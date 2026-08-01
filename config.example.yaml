@@ -1,0 +1,86 @@
+# Timar configuration. Lives at /data/config.yaml inside the container.
+#
+# Until settings can be edited from the UI, copy this in and edit it:
+#   docker cp config.example.yaml timar:/data/config.yaml
+# There is no restart needed for the server list -- it is read on each request.
+
+servers:
+  # An always-on machine. The minimum a server needs is a name, an address and a platform.
+  - name: web-01
+    host: 192.0.2.10          # IP or hostname
+    user: deploy
+    platform: linux           # linux | openwrt | proxmox
+
+    # Optional: overrides the built-in default for this platform. On OpenWrt there IS no
+    # default -- see the note further down.
+    # update_cmd: "sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+
+    # Optional: a line of context handed to the log analysis, to explain behaviour that looks
+    # alarming but is not. This is the cheapest way to stop a recurring false alarm.
+    # context: "Runs a nightly batch job that logs connection resets; those are expected."
+
+    # Optional: scheduled jobs to watch. Timar checks that each one *ran today* and *finished*.
+    # Watching for absence is the point -- a job that stops being scheduled writes no error at
+    # all, so nothing but a missing run reveals it.
+    # job_logs:
+    #   - path: /var/log/backup.log
+    #     started_marker: "Backup started"
+    #     completed_marker: "Backup completed"
+
+    # Optional: extra log files to scan for error keywords.
+    # watch_logs:
+    #   - /var/log/myapp.log
+
+    # Optional: use a specific key instead of the one Timar generated for itself.
+    # ssh_key: ~/.ssh/id_ed25519
+
+  # An on-demand machine. `wol_mac` is what marks it as expected-to-be-asleep: the dashboard
+  # shows it as "asleep" rather than "down", and the log analysis is told its being off is
+  # normal. Updates wake it, update it, and shut it back down.
+  - name: gpu-01
+    host: 192.0.2.20
+    user: deploy
+    platform: linux
+    wol_mac: "aa:bb:cc:dd:ee:ff"
+    wol_broadcast: 192.0.2.255   # your LAN's broadcast address
+
+  # A router. OpenWrt has NO default update command, deliberately: an unattended `apk upgrade`
+  # can exhaust the overlay partition or land a kernel-module mismatch, and the machine that
+  # breaks is the one carrying the SSH session you would repair it from. Set `update_cmd`
+  # yourself if you want it; leaving it unset means this host is swept for logs but not updated.
+  - name: router
+    host: 192.0.2.1
+    user: root
+    platform: openwrt
+
+  # A hypervisor and the guest it is responsible for. Timar starts the guest, updates it, and
+  # shuts it down again -- so the guest needs no `wol_mac` of its own, and is still treated as
+  # on-demand because its host manages it.
+  - name: hv-01
+    host: 192.0.2.30
+    user: root
+    platform: proxmox
+    manages_vms:
+      - vm_id: 100
+        server_name: vm-01
+  - name: vm-01
+    host: 192.0.2.31
+    user: deploy
+    platform: linux
+
+log_check:
+  journal_hours: 6      # how far back to read the system log
+  disk_threshold: 85    # percent full before a filesystem is reported
+
+# Optional. Without it, waking, updating and the log sweep all still work -- you just get the
+# raw findings instead of a written assessment.
+#
+# provider: anthropic | openai | ollama
+#   anthropic  needs api_key.        Default model: claude-opus-5
+#   openai     any OpenAI-compatible endpoint -- OpenAI, OpenRouter, LM Studio, vLLM,
+#              llama.cpp. Local servers usually need no api_key at all; leave it out.
+#   ollama     Ollama's native API.  base_url defaults to http://localhost:11434
+# llm:
+#   provider: ollama
+#   base_url: http://192.0.2.40:11434
+#   model: <the model you have pulled>

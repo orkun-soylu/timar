@@ -157,3 +157,61 @@ class TestDashboard:
         complete_setup(client)
         client.cookies.clear()
         assert client.get("/fragments/fleet").headers["location"] == "/login"
+
+
+class _FakeResponse:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _capture_url(into: dict):
+    def urlopen(url, timeout):
+        into["url"] = url
+        return _FakeResponse()
+    return urlopen
+
+
+class TestHealthcheck:
+    """The container probe, which is a separate code path from the /health route."""
+
+    def test_probes_the_configured_port(self, monkeypatch):
+        """The port is configurable, so the probe must read it rather than assume 8080.
+
+        A hardcoded port made the container report `starting` forever for anyone who changed
+        TIMAR_PORT -- a change the compose file explicitly invites. It only reproduces by
+        running the image, so it is pinned here where a build is not needed to catch it.
+        """
+        from timar.web import healthcheck
+
+        seen: dict = {}
+        monkeypatch.setenv("TIMAR_PORT", "9443")
+        monkeypatch.setattr(healthcheck.urllib.request, "urlopen", _capture_url(seen))
+
+        assert healthcheck.main() == 0
+        assert "127.0.0.1:9443" in seen["url"]
+
+    def test_defaults_to_8080(self, monkeypatch):
+        from timar.web import healthcheck
+
+        seen: dict = {}
+        monkeypatch.delenv("TIMAR_PORT", raising=False)
+        monkeypatch.setattr(healthcheck.urllib.request, "urlopen", _capture_url(seen))
+
+        assert healthcheck.main() == 0
+        assert "127.0.0.1:8080" in seen["url"]
+
+    def test_unreachable_server_is_a_failure_not_a_traceback(self, monkeypatch):
+        """Docker reads the exit code; an escaping exception is still a nonzero exit but the
+        log then carries a traceback instead of a sentence naming the port."""
+        from timar.web import healthcheck
+
+        def refuse(url, timeout):
+            raise OSError("connection refused")
+
+        monkeypatch.setattr(healthcheck.urllib.request, "urlopen", refuse)
+        assert healthcheck.main() == 1

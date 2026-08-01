@@ -7,8 +7,44 @@ Nothing is installed on the machines you manage. Timar needs SSH and, for hosts 
 Wake-on-LAN. It ships as a single container with a single data volume, so the whole
 installation moves by copying a directory.
 
-> **Status: early.** The engine (wake / update / log sweep / platform command sets) works and is
-> tested. The web UI is not built yet. See [ARCHITECTURE.md](ARCHITECTURE.md).
+> **Status: early.** The engine (wake / update / log sweep / platform command sets) and a
+> read-only dashboard work and are tested. Settings are still edited as YAML; editing them from
+> the UI, the scheduler, and key enrolment are next. See [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Run it
+
+```bash
+curl -O https://raw.githubusercontent.com/orkun-soylu/timar/main/docker-compose.yml
+docker compose up -d
+```
+
+Then open `http://<host>:8080` and create the operator account. Nothing else answers until you
+do — the first screen is the only one served before an account exists.
+
+Configuration lives in the `timar-data` volume as `config.yaml`; see
+[`config.example.yaml`](config.example.yaml) for the fields.
+
+> ⚠️ **Do not expose this to the internet.** Timar holds an SSH key that reaches every machine
+> it manages and can grant itself `sudo` on them. The login page is the only thing in front of
+> your fleet. Keep it on a private network, or behind a reverse proxy you control.
+
+### Running on a bridge network
+
+The default compose file uses `network_mode: host` because **Wake-on-LAN does not work from a
+bridge network** — a magic packet is a broadcast, and from a bridge the send succeeds with no
+error while the packet never reaches the LAN. Measured with `tcpdump` on the LAN interface:
+bridge network 0 packets, host network 1 packet.
+
+Everything else works fine on a bridge. If you do not need to wake machines, replace the
+`network_mode: host` line with:
+
+```yaml
+    ports:
+      - "8080:8080"
+```
+
+Waking machines from a bridge deployment needs a relay — an always-on host that sends the packet
+on Timar's behalf — which is not implemented yet.
 
 ## Why
 

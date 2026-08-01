@@ -1,0 +1,12 @@
+.git/
+.venv/
+data/
+tests/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+docker-compose*.yml
+Dockerfile
+.dockerignore
+CLAUDE.md

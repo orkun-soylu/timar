@@ -191,9 +191,49 @@ real three-machine fleet with one sleeping host: **3.02s cold, 0.01s cached** �
 timeout, not the sum of them. The cache also stops a left-open browser tab from generating
 continuous traffic to every machine in the rack.
 
+## Packaging — and the networking choice, measured
+
+One Alpine image, **126 MB** on disk (`docker images` DISK USAGE, not `inspect .Size` — those
+differ by several times). Dependencies account for 39 MB of it. Runs as uid 1000, non-root; the
+UID is fixed by an ARG because `/data` is the installation and operators bind-mount it, so a UID
+that drifts between releases turns an upgrade into "permission denied" on their own files.
+
+`--only-binary=:all:` is carried over as a guard, not an optimisation: every dependency ships a
+musllinux wheel today, and the day one stops, pip would silently fall back to a source build
+needing a Rust and C toolchain the image does not have — an hour of compiling on a Pi, or a
+confusing failure. With the flag the build fails immediately and names the package. **A failure
+there is information; do not remove the flag to make a build pass.**
+
+### Wake-on-LAN requires host networking
+
+Measured, not assumed. A magic packet is a broadcast. Sent from a container on a bridge network
+it **succeeds** — `sendto` returns, no error, no exception — and never reaches the LAN.
+`tcpdump` on the host's LAN interface, same image, same call, same target:
+
+| Network mode | `sendto` | Packets seen on the LAN interface |
+|---|---|---|
+| bridge | returned cleanly | **0** |
+| host | returned cleanly | **1** — `192.0.2.6.47361 > 192.0.2.255.9: UDP, length 102` |
+
+102 bytes is exactly `6 + 16 x 6`, a well-formed magic packet. The default compose file
+therefore uses `network_mode: host`. Everything else works on a bridge; only waking does not,
+and it fails in the way that is hardest to diagnose, so the default is the mode that works.
+
+Waking from a bridge deployment needs a relay — an always-on host that sends the packet on
+Timar's behalf, over SSH. Not implemented; it would also enable waking machines in other
+subnets, which host networking cannot do.
+
+> **⚠️ The healthcheck must read `TIMAR_PORT`.** The exec form of `HEALTHCHECK CMD` does not
+> expand environment variables, so an inline `python -c` with a hardcoded 8080 left the
+> container reporting `starting` **forever** for anyone who changed the port — which the compose
+> file explicitly invites them to do. It is a module (`timar.web.healthcheck`) that reads the
+> variable itself. Found by running the image, not by building it; `tests/test_web.py` now pins
+> it so a build is not needed to catch a regression.
+
 ## Open / next
 
 - Settings editing: servers, schedules, LLM and notifier, written back to `config.yaml`
 - SSH key generation, key push, and sudoers enrolment from the UI
 - In-process scheduler with supervised tasks and a visible heartbeat
-- Dockerfile and compose, with the WOL networking choice documented
+- WOL relay, for bridge deployments and cross-subnet wake
+- Multi-arch build and publish (amd64 + arm64) to GHCR

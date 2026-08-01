@@ -1,0 +1,36 @@
+services:
+  timar:
+    image: ghcr.io/orkun-soylu/timar:latest
+    # Build locally instead: `docker compose build`
+    # build: .
+    container_name: timar
+    restart: unless-stopped
+
+    # Host networking is required for Wake-on-LAN, and this was measured rather than assumed.
+    # A magic packet is a broadcast; from a bridge network the send *succeeds* -- no error, no
+    # exception -- and the packet never leaves the bridge. Verified with tcpdump on the LAN
+    # interface: bridge network, 0 packets; host network, 1 packet. A silent failure is the
+    # worst kind, so the default is the one that works.
+    #
+    # Everything except WOL works fine on a bridge network. If you do not need to wake machines,
+    # or you reach them another way, see "Running on a bridge network" in the README.
+    network_mode: host
+
+    volumes:
+      # A named volume, not a bind mount: the image creates /data owned by uid 1000, and Docker
+      # carries that ownership into a *named* volume when it initialises it. A bind mount keeps
+      # the host directory's ownership instead, so a bind mount needs `chown 1000:1000` first.
+      - timar-data:/data
+
+    environment:
+      # With host networking this binds directly to every interface the host has. That is what
+      # makes the UI reachable from your laptop -- and it means the only thing in front of your
+      # fleet is the login page. Do not forward this port from the internet.
+      # Set to 127.0.0.1 to reach it only through a reverse proxy on the same host.
+      TIMAR_HOST: 0.0.0.0
+      # Host networking means no port remapping: this port must be free on the host. 8080 is a
+      # popular one -- change it here if something already has it.
+      TIMAR_PORT: "8080"
+
+volumes:
+  timar-data:
