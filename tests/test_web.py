@@ -215,3 +215,107 @@ class TestHealthcheck:
 
         monkeypatch.setattr(healthcheck.urllib.request, "urlopen", refuse)
         assert healthcheck.main() == 1
+
+
+class TestSettings:
+    def test_every_settings_route_requires_a_session(self, client):
+        """Declared on the router, so a new endpoint is protected for being one, not by memory."""
+        complete_setup(client)
+        client.cookies.clear()
+        for method, path in [
+            ("get", "/settings"),
+            ("post", "/settings/servers"),
+            ("post", "/settings/log-check"),
+            ("post", "/settings/llm"),
+            ("post", "/settings/llm/test"),
+            ("post", "/settings/telegram"),
+            ("post", "/settings/telegram/test"),
+            ("post", "/settings/servers/web-01/delete"),
+        ]:
+            response = getattr(client, method)(path)
+            assert response.headers.get("location") == "/login", f"{method} {path} was not guarded"
+
+    def test_add_a_server(self, client):
+        complete_setup(client)
+        from timar import config
+        response = client.post("/settings/servers", data={
+            "name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux"})
+        assert response.status_code == 303
+        assert config.load()["servers"] == [
+            {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux"}]
+
+    def test_invalid_server_is_rejected_and_nothing_is_written(self, client):
+        complete_setup(client)
+        from timar import config
+        response = client.post("/settings/servers", data={"name": "bad name", "host": "", "user": "", "platform": "linux"})
+        assert response.status_code == 400
+        assert config.load().get("servers") in (None, [])
+
+    def test_edit_replaces_in_place_and_keeps_order(self, client):
+        complete_setup(client)
+        from timar import config
+        for name in ("a", "b", "c"):
+            client.post("/settings/servers", data={
+                "name": name, "host": f"10.0.0.{name}", "user": "deploy", "platform": "linux"})
+        client.post("/settings/servers", data={
+            "original_name": "b", "name": "b2", "host": "10.0.0.9",
+            "user": "deploy", "platform": "openwrt"})
+        names = [s["name"] for s in config.load()["servers"]]
+        assert names == ["a", "b2", "c"]
+
+    def test_delete_also_drops_the_hypervisor_relationship(self, client):
+        """A guest left in manages_vms after its entry is gone is one nothing will ever start."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers/vm-01/delete")
+        remaining = config.load()["servers"]
+        assert [s["name"] for s in remaining] == ["hv"]
+        assert "manages_vms" not in remaining[0]
+
+    def test_stored_secrets_are_never_sent_to_the_browser(self, client):
+        """The page says a key is stored; it never says what it is."""
+        complete_setup(client)
+        from timar import config
+        cfg = config.load()
+        cfg["llm"] = {"provider": "anthropic", "model": "m", "api_key": "SECRET-LLM-KEY"}
+        cfg["telegram"] = {"token": "SECRET-BOT-TOKEN", "chat_id": "123"}
+        config.save(cfg)
+
+        page = client.get("/settings").text
+        assert "SECRET-LLM-KEY" not in page
+        assert "SECRET-BOT-TOKEN" not in page
+        assert "stored — leave blank to keep it" in page
+        assert "123" in page  # the chat id is not a secret and must round-trip
+
+    def test_saving_the_form_blank_does_not_wipe_the_key(self, client):
+        complete_setup(client)
+        from timar import config
+        cfg = config.load()
+        cfg["llm"] = {"provider": "anthropic", "model": "m", "api_key": "keep-me"}
+        config.save(cfg)
+        client.post("/settings/llm", data={"provider": "anthropic", "model": "m2", "api_key": ""})
+        stored = config.load()["llm"]
+        assert stored["api_key"] == "keep-me" and stored["model"] == "m2"
+
+    def test_test_button_reports_failure_without_leaking_html(self, client, monkeypatch):
+        complete_setup(client)
+        from timar import config, llm as llm_module
+        cfg = config.load()
+        cfg["llm"] = {"provider": "ollama", "model": "m", "base_url": "http://x"}
+        config.save(cfg)
+
+        def boom(*a, **kw):
+            raise llm_module.LLMError("<script>alert(1)</script> refused")
+        monkeypatch.setattr("timar.web.settings.llm_module.complete", boom)
+
+        body = client.post("/settings/llm/test").text
+        assert "<script>" not in body and "&lt;script&gt;" in body
+
+    def test_test_button_says_so_when_nothing_is_configured(self, client):
+        complete_setup(client)
+        assert "Save a model connection first" in client.post("/settings/llm/test").text

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 import bcrypt
 import jwt
+from fastapi import HTTPException, Request, status
 
 from .. import config
 
@@ -142,4 +143,17 @@ def read_token(token: str | None) -> str | None:
     # no longer the operator must not still open the door.
     if acct is None or username != acct["username"]:
         return None
+    return username
+
+
+def require_operator(request: Request) -> str:
+    """FastAPI dependency: the signed-in operator, or a 401 that the app turns into /login.
+
+    Lives here rather than in `app.py` so every router can depend on it without importing the
+    application — a settings router that cannot reach the guard is a settings router that ends
+    up unguarded.
+    """
+    username = read_token(request.cookies.get(SESSION_COOKIE))
+    if username is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
     return username

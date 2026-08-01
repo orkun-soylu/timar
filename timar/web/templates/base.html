@@ -57,7 +57,31 @@
     }
     .linkish { background: none; border: none; color: var(--muted); padding: 0; font-weight: 400; cursor: pointer; }
     .error { color: var(--down); font-size: 0.875rem; margin-bottom: 1rem; }
+    .ok { color: var(--up); font-size: 0.875rem; }
     .empty { padding: 2rem 1rem; text-align: center; color: var(--muted); }
+
+    section.panel { margin-bottom: 1.25rem; padding: 0 0 1.25rem; }
+    section.panel h2 { font-size: 1rem; margin: 0; padding: 1rem; border-bottom: 1px solid var(--line); }
+    section.panel h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;
+                       color: var(--muted); margin: 0 0 0.25rem; }
+    .stack { padding: 1.25rem 1rem 0; }
+    .stack + .stack { border-top: 1px solid var(--line); margin-top: 1rem; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .row > label { flex: 1 1 14rem; }
+    select {
+      width: 100%; padding: 0.55rem 0.7rem; border-radius: 7px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
+    }
+    .hint { font-size: 0.8rem; color: var(--muted); margin: -0.4rem 0 1rem; }
+    .actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    button.secondary { background: none; color: var(--text); font-weight: 400; }
+    .result { font-size: 0.875rem; }
+    .result.htmx-request::after { content: "…"; color: var(--muted); }
+    .notice { padding: 0.8rem 1rem; margin-bottom: 1.25rem; font-size: 0.875rem; }
+    .notice.good { border-left: 3px solid var(--up); }
+    .notice.bad { border-left: 3px solid var(--down); color: var(--down); }
+    section.panel table { margin-bottom: 0; }
+    a { color: inherit; }
   </style>
 </head>
 <body>

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Settings — Timar{% endblock %}
+{% block body %}
+<header>
+  <h1>Settings</h1>
+  <span class="spacer"></span>
+  <a href="/" class="muted">← dashboard</a>
+</header>
+
+{% if errors %}
+  <div class="panel notice bad">
+    {% for message in errors %}<div>{{ message }}</div>{% endfor %}
+  </div>
+{% elif notice %}
+  <div class="panel notice good">
+    {{ "Saved." if notice == "saved" else "Server removed." }}
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Servers</h2>
+  {% if servers %}
+  <table>
+    <thead><tr><th>Name</th><th>Address</th><th>Platform</th><th>Wake</th><th></th></tr></thead>
+    <tbody>
+      {% for server in servers %}
+      <tr>
+        <td>{{ server.name }}</td>
+        <td><code>{{ server.user }}@{{ server.host }}</code></td>
+        <td class="muted">{{ server.platform | default("linux") }}</td>
+        <td class="muted">{{ "on-demand" if server.wol_mac else "always on" }}</td>
+        <td style="text-align:right; white-space:nowrap">
+          <a href="/settings?edit={{ server.name }}" class="muted">edit</a>
+          <form method="post" action="/settings/servers/{{ server.name }}/delete"
+                style="display:inline; margin-left:0.6rem"
+                onsubmit="return confirm('Remove {{ server.name }} from Timar? The machine is not touched.')">
+            <button type="submit" class="linkish">remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No servers yet. Add the first one below.</p>
+  {% endif %}
+
+  {% set editing = servers | selectattr("name", "equalto", edit) | first if edit else None %}
+  <form method="post" action="/settings/servers" class="stack">
+    <h3>{{ "Edit " ~ editing.name if editing else "Add a server" }}</h3>
+    {% if editing %}<input type="hidden" name="original_name" value="{{ editing.name }}">{% endif %}
+
+    <div class="row">
+      <label><span>Name</span>
+        <input name="name" required value="{{ editing.name if editing else '' }}"></label>
+      <label><span>Address</span>
+        <input name="host" required placeholder="10.0.0.5 or host.lan"
+               value="{{ editing.host if editing else '' }}"></label>
+    </div>
+    <div class="row">
+      <label><span>SSH user</span>
+        <input name="user" required value="{{ editing.user if editing else '' }}"></label>
+      <label><span>Platform</span>
+        <select name="platform">
+          {% for platform in platforms %}
+          <option value="{{ platform }}"
+            {{ "selected" if editing and editing.platform == platform else "" }}>{{ platform }}</option>
+          {% endfor %}
+        </select></label>
+    </div>
+    <div class="row">
+      <label><span>Wake-on-LAN MAC <em class="muted">optional</em></span>
+        <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
+               value="{{ editing.wol_mac if editing and editing.wol_mac else '' }}"></label>
+      <label><span>Broadcast address <em class="muted">optional</em></span>
+        <input name="wol_broadcast" placeholder="10.0.0.255"
+               value="{{ editing.wol_broadcast if editing and editing.wol_broadcast else '' }}"></label>
+    </div>
+    <p class="hint">
+      A MAC marks the machine as on-demand: it shows as <em>asleep</em> rather than <em>down</em>
+      when off, and updates wake it, update it, and shut it back down.
+    </p>
+
+    <label><span>Update command <em class="muted">optional — overrides the platform default</em></span>
+      <input name="update_cmd" value="{{ editing.update_cmd if editing and editing.update_cmd else '' }}"></label>
+    <p class="hint">
+      OpenWrt has <strong>no</strong> default on purpose: an unattended upgrade can fill the
+      overlay partition or land a kernel-module mismatch, and the machine that breaks is the one
+      carrying the session you would repair it from. Leave this empty and the host is swept for
+      logs but never updated.
+    </p>
+
+    <label><span>Context for the log analysis <em class="muted">optional</em></span>
+      <input name="context" placeholder="Nightly batch job logs connection resets; expected."
+             value="{{ editing.context if editing and editing.context else '' }}"></label>
+
+    <div class="actions">
+      <button type="submit">{{ "Save changes" if editing else "Add server" }}</button>
+      {% if editing %}<a href="/settings" class="muted" style="margin-left:0.8rem">cancel</a>{% endif %}
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Log sweep</h2>
+  <form method="post" action="/settings/log-check" class="stack">
+    <div class="row">
+      <label><span>System log window (hours)</span>
+        <input name="journal_hours" type="number" min="1" max="168"
+               value="{{ log_check.journal_hours | default(6) }}"></label>
+      <label><span>Disk threshold (percent full)</span>
+        <input name="disk_threshold" type="number" min="50" max="99"
+               value="{{ log_check.disk_threshold | default(85) }}"></label>
+    </div>
+    <div class="actions"><button type="submit">Save</button></div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Model</h2>
+  <p class="hint">
+    Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all
+    still work; you just get the raw findings instead of a written assessment.
+  </p>
+  <form method="post" action="/settings/llm" class="stack">
+    <div class="row">
+      <label><span>Provider</span>
+        <select name="provider">
+          <option value="">— none —</option>
+          {% for provider in providers %}
+          <option value="{{ provider }}" {{ "selected" if llm.provider == provider else "" }}>{{ provider }}</option>
+          {% endfor %}
+        </select></label>
+      <label><span>Model</span>
+        <input name="model" value="{{ llm.model | default('') }}"></label>
+    </div>
+    <div class="row">
+      <label><span>Base URL <em class="muted">optional — for self-hosted endpoints</em></span>
+        <input name="base_url" placeholder="http://10.0.0.40:11434"
+               value="{{ llm.base_url | default('') }}"></label>
+      <label><span>API key</span>
+        <input name="api_key" type="password" autocomplete="off"
+               placeholder="{{ 'stored — leave blank to keep it' if llm_has_key else 'not set' }}"></label>
+    </div>
+    <div class="actions">
+      <button type="submit">Save</button>
+      <button type="button" class="secondary" hx-post="/settings/llm/test"
+              hx-target="#llm-test" hx-swap="innerHTML"
+              hx-indicator="#llm-test">Test connection</button>
+      <span id="llm-test" class="result"></span>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Notifications</h2>
+  <p class="hint">
+    Telegram delivery for reports. The machines Timar watches are the ones nobody is looking at,
+    so a report that only exists in this page is one nobody reads until they already suspect
+    something.
+  </p>
+  <form method="post" action="/settings/telegram" class="stack">
+    <div class="row">
+      <label><span>Bot token</span>
+        <input name="token" type="password" autocomplete="off"
+               placeholder="{{ 'stored — leave blank to keep it' if telegram_has_token else 'not set' }}"></label>
+      <label><span>Chat ID</span>
+        <input name="chat_id" value="{{ telegram_chat_id }}"></label>
+    </div>
+    <div class="actions">
+      <button type="submit">Save</button>
+      <button type="button" class="secondary" hx-post="/settings/telegram/test"
+              hx-target="#tg-test" hx-swap="innerHTML"
+              hx-indicator="#tg-test">Send test message</button>
+      <span id="tg-test" class="result"></span>
+    </div>
+  </form>
+</section>
+
+<p class="muted" style="margin-top:1.5rem">
+  Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page
+  rewrites that file, which drops any comments you added by hand.
+</p>
+{% endblock %}

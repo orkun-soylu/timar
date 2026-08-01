@@ -18,20 +18,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .. import config, status as fleet_status
-from . import auth
+from . import auth, settings
+from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
 
 app = FastAPI(title="Timar", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
-
-
-def current_operator(request: Request) -> str:
-    username = auth.read_token(request.cookies.get(auth.SESSION_COOKIE))
-    if username is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED)
-    return username
+app.include_router(settings.router)
 
 
 def _set_session(response, username: str) -> None:

@@ -230,9 +230,47 @@ subnets, which host networking cannot do.
 > variable itself. Found by running the image, not by building it; `tests/test_web.py` now pins
 > it so a build is not needed to catch a regression.
 
+## Settings — validation, secrets, and proving a connection
+
+Servers, log-sweep defaults, the model connection and Telegram are edited from the UI and
+written back through `config.save()`. Saving rewrites `config.yaml`, which drops hand-written
+comments — the page says so rather than surprising anyone.
+
+**Validation lives in `validate.py`, not in the form handlers.** The same rules have to hold for
+a config file written by hand, and a rule that only exists in a request handler does not. Errors
+are collected and reported together: a form that reveals its next problem only after you fix the
+current one is a form people learn to dread.
+
+**Add and edit share one handler.** They share every rule, and splitting them is how the two
+paths drift until one of them stops checking something.
+
+**Secrets are never sent to the browser.** The forms report *whether* a key is stored, never
+what it is, and an empty key field means "leave it as it was". That has to be the rule rather
+than "empty means delete", because a blank box is the **normal** state of the field on every
+visit — treating it as a deletion would wipe the credential on any unrelated edit to the same
+form. Switching provider does not carry the old key across: a key for one vendor is meaningless
+to another and quietly wrong to keep. Verified live: with a key and a bot token stored, the
+rendered page contains neither, while the chat id — not a secret — round-trips.
+
+**The session guard is declared on the router**, not per route, so a new settings endpoint is
+protected for *being* a settings endpoint rather than because whoever added it remembered a
+decorator. A test walks every route to prove it.
+
+### Test buttons, because credentials fail at 3am otherwise
+
+Both the model connection and Telegram have a test button. A credential exercised only by the
+nightly job is one you discover is wrong on the morning the report did not arrive.
+
+The failure text matters as much as the success. Verified against a live Ollama endpoint: a
+good connection answers `Model replied: ok`; a wrong model name returns the upstream's own words
+— `ollama returned HTTP 404: {"error":"model 'does-not-exist' not found"}` — HTML-escaped,
+because that string is a third-party response body being written into the page.
+
+Deleting a server also drops it from any hypervisor's `manages_vms`. A guest left in that list
+after its own entry is gone is a guest nothing will ever start.
+
 ## Open / next
 
-- Settings editing: servers, schedules, LLM and notifier, written back to `config.yaml`
 - SSH key generation, key push, and sudoers enrolment from the UI
 - In-process scheduler with supervised tasks and a visible heartbeat
 - WOL relay, for bridge deployments and cross-subnet wake
