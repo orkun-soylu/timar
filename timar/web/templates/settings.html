@@ -28,7 +28,12 @@
         <td>{{ server.name }}</td>
         <td><code>{{ server.user }}@{{ server.host }}</code></td>
         <td class="muted">{{ server.platform | default("linux") }}</td>
-        <td class="muted">{{ "on-demand" if server.wol_mac else "always on" }}</td>
+        {% set reason = on_demand.get(server.name) %}
+        <td class="muted">
+          {%- if not reason %}always on
+          {%- elif reason == "wol" %}on-demand
+          {%- else %}on-demand <span title="started by its hypervisor">via {{ reason }}</span>
+          {%- endif %}</td>
         <td style="text-align:right; white-space:nowrap">
           <a href="/settings/servers/{{ server.name }}/enroll" class="muted">enrol</a>
           <a href="/settings?edit={{ server.name }}" class="muted" style="margin-left:0.6rem">edit</a>
@@ -85,6 +90,28 @@
           {{ "selected" if editing and editing.wol_relay == other.name else "" }}>{{ other.name }}</option>
         {% endfor %}
       </select></label>
+    {% set link = guest_of.get(editing.name) if editing else None %}
+    <div class="row">
+      <label><span>Guest of <em class="muted">optional — a hypervisor that starts it</em></span>
+        <select name="hypervisor">
+          <option value="">— not a virtual machine —</option>
+          {% for other in servers if other.platform == "proxmox"
+                and (not editing or other.name != editing.name) %}
+          <option value="{{ other.name }}"
+            {{ "selected" if link and link.hypervisor == other.name else "" }}>{{ other.name }}</option>
+          {% endfor %}
+        </select></label>
+      <label><span>VM id <em class="muted">required with a hypervisor</em></span>
+        <input name="vm_id" inputmode="numeric" placeholder="100"
+               value="{{ link.vm_id if link else '' }}"></label>
+    </div>
+    <p class="hint">
+      A guest needs no MAC of its own — it is started with <code>qm</code>, not a magic packet —
+      but it <strong>is</strong> on-demand whenever its hypervisor is, so being off is never
+      reported as a fault. Updates reach it through its host: wake the hypervisor, start the
+      guest, update, shut both back down in order.
+    </p>
+
     <p class="hint">
       A MAC marks the machine as on-demand: it shows as <em>asleep</em> rather than <em>down</em>
       when off, and updates wake it, update it, and shut it back down.

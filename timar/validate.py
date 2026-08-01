@@ -80,6 +80,63 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     return entry
 
 
+def guest_link(form: dict, servers: list[dict], name: str,
+               original_name: str | None = None) -> tuple[str, int] | None:
+    """Which hypervisor starts this server, and as which VM id. `None` when it is standalone.
+
+    Stored on the *hypervisor* (`manages_vms`) rather than on the guest, because that is the
+    entry the updater walks when it wakes a host and works through what that host is responsible
+    for. The form asks the question from the guest's side because that is where an operator is
+    standing when they notice the answer is missing.
+    """
+    hypervisor = (form.get("hypervisor") or "").strip()
+    raw_id = (form.get("vm_id") or "").strip()
+
+    if not hypervisor:
+        if raw_id:
+            raise ValidationError(["A VM id needs a hypervisor to go with it."])
+        return None
+
+    errors: list[str] = []
+    host = next((s for s in servers if s["name"] == hypervisor), None)
+    if host is None:
+        errors.append(f"Hypervisor {hypervisor!r} is not a configured server.")
+    elif host.get("platform") != "proxmox":
+        errors.append(f"{hypervisor!r} is not a hypervisor — its platform is "
+                      f"{host.get('platform', 'linux')!r}.")
+    # `original_name` is the entry being edited: it still carries the old name in the stored
+    # config, so without it a rename collides with the very link it is renaming.
+    own_names = {name, original_name}
+    if hypervisor in own_names:
+        errors.append("A server cannot be its own hypervisor.")
+
+    vm_id = 0
+    if not raw_id:
+        errors.append("A VM id is required when a hypervisor is set.")
+    else:
+        try:
+            vm_id = int(raw_id)
+        except ValueError:
+            errors.append("VM id must be a whole number.")
+        else:
+            if vm_id < 1:
+                errors.append("VM id must be a positive number.")
+            else:
+                clash = next(
+                    (g for s in servers if s["name"] == hypervisor
+                     for g in s.get("manages_vms", [])
+                     if g["vm_id"] == vm_id and g["server_name"] not in own_names),
+                    None,
+                )
+                if clash:
+                    errors.append(f"VM {vm_id} on {hypervisor} is already "
+                                  f"{clash['server_name']!r}.")
+
+    if errors:
+        raise ValidationError(errors)
+    return hypervisor, vm_id
+
+
 def log_check(form: dict) -> dict:
     errors: list[str] = []
     try:

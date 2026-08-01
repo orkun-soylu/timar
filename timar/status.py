@@ -14,6 +14,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
+from . import config
 from .network import is_host_up
 
 TTL = 10.0
@@ -64,11 +65,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
     if not servers:
         return []
 
-    managed_guests = {
-        guest["server_name"]
-        for host in servers
-        for guest in host.get("manages_vms", [])
-    }
+    sleepers = config.on_demand(servers)
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
@@ -78,7 +75,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             name=s["name"],
             host=s["host"],
             up=up,
-            on_demand=bool(s.get("wol_mac")) or s["name"] in managed_guests,
+            on_demand=s["name"] in sleepers,
             platform=s.get("platform", "linux"),
         )
         for s, up in zip(servers, results)

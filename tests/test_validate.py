@@ -5,7 +5,7 @@ not in a form handler.
 """
 import pytest
 
-from timar.validate import ValidationError, llm, log_check, server, telegram
+from timar.validate import ValidationError, guest_link, llm, log_check, server, telegram
 
 MINIMAL = {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux"}
 
@@ -141,3 +141,53 @@ class TestWakeRelay:
         """A relay on a machine with no MAC is a setting that can never take effect."""
         with pytest.raises(ValidationError, match="need a MAC"):
             server(MINIMAL | {"wol_relay": "db-01"}, {"db-01"})
+
+
+class TestGuestLink:
+    HOSTS = [
+        {"name": "hv-01", "platform": "proxmox",
+         "manages_vms": [{"vm_id": 100, "server_name": "other-vm"}]},
+        {"name": "web-01", "platform": "linux"},
+    ]
+
+    def test_no_hypervisor_means_standalone(self):
+        assert guest_link({}, self.HOSTS, "vm-01") is None
+
+    def test_a_valid_link_is_returned(self):
+        assert guest_link({"hypervisor": "hv-01", "vm_id": "200"}, self.HOSTS, "vm-01") \
+            == ("hv-01", 200)
+
+    def test_hypervisor_must_exist(self):
+        with pytest.raises(ValidationError, match="not a configured server"):
+            guest_link({"hypervisor": "ghost", "vm_id": "200"}, self.HOSTS, "vm-01")
+
+    def test_hypervisor_must_be_a_hypervisor(self):
+        """Only Proxmox has `qm`; pointing a guest at a plain Linux box promises a boot that
+        can never happen."""
+        with pytest.raises(ValidationError, match="not a hypervisor"):
+            guest_link({"hypervisor": "web-01", "vm_id": "200"}, self.HOSTS, "vm-01")
+
+    def test_a_server_cannot_host_itself(self):
+        with pytest.raises(ValidationError, match="its own hypervisor"):
+            guest_link({"hypervisor": "hv-01", "vm_id": "200"}, self.HOSTS, "hv-01")
+
+    def test_vm_id_is_required_with_a_hypervisor(self):
+        with pytest.raises(ValidationError, match="VM id is required"):
+            guest_link({"hypervisor": "hv-01"}, self.HOSTS, "vm-01")
+
+    def test_vm_id_without_a_hypervisor_is_rejected(self):
+        with pytest.raises(ValidationError, match="needs a hypervisor"):
+            guest_link({"vm_id": "200"}, self.HOSTS, "vm-01")
+
+    def test_vm_id_must_be_a_number(self):
+        with pytest.raises(ValidationError, match="whole number"):
+            guest_link({"hypervisor": "hv-01", "vm_id": "one hundred"}, self.HOSTS, "vm-01")
+
+    def test_a_vm_id_already_used_on_that_host_is_rejected(self):
+        """Two entries claiming id 100 means one of them starts the wrong machine."""
+        with pytest.raises(ValidationError, match="already"):
+            guest_link({"hypervisor": "hv-01", "vm_id": "100"}, self.HOSTS, "vm-01")
+
+    def test_a_server_keeps_its_own_vm_id_when_edited(self):
+        assert guest_link({"hypervisor": "hv-01", "vm_id": "100"}, self.HOSTS, "other-vm") \
+            == ("hv-01", 100)

@@ -116,11 +116,20 @@ names, addresses, GPU models — directly in the system prompt string. That made
 unpublishable *and* made adding a server a code change. A test asserts the module contributes
 no digits and no addresses of its own to the prompt.
 
-**On-demand is derived from `wol_mac`, not a separate flag** — a machine with a wake address is
-by definition one expected to sleep, so its being offline is stated as normal rather than
-reported as an outage. The relationship is followed through `manages_vms` too: a guest started
-by its hypervisor has no `wol_mac` of its own and would otherwise read as a permanently-on
-machine that is down.
+**On-demand is derived, not flagged** — a machine with a `wol_mac` is by definition one expected
+to sleep, so its being offline is stated as normal rather than reported as an outage. A guest
+started by its hypervisor has no `wol_mac` of its own — it cannot, it is started by `qm` — so it
+**inherits** the answer from its host through `manages_vms`.
+
+Inherited rather than granted to every guest, because the two mistakes are not symmetric.
+Calling an on-demand guest always-on produces a nightly false alarm, which is noise; calling a
+guest of an *always-on* host on-demand normalises its outage, so a 24/7 VM that has actually
+crashed is described as sleeping soundly. Noise is recoverable, silence is not.
+
+The rule lives in exactly one function, `config.on_demand`, because it did not used to. It was
+written out once per consumer — dashboard, analysis prompt, settings table — and the third copy
+dropped the guest clause, so the same Kali VM was *asleep* on one page and *always on* on
+another. The fleet's own description must not depend on which page you are looking at.
 
 ## The `/data` volume is the installation
 

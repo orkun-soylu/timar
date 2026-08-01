@@ -60,13 +60,16 @@ servers:
     user: root
     platform: openwrt
 
-  # A hypervisor and the guest it is responsible for. Timar starts the guest, updates it, and
-  # shuts it down again -- so the guest needs no `wol_mac` of its own, and is still treated as
-  # on-demand because its host manages it.
+  # A hypervisor and the guest it is responsible for. Timar wakes the host, starts the guest,
+  # updates it, and puts both back the way it found them -- so the guest needs no `wol_mac` of
+  # its own, and it inherits on-demand from its host: being off is normal for it exactly when
+  # being off is normal for the machine underneath it. A guest of an *always-on* hypervisor is
+  # therefore still always-on, so a 24/7 VM that has crashed is reported rather than excused.
   - name: hv-01
     host: 192.0.2.30
     user: root
     platform: proxmox
+    wol_mac: "aa:bb:cc:dd:ee:01"
     manages_vms:
       - vm_id: 100
         server_name: vm-01

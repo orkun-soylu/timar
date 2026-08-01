@@ -11,6 +11,7 @@ each server's own `context` line.
 """
 import logging
 
+from . import config
 from .llm import LLMConfig, LLMError, complete
 
 logger = logging.getLogger(__name__)
@@ -33,24 +34,21 @@ def _fleet_facts(cfg: dict) -> str:
 
     The on-demand distinction is the one that matters most: a machine that exists to be woken
     for a job is *supposed* to be off, and reporting it as an outage every single night is how
-    an operator learns to ignore the report. It is derived from `wol_mac` rather than a separate
-    flag — a machine with a wake address is by definition one that is expected to sleep.
+    an operator learns to ignore the report. It is derived rather than flagged — see
+    `config.on_demand` for what earns it.
     """
     servers = cfg.get("servers", [])
     if not servers:
         return ""
 
-    managed_guests = {
-        guest["server_name"]
-        for host in servers
-        for guest in host.get("manages_vms", [])
-    }
+    sleepers = config.on_demand(servers)
 
     lines = ["The fleet:"]
     for server in servers:
         bits = [server.get("platform", "linux")]
-        if server.get("wol_mac") or server["name"] in managed_guests:
-            bits.append("on-demand — being offline is normal and is not a fault")
+        if reason := sleepers.get(server["name"]):
+            bits.append("on-demand — being offline is normal and is not a fault"
+                        + ("" if reason == "wol" else f"; started by {reason}"))
         line = f"- {server['name']} ({', '.join(bits)})"
         if note := server.get("context"):
             line += f": {note}"

@@ -44,6 +44,12 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
     telegram_cfg = cfg.get("telegram") or {}
     return TEMPLATES.TemplateResponse(request, "settings.html", {
         "servers": cfg.get("servers", []),
+        "on_demand": config.on_demand(cfg.get("servers", [])),
+        "guest_of": {
+            guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"]}
+            for host in cfg.get("servers", [])
+            for guest in host.get("manages_vms", [])
+        },
         "log_check": cfg.get("log_check", {}),
         "llm": {k: v for k, v in llm_cfg.items() if k != "api_key"},
         "llm_has_key": bool(llm_cfg.get("api_key")),
@@ -71,6 +77,38 @@ async def page(request: Request, notice: str | None = None, edit: str | None = N
     return _view(request, notice=notice, edit=edit)
 
 
+def _rename_references(servers: list[dict], old: str, new: str) -> None:
+    """Carry a rename into the places other servers name this one.
+
+    A server is referred to by name in two places, and a rename that updates only the entry
+    itself leaves a guest nothing will ever start and a wake relay that resolves to nobody —
+    both of which fail silently, at the next scheduled run, far from the edit that caused them.
+    """
+    for server in servers:
+        for guest in server.get("manages_vms", []):
+            if guest["server_name"] == old:
+                guest["server_name"] = new
+        if server.get("wol_relay") == old:
+            server["wol_relay"] = new
+
+
+def _relink_guest(servers: list[dict], name: str, link: tuple[str, int] | None) -> None:
+    """Make `name` a guest of exactly the hypervisor in `link`, or of none at all."""
+    for server in servers:
+        if guests := server.get("manages_vms"):
+            server["manages_vms"] = [g for g in guests if g["server_name"] != name]
+            if not server["manages_vms"]:
+                del server["manages_vms"]
+
+    if link is None:
+        return
+    hypervisor, vm_id = link
+    for server in servers:
+        if server["name"] == hypervisor:
+            server.setdefault("manages_vms", []).append(
+                {"vm_id": vm_id, "server_name": name})
+
+
 @router.post("/servers")
 async def save_server(request: Request):
     """Add a server, or replace one when `original_name` is present.
@@ -85,13 +123,18 @@ async def save_server(request: Request):
 
     try:
         entry = validate.server(form, {s["name"] for s in servers}, original_name=original)
+        link = validate.guest_link(form, servers, entry["name"], original_name=original)
     except validate.ValidationError as e:
         return _view(request, errors=e.errors, edit=original, status_code=400)
 
     if original:
         servers = [entry if s["name"] == original else s for s in servers]
+        if entry["name"] != original:
+            _rename_references(servers, original, entry["name"])
     else:
         servers.append(entry)
+
+    _relink_guest(servers, entry["name"], link)
 
     cfg["servers"] = servers
     config.save(cfg)

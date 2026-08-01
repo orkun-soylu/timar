@@ -277,6 +277,95 @@ class TestSettings:
         assert [s["name"] for s in remaining] == ["hv"]
         assert "manages_vms" not in remaining[0]
 
+    def test_a_guest_can_be_linked_to_its_hypervisor_from_the_form(self, client):
+        """Without this the relationship exists only in hand-edited YAML, so a VM added through
+        the UI is permanently mislabelled as always-on with no way to correct it."""
+        complete_setup(client)
+        from timar import config
+        client.post("/settings/servers", data={
+            "name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+            "wol_mac": "aa:bb:cc:dd:ee:ff"})
+        client.post("/settings/servers", data={
+            "name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux",
+            "hypervisor": "hv", "vm_id": "100"})
+        hv = config.load()["servers"][0]
+        assert hv["manages_vms"] == [{"vm_id": 100, "server_name": "vm-01"}]
+        assert config.on_demand(config.load()["servers"])["vm-01"] == "hv"
+
+    def test_the_settings_table_agrees_with_the_dashboard_about_a_guest(self, client):
+        """The bug that prompted all this: the two pages described the same VM differently."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "wol_mac": "aa:bb:cc:dd:ee:ff",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        page = client.get("/settings").text
+        row = page.split("<td>vm-01</td>", 1)[1].split("</tr>", 1)[0]
+        assert "on-demand" in row and "via hv" in row
+        assert "always on" not in row
+
+    def test_moving_a_guest_leaves_only_one_hypervisor_owning_it(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv-a", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "hv-b", "host": "10.0.0.2", "user": "root", "platform": "proxmox"},
+            {"name": "vm-01", "host": "10.0.0.3", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "vm-01", "name": "vm-01", "host": "10.0.0.3", "user": "deploy",
+            "platform": "linux", "hypervisor": "hv-b", "vm_id": "200"})
+        by_name = {s["name"]: s for s in config.load()["servers"]}
+        assert "manages_vms" not in by_name["hv-a"]
+        assert by_name["hv-b"]["manages_vms"] == [{"vm_id": 200, "server_name": "vm-01"}]
+
+    def test_clearing_the_hypervisor_detaches_the_guest(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "vm-01", "name": "vm-01", "host": "10.0.0.2", "user": "deploy",
+            "platform": "linux", "hypervisor": "", "vm_id": ""})
+        assert "manages_vms" not in config.load()["servers"][0]
+
+    def test_renaming_a_guest_carries_the_hypervisor_link(self, client):
+        """A rename that updates only the entry leaves a guest nothing will ever start."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "wol_mac": "aa:bb:cc:dd:ee:ff",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "vm-01", "name": "kali", "host": "10.0.0.2", "user": "deploy",
+            "platform": "linux", "hypervisor": "hv", "vm_id": "100"})
+        servers = config.load()["servers"]
+        assert servers[0]["manages_vms"] == [{"vm_id": 100, "server_name": "kali"}]
+        assert config.on_demand(servers)["kali"] == "hv"
+
+    def test_renaming_a_relay_carries_the_reference(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "jump", "host": "10.0.0.1", "user": "deploy", "platform": "linux"},
+            {"name": "gpu", "host": "10.0.0.2", "user": "deploy", "platform": "linux",
+             "wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "jump"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "jump", "name": "jump-01", "host": "10.0.0.1", "user": "deploy",
+            "platform": "linux"})
+        assert config.load()["servers"][1]["wol_relay"] == "jump-01"
+
     def test_stored_secrets_are_never_sent_to_the_browser(self, client):
         """The page says a key is stored; it never says what it is."""
         complete_setup(client)

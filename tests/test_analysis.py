@@ -9,8 +9,12 @@ CONFIG = {
         {"name": "web-01", "platform": "linux"},
         {"name": "gpu-01", "platform": "linux", "wol_mac": "aa:bb:cc:dd:ee:ff",
          "context": "Only powered on for batch jobs."},
-        {"name": "hv-01", "platform": "proxmox", "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+        {"name": "hv-01", "platform": "proxmox", "wol_mac": "aa:bb:cc:dd:ee:01",
+         "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
         {"name": "vm-01", "platform": "linux"},
+        {"name": "hv-02", "platform": "proxmox",
+         "manages_vms": [{"vm_id": 200, "server_name": "vm-02"}]},
+        {"name": "vm-02", "platform": "linux"},
     ]
 }
 
@@ -39,11 +43,17 @@ class TestSystemPrompt:
         assert "on-demand" in gpu_line
 
     def test_managed_guest_is_on_demand_without_its_own_wol_mac(self):
-        # vm-01 has no wol_mac — it is started by its hypervisor, so its own entry looks like a
+        # vm-01 has no wol_mac — it cannot, it is started by `qm` — so its own entry looks like a
         # permanently-on machine unless the manages_vms relationship is followed.
         prompt = build_system_prompt(CONFIG)
         vm_line = next(l for l in prompt.splitlines() if l.startswith("- vm-01"))
         assert "on-demand" in vm_line
+
+    def test_guest_of_an_always_on_hypervisor_is_not_on_demand(self):
+        """A 24/7 VM that has crashed must not be described as sleeping normally."""
+        prompt = build_system_prompt(CONFIG)
+        vm_line = next(l for l in prompt.splitlines() if l.startswith("- vm-02"))
+        assert "on-demand" not in vm_line
 
     def test_always_on_server_is_not_marked_on_demand(self):
         prompt = build_system_prompt(CONFIG)

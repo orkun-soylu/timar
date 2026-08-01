@@ -108,6 +108,42 @@ def resolve_ssh_key(server: dict) -> str:
     return str(path(SSH_KEY))
 
 
+def on_demand(servers: list[dict]) -> dict[str, str]:
+    """Which servers are expected to be off, and why. Absent from the map means always on.
+
+    Two ways a machine earns it, and both must be honoured everywhere or the fleet is described
+    inconsistently:
+
+    1. It has a `wol_mac` — a machine with a wake address is by definition one meant to sleep.
+       Value: `"wol"`.
+    2. **Its hypervisor is on-demand.** A guest has no wake address of its own — it cannot have
+       one, it is started by `qm` — so keying off `wol_mac` alone calls a sleeping VM always-on
+       and every sweep then reports it as an outage. Value: the hypervisor's name.
+
+    Inherited rather than granted to every guest, because the two mistakes are not equal. Calling
+    an on-demand guest always-on produces a nightly false alarm, which is merely noise; calling a
+    guest of an always-on host on-demand normalises its outage, so a VM that has actually crashed
+    is reported as sleeping soundly. Inheritance is also transitive — nested virtualisation is
+    unusual but the fixpoint costs nothing and the alternative is a wrong answer at depth two.
+
+    Lives here, not in each caller, because it was written out three times and the third copy
+    dropped the guest clause: the dashboard and the analysis agreed a Kali VM was on-demand while
+    the settings page called it always on.
+    """
+    reasons = {s["name"]: "wol" for s in servers if s.get("wol_mac")}
+    guests = [(host["name"], guest["server_name"])
+              for host in servers for guest in host.get("manages_vms", [])]
+
+    changed = True
+    while changed:
+        changed = False
+        for hypervisor, guest in guests:
+            if hypervisor in reasons and guest not in reasons:
+                reasons[guest] = hypervisor
+                changed = True
+    return reasons
+
+
 def is_configured() -> bool:
     """Has an operator account been created? Everything else is optional; this is not."""
     return path(AUTH).exists()
