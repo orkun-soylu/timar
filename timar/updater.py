@@ -11,7 +11,7 @@ from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run
-from .wol import send_magic_packet
+from .wol import WolError, wake
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +32,20 @@ def _do_update(ssh, cmd: str, timeout: int = 300):
     return True, ""
 
 
-def _wake_and_wait(server_cfg) -> bool:
+def _wake_and_wait(server_cfg, servers_map: dict | None = None) -> bool:
     name = server_cfg["name"]
-    mac = server_cfg.get("wol_mac")
-    broadcast = server_cfg.get("wol_broadcast", "255.255.255.255")
-    if not mac:
-        logger.error("%s: wol_mac not configured", name)
+    logger.info("%s is offline, sending a magic packet ...", name)
+    try:
+        wake(server_cfg, servers_map)
+    except WolError as e:
+        # Distinguished from "did not come up": a packet that could not be sent is an operator
+        # problem (missing MAC, unreachable relay), while a packet sent to a machine that stays
+        # dark is usually Wake-on-LAN disabled in its firmware. Same outcome, different fix.
+        logger.error("%s: %s", name, e)
         return False
-    logger.info("%s is offline, sending WOL to %s ...", name, mac)
-    send_magic_packet(mac, broadcast)
+
     if not wait_for_host(server_cfg["host"]):
-        logger.error("%s did not come up after WOL", name)
+        logger.error("%s did not come up after the magic packet was sent", name)
         return False
     logger.info("%s is up", name)
     return True
@@ -81,7 +84,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
     was_running = is_host_up(host)
 
     if not was_running:
-        if not _wake_and_wait(server_cfg):
+        if not _wake_and_wait(server_cfg, servers_map):
             return [UpdateResult(server=name, success=False, was_running=False,
                                  error="Host did not come up after WOL")]
 

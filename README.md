@@ -43,8 +43,13 @@ Everything else works fine on a bridge. If you do not need to wake machines, rep
       - "8080:8080"
 ```
 
-Waking machines from a bridge deployment needs a relay — an always-on host that sends the packet
-on Timar's behalf — which is not implemented yet.
+To wake machines from a bridge deployment, set a **wake relay** on those servers: another
+configured host, already enrolled and always on, that sends the packet on Timar's behalf over
+SSH. It needs `python3` or `wakeonlan`.
+
+A relay is also the only way to wake a machine in a **different subnet** — a second site over a
+tunnel, an office network. Host networking cannot help there, because the packet has to
+originate on the target's own segment.
 
 ## Why
 

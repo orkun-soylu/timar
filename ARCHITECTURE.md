@@ -219,9 +219,36 @@ it **succeeds** — `sendto` returns, no error, no exception — and never reach
 therefore uses `network_mode: host`. Everything else works on a bridge; only waking does not,
 and it fails in the way that is hardest to diagnose, so the default is the mode that works.
 
-Waking from a bridge deployment needs a relay — an always-on host that sends the packet on
-Timar's behalf, over SSH. Not implemented; it would also enable waking machines in other
-subnets, which host networking cannot do.
+### The relay
+
+A magic packet is a broadcast, and a broadcast only reaches its own segment. That one fact
+causes two problems, and a relay answers both: send the packet from a machine already on the
+target's segment and already reachable over SSH. Timar manages such machines by definition.
+
+- **Bridge deployments.** Measured from one bridge container, same image, same button:
+  direct wake reported success and put **0 packets** on the LAN; a relayed wake put **1 packet**,
+  `192.0.2.6.35205 > 192.0.2.255.9: UDP, length 102`, originating from the relay.
+- **Other subnets** — a second site over a tunnel, an office network. Host networking cannot
+  reach these at all, because the packet has to originate over there. This is the case the
+  relay adds that no networking mode can.
+
+The relay runs `python3` if present, `wakeonlan` otherwise, and says which it wanted if it has
+neither. `etherwake` is deliberately not attempted: it needs an interface name and root, and
+guessing the interface on someone else's machine is how you send the packet out of the wrong one
+and report success.
+
+> **⚠️ Two nested languages, one escaping tool each.** The relay runs Python inside a shell
+> command. The first version escaped the Python-level values with `shlex.quote`, which returns a
+> **bare word** for anything without shell metacharacters — so a hex MAC arrived in the Python
+> source as an undefined identifier and the remote raised `NameError`. Nothing local could have
+> noticed; the packet simply never went. Python-level values now use `repr`, the shell layer
+> still uses `shlex.quote`, and a test **compiles** the generated script and executes it against
+> a fake socket to check the bytes it would put on the wire.
+
+Waking is also the one operation with no feedback of its own — the packet is fire and forget. A
+machine that stays dark could mean a wrong MAC, a packet that never left the network, or
+Wake-on-LAN disabled in firmware. The manual button exists so an operator can press it and watch
+the dashboard, which is how those get told apart.
 
 > **⚠️ The healthcheck must read `TIMAR_PORT`.** The exec form of `HEALTHCHECK CMD` does not
 > expand environment variables, so an inline `python -c` with a hardcoded 8080 left the

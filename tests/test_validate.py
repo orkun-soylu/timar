@@ -55,7 +55,7 @@ class TestServer:
 
     def test_broadcast_without_mac_rejected(self):
         """Otherwise the file carries a setting that can never take effect."""
-        with pytest.raises(ValidationError, match="needs a MAC"):
+        with pytest.raises(ValidationError, match="need a MAC"):
             server(MINIMAL | {"wol_broadcast": "10.0.0.255"}, set())
 
     def test_blank_optionals_are_omitted_not_stored_empty(self):
@@ -119,3 +119,25 @@ class TestTelegram:
     def test_blank_token_keeps_the_stored_one(self):
         result = telegram({"token": "", "chat_id": "456"}, {"token": "t", "chat_id": "123"})
         assert result == {"token": "t", "chat_id": "456"}
+
+
+class TestWakeRelay:
+    def test_relay_must_be_a_configured_server(self):
+        with pytest.raises(ValidationError, match="not a configured server"):
+            server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "ghost"},
+                   {"web-01", "db-01"})
+
+    def test_a_server_cannot_relay_for_itself(self):
+        with pytest.raises(ValidationError, match="its own wake relay"):
+            server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "web-01"},
+                   {"web-01"}, original_name="web-01")
+
+    def test_a_valid_relay_is_stored(self):
+        entry = server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "db-01"},
+                       {"db-01"})
+        assert entry["wol_relay"] == "db-01"
+
+    def test_relay_without_a_mac_is_rejected(self):
+        """A relay on a machine with no MAC is a setting that can never take effect."""
+        with pytest.raises(ValidationError, match="need a MAC"):
+            server(MINIMAL | {"wol_relay": "db-01"}, {"db-01"})

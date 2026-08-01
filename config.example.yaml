@@ -42,7 +42,14 @@ servers:
     user: deploy
     platform: linux
     wol_mac: "aa:bb:cc:dd:ee:ff"
-    wol_broadcast: 192.0.2.255   # your LAN's broadcast address
+    wol_broadcast: 192.0.2.255   # the broadcast address of the target's own segment
+
+    # Optional: send the magic packet from another configured server instead of from Timar.
+    # A broadcast only reaches its own segment, so a relay is required when the target is in a
+    # different subnet (another site, an office network) -- no networking mode can reach those --
+    # and when Timar itself runs on a bridge network. The relay must be always on, already
+    # enrolled, and have python3 or wakeonlan.
+    # wol_relay: web-01
 
   # A router. OpenWrt has NO default update command, deliberately: an unattended `apk upgrade`
   # can exhaust the overlay partition or land a kernel-module mismatch, and the machine that

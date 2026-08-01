@@ -77,9 +77,21 @@
         <input name="wol_broadcast" placeholder="10.0.0.255"
                value="{{ editing.wol_broadcast if editing and editing.wol_broadcast else '' }}"></label>
     </div>
+    <label><span>Wake through <em class="muted">optional — another server that sends the packet</em></span>
+      <select name="wol_relay">
+        <option value="">— send it from Timar itself —</option>
+        {% for other in servers if not editing or other.name != editing.name %}
+        <option value="{{ other.name }}"
+          {{ "selected" if editing and editing.wol_relay == other.name else "" }}>{{ other.name }}</option>
+        {% endfor %}
+      </select></label>
     <p class="hint">
       A MAC marks the machine as on-demand: it shows as <em>asleep</em> rather than <em>down</em>
       when off, and updates wake it, update it, and shut it back down.
+      A magic packet is a broadcast and only reaches its own segment — pick a relay for a machine
+      in a <strong>different subnet</strong> (another site, an office network), or if Timar runs
+      on a bridge network. The relay must be always on, already enrolled, and have
+      <code>python3</code> or <code>wakeonlan</code>.
     </p>
 
     <label><span>Update command <em class="muted">optional — overrides the platform default</em></span>

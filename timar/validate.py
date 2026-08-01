@@ -59,10 +59,17 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
             entry["wol_mac"] = mac.lower().replace("-", ":")
         if broadcast := (form.get("wol_broadcast") or "").strip():
             entry["wol_broadcast"] = broadcast
-    elif (form.get("wol_broadcast") or "").strip():
-        # Silently keeping a broadcast address for a machine with no MAC would leave a setting
-        # visible in the file that can never take effect.
-        errors.append("A broadcast address needs a MAC address to go with it.")
+        if relay := (form.get("wol_relay") or "").strip():
+            if relay == name:
+                errors.append("A server cannot be its own wake relay.")
+            elif relay not in existing_names and relay != original_name:
+                errors.append(f"Wake relay {relay!r} is not a configured server.")
+            else:
+                entry["wol_relay"] = relay
+    elif (form.get("wol_broadcast") or "").strip() or (form.get("wol_relay") or "").strip():
+        # Silently keeping a broadcast address or a relay for a machine with no MAC would leave
+        # a setting visible in the file that can never take effect.
+        errors.append("Wake settings need a MAC address to go with them.")
 
     for optional in ("update_cmd", "context"):
         if value := (form.get(optional) or "").strip():

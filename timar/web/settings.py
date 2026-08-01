@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from .. import (config, enroll as enroll_module, jobs, keys, llm as llm_module, notify,
-                state, status as fleet_status, validate)
+                state, status as fleet_status, validate, wol)
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from .auth import require_operator
@@ -284,3 +284,24 @@ def _find_server(name: str) -> dict:
     if server is None:
         raise HTTPException(404)
     return server
+
+
+@router.post("/servers/{name}/wake", response_class=HTMLResponse)
+async def wake_server(name: str):
+    """Send a magic packet now.
+
+    Waking is the one Timar operation with no feedback of its own — the packet is fire and
+    forget, and a machine that stays dark could mean a wrong MAC, a packet that never left the
+    host, or Wake-on-LAN simply disabled in its firmware. Being able to press the button and
+    watch the dashboard is how an operator tells those apart.
+    """
+    cfg = config.load()
+    server = _find_server(name)
+    try:
+        wol.wake(server, {s["name"]: s for s in cfg.get("servers", [])})
+    except wol.WolError as e:
+        return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
+    fleet_status.invalidate()  # the machine is about to change state; a cached probe would lie
+    via = f" via {server['wol_relay']}" if server.get("wol_relay") else ""
+    return HTMLResponse(
+        f'<span class="ok">Magic packet sent{_escape(via)} — watch the dashboard.</span>')

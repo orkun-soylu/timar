@@ -71,6 +71,27 @@
   </form>
 </section>
 
+{% if server.wol_mac %}
+<section class="panel">
+  <h2>Wake it</h2>
+  <div class="stack">
+    <p class="hint" style="margin-top:0">
+      Sends a magic packet{% if server.wol_relay %} from <code>{{ server.wol_relay }}</code>{% endif %}.
+      Waking has no feedback of its own — if the machine stays dark it could be a wrong MAC, a
+      packet that never left the network, or Wake-on-LAN disabled in its firmware. Watch the
+      dashboard.
+    </p>
+    <div class="actions">
+      <button type="button" class="secondary"
+              hx-post="/settings/servers/{{ server.name }}/wake"
+              hx-target="#wake-result" hx-swap="innerHTML"
+              hx-indicator="#wake-result">Send magic packet</button>
+      <span id="wake-result" class="result"></span>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <section class="panel">
   <h2>Check an existing enrolment</h2>
   <div class="stack">
