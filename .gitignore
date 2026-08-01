@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Runtime state. In a deployment this lives in the /data volume, never in the repo:
+# config.yaml holds credentials, ssh/ holds the key that reaches every managed host.
+/data/
+/config.yaml
+/state.json
+/notes.md
+
+# Deployment notes for one specific install (hostnames, IPs, routing). Portable design
+# rationale belongs in ARCHITECTURE.md, which IS tracked.
+/CLAUDE.md
