@@ -269,6 +269,72 @@ because that string is a third-party response body being written into the page.
 Deleting a server also drops it from any hypervisor's `manages_vms`. A guest left in that list
 after its own entry is gone is a guest nothing will ever start.
 
+## The scheduler, and why supervision is the feature
+
+Timar's predecessor lost its weekly update job during a host migration. The trigger silently
+disappeared, the service went on reporting itself as running, and nobody noticed for two weeks.
+Nothing was broken in any way anything could see — which is the whole point. **A job that stops
+being scheduled produces no error, no output and no signal of any kind.**
+
+The scheduler runs in the web process's event loop. One process means one PID, one log stream,
+and `restart: unless-stopped` meaning what it says — but a single asyncio process has a failure
+mode that had to be designed against rather than discovered:
+
+> **A task that raises does not stop the process. It disappears.** The server keeps serving
+> pages, the container stays `healthy`, and the schedule never fires again.
+
+Which is a different mechanism from the original incident with exactly the same shape. So:
+
+1. **Every long-lived task runs under a supervisor** that catches the exception, logs the full
+   traceback — the trace that would otherwise vanish with the task — and restarts after a pause.
+   A crash costs one cycle, not the schedule. `CancelledError` is re-raised, never retried:
+   shutdown is not a failure.
+2. **Every cycle writes a heartbeat**, and the dashboard shows *last run* and *next run* per job.
+   A frozen timestamp on a healthy-looking container is the only outward sign that a loop has
+   stopped, so it is on the first screen rather than in a log.
+3. **A failing job is recorded, not raised.** Letting it propagate would kill the loop that
+   called it — precisely the failure being defended against.
+4. **An unparseable schedule keeps the loop alive.** An operator typo is an operator error; the
+   loop has to survive it so the UI can be used to fix it.
+
+**Jobs run in a worker thread, never on the event loop.** paramiko is synchronous and an update
+run can take ten minutes; executed inline it would freeze the UI for the duration, and a
+dashboard going dead while an update runs is the opposite of what an operator needs then. One
+lock per job stops a manual run landing on top of a scheduled one.
+
+**The loop sleeps in one-minute steps** rather than straight through to the next run: a
+multi-day sleep would freeze the heartbeat and ignore a schedule edited in the meantime.
+
+### Schedules are a vocabulary, not cron
+
+`daily at HH:MM`, `weekly on <day> at HH:MM`, `every N hours`. A cron expression is a thing
+operators mistype in ways that are invisible until the run does not happen; a dropdown and a
+time field cannot express `0 7 * * 5` wrongly. Times are the container's local time — set `TZ`,
+or a report scheduled for 07:00 arrives at 04:00.
+
+Two arithmetic details, each pinned by a test:
+
+- **Interval schedules count from the last run, not from startup.** Otherwise a restart resets
+  the clock, and a six-hourly job on a host that restarts hourly never fires at all — silently.
+- **A run missed while the process was down happens at the next opportunity**, rather than being
+  quietly counted as already done.
+
+A schedule is validated *as if enabled* when saved, because `next_run` short-circuits on a
+disabled one — otherwise a bad time could be stored now and only break whenever someone enables
+it.
+
+### Run now
+
+A scheduler you cannot trigger is a scheduler you cannot verify; the operator has to be able to
+prove the plumbing works without waiting a week for the next window. The route starts the job
+and returns the panel immediately — waiting for an update run would hold the request open for
+ten minutes and time out at every proxy in between. Triggering an update asks for confirmation
+first, because it wakes machines and installs packages.
+
+**Delivery failure never fails the job.** The sweep ran and the findings are in the UI;
+conflating "could not reach Telegram" with "the update broke" sends the operator to the wrong
+problem.
+
 ## Open / next
 
 - SSH key generation, key push, and sudoers enrolment from the UI

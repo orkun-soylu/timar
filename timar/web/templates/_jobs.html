@@ -1,0 +1,48 @@
+{# Polled standalone, so no `extends`. #}
+<table>
+  <thead>
+    <tr><th>Job</th><th>Schedule</th><th>Last run</th><th>Next run</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for job in jobs %}
+    <tr>
+      <td>
+        {{ job.title }}
+        {% if job.last_error %}
+          <div class="error" style="margin:0.2rem 0 0">{{ job.last_error }}</div>
+        {% elif job.last_summary %}
+          <div class="muted" style="font-size:0.8rem">{{ job.last_summary }}</div>
+        {% endif %}
+      </td>
+      <td class="muted">{{ job.schedule }}</td>
+      <td>
+        {% if job.running %}
+          <span class="muted">running…</span>
+        {% elif job.last_run %}
+          {# The load-bearing field. A job that stops being scheduled writes no error
+             anywhere; a stale timestamp here is the only thing that reveals it. #}
+          <span class="{{ 'ok' if job.status == 'ok' else 'error' }}">{{ job.last_run | replace("T", " ") }}</span>
+        {% else %}
+          <span class="muted">never</span>
+        {% endif %}
+      </td>
+      <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
+      <td style="text-align:right; white-space:nowrap">
+        <button type="button" class="linkish"
+                hx-post="/jobs/{{ job.name }}/run"
+                hx-target="#jobs-panel" hx-swap="innerHTML"
+                {% if job.running %}disabled{% endif %}
+                {% if job.name == "update" %}
+                hx-confirm="Run updates now? Machines that are asleep will be woken, updated, and shut down again."
+                {% endif %}>run now</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% set stale = jobs | rejectattr("heartbeat") | list %}
+{% if stale %}
+  <p class="hint" style="padding:0 1rem 1rem; margin:0">
+    Waiting for the scheduler's first tick.
+  </p>
+{% endif %}

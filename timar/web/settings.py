@@ -17,8 +17,9 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .. import config, llm as llm_module, notify, status as fleet_status, validate
+from .. import config, jobs, llm as llm_module, notify, state, status as fleet_status, validate
 from ..platforms import PLATFORMS
+from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from .auth import require_operator
 
 # Every route in this file is behind the session guard. Declared once on the router rather than
@@ -49,6 +50,10 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "telegram_has_token": bool(telegram_cfg.get("token")),
         "platforms": list(PLATFORMS),
         "providers": llm_module.PROVIDERS,
+        "schedules": cfg.get("schedules") or {},
+        "jobs": [{"name": n, "title": jobs.TITLES[n]} for n in jobs.JOBS],
+        "days": list(_DAYS),
+        "kinds": list(_KINDS),
         "errors": errors or [],
         "notice": notice,
         "edit": edit,
@@ -189,3 +194,20 @@ async def test_telegram():
     except notify.NotifyError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
     return HTMLResponse('<span class="ok">Sent — check your chat.</span>')
+
+
+@router.post("/schedules")
+async def save_schedules(request: Request):
+    form = dict(await request.form())
+    cfg = config.load()
+    try:
+        cfg["schedules"] = validate.schedules(form, jobs.JOBS)
+    except validate.ValidationError as e:
+        return _view(request, errors=e.errors, status_code=400)
+    config.save(cfg)
+    # The running loops re-read config on their next tick, so no restart is needed -- but the
+    # stored next_run is now wrong until that happens, and a dashboard showing a next run that
+    # no longer matches the schedule is exactly the kind of thing that erodes trust in it.
+    for name in jobs.JOBS:
+        state.set_next_run(name, None)
+    return _redirect("saved")

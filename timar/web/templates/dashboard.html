@@ -17,8 +17,24 @@
   {% include "_fleet.html" %}
 </div>
 
-<p class="muted" style="margin-top:1rem">
+<p class="muted" style="margin-top:1rem; margin-bottom:2rem">
   Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is
   expected; <em>down</em> means it should be reachable and is not.
+</p>
+
+<section class="panel">
+  <h2>Scheduled work</h2>
+  <div id="jobs-panel"
+       hx-get="/fragments/jobs"
+       hx-trigger="every 15s"
+       hx-swap="innerHTML">
+    {% include "_jobs.html" %}
+  </div>
+</section>
+
+<p class="muted">
+  If <em>last run</em> stops advancing, the schedule has stopped even though everything else
+  looks healthy — that is the failure this panel exists to show. Edit schedules in
+  <a href="/settings">settings</a>.
 </p>
 {% endblock %}

@@ -117,6 +117,51 @@
 </section>
 
 <section class="panel">
+  <h2>Schedules</h2>
+  <p class="hint">
+    Times are the container's local time — set <code>TZ</code> on the container if a report
+    scheduled for 07:00 arrives at 04:00.
+  </p>
+  <form method="post" action="/settings/schedules" class="stack">
+    {% for job in jobs %}
+      {% set current = schedules.get(job.name, {}) %}
+      <h3>{{ job.title }}</h3>
+      <label class="inline">
+        <input type="checkbox" name="{{ job.name }}_enabled"
+               {{ "checked" if current.get("enabled") else "" }}>
+        <span>Run on a schedule</span>
+      </label>
+      <div class="row">
+        <label><span>How often</span>
+          <select name="{{ job.name }}_kind">
+            {% for kind in kinds %}
+            <option value="{{ kind }}" {{ "selected" if current.get("kind", "daily") == kind else "" }}>{{ kind }}</option>
+            {% endfor %}
+          </select></label>
+        <label><span>At (for daily and weekly)</span>
+          <input name="{{ job.name }}_at" placeholder="09:00" value="{{ current.get('at', '09:00') }}"></label>
+        <label><span>Day (for weekly)</span>
+          <select name="{{ job.name }}_day">
+            {% for day in days %}
+            <option value="{{ day }}" {{ "selected" if current.get("day", "monday") == day else "" }}>{{ day }}</option>
+            {% endfor %}
+          </select></label>
+        <label><span>Every N hours (for interval)</span>
+          <input name="{{ job.name }}_every_hours" type="number" min="1" max="168"
+                 value="{{ current.get('every_hours', 6) }}"></label>
+      </div>
+      {% if job.name == "update" %}
+      <p class="hint">
+        An update run wakes machines that are asleep, updates them, and shuts them back down.
+        OpenWrt hosts are skipped unless you gave them an update command of their own.
+      </p>
+      {% endif %}
+    {% endfor %}
+    <div class="actions"><button type="submit">Save schedules</button></div>
+  </form>
+</section>
+
+<section class="panel">
   <h2>Model</h2>
   <p class="hint">
     Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all

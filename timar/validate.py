@@ -151,3 +151,63 @@ def telegram(form: dict, existing: dict | None) -> dict | None:
     if errors:
         raise ValidationError(errors)
     return {"token": token, "chat_id": chat_id}
+
+
+def schedules(form: dict, job_names) -> dict:
+    """Validate the schedule for each job. Fields are prefixed with the job name.
+
+    A schedule that cannot be parsed would leave the job silently never firing, which is the
+    failure this whole feature exists to prevent — so it is rejected at the form rather than
+    written and discovered later.
+    """
+    from dataclasses import replace
+    from datetime import datetime
+
+    from .schedule import DAYS, INTERVAL, KINDS, WEEKLY, Schedule, ScheduleError, next_run
+
+    errors: list[str] = []
+    result: dict = {}
+
+    for name in job_names:
+        kind = (form.get(f"{name}_kind") or "daily").strip()
+        if kind not in KINDS:
+            errors.append(f"{name}: schedule type must be one of {', '.join(KINDS)}.")
+            continue
+
+        spec = Schedule(
+            enabled=form.get(f"{name}_enabled") in ("on", "true", "1"),
+            kind=kind,
+            at=(form.get(f"{name}_at") or "09:00").strip(),
+            day=(form.get(f"{name}_day") or "monday").strip().lower(),
+            every_hours=_int_or(form.get(f"{name}_every_hours"), 6),
+        )
+
+        if kind == INTERVAL and spec.every_hours < 1:
+            errors.append(f"{name}: interval must be at least one hour.")
+            continue
+        if kind == WEEKLY and spec.day not in DAYS:
+            errors.append(f"{name}: unknown day {spec.day!r}.")
+            continue
+
+        try:
+            # Proving it resolves is the point: a time like "25:00" is only a problem at the
+            # moment the loop tries to use it, which is hours after the operator left the page.
+            # Checked as if enabled, because `next_run` short-circuits on a disabled schedule —
+            # otherwise a bad time could be saved now and only break when someone enables it.
+            next_run(replace(spec, enabled=True), datetime.now())
+        except ScheduleError as e:
+            errors.append(f"{name}: {e}")
+            continue
+
+        result[name] = spec.to_dict()
+
+    if errors:
+        raise ValidationError(errors)
+    return result
+
+
+def _int_or(value, fallback: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback

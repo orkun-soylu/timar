@@ -12,19 +12,39 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, status as fleet_status
+from .. import config, jobs, state, status as fleet_status
+from ..scheduler import scheduler
 from . import auth, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
 
-app = FastAPI(title="Timar", docs_url=None, redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """The scheduler runs in this process, in this event loop.
+
+    One process means one PID, one log stream, and `restart: unless-stopped` meaning what it
+    says. The cost is that a crashed task would vanish silently — which is what the supervisor
+    and the heartbeats in `scheduler.py` exist to make visible.
+    """
+    scheduler.start()
+    try:
+        yield
+    finally:
+        await scheduler.stop()
+
+
+app = FastAPI(title="Timar", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
 app.include_router(settings.router)
 
@@ -114,6 +134,35 @@ async def logout():
     return response
 
 
+def _job_view() -> list[dict]:
+    """What the dashboard shows for each job.
+
+    `last_run` is the load-bearing field. A job that stops being scheduled writes no error
+    anywhere — a stale timestamp is the only thing that reveals it.
+    """
+    cfg = config.load()
+    schedules = cfg.get("schedules") or {}
+    from .. import schedule as schedule_module
+
+    rows = []
+    for name in jobs.JOBS:
+        record = state.job(name)
+        spec = schedule_module.Schedule.from_dict(schedules.get(name))
+        rows.append({
+            "name": name,
+            "title": jobs.TITLES[name],
+            "schedule": spec.describe(),
+            "running": scheduler.is_running(name),
+            "status": record.get("status"),
+            "last_run": record.get("last_run"),
+            "last_summary": record.get("last_summary"),
+            "last_error": record.get("last_error"),
+            "next_run": record.get("next_run"),
+            "heartbeat": state.heartbeats().get(f"job:{name}"),
+        })
+    return rows
+
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, operator: str = Depends(current_operator)):
     cfg = config.load()
@@ -121,6 +170,7 @@ async def dashboard(request: Request, operator: str = Depends(current_operator))
         "operator": operator,
         "servers": cfg.get("servers", []),
         "fleet": fleet_status.fleet(cfg),
+        "jobs": _job_view(),
     })
 
 
@@ -130,3 +180,28 @@ async def fleet_fragment(request: Request, operator: str = Depends(current_opera
     return TEMPLATES.TemplateResponse(request, "_fleet.html", {
         "fleet": fleet_status.fleet(config.load()),
     })
+
+
+@app.get("/fragments/jobs", response_class=HTMLResponse)
+async def jobs_fragment(request: Request, operator: str = Depends(current_operator)):
+    return TEMPLATES.TemplateResponse(request, "_jobs.html", {"jobs": _job_view()})
+
+
+@app.post("/jobs/{name}/run", response_class=HTMLResponse)
+async def run_job(request: Request, name: str, operator: str = Depends(current_operator)):
+    """Start a job now.
+
+    A scheduler you cannot trigger is a scheduler you cannot verify — the operator has to be
+    able to prove the plumbing works without waiting a week for the next window.
+
+    Returns immediately with the panel; the work runs in the background and the panel's own
+    polling reports it. Waiting for an update run to finish would hold the request open for ten
+    minutes and time out at every proxy in between.
+    """
+    if name not in jobs.JOBS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    asyncio.create_task(scheduler.run(name))
+    # Let the job mark itself as started before the panel is rendered, so the first response
+    # already shows "running" rather than a stale idle state the operator has to wait out.
+    await asyncio.sleep(0.05)
+    return TEMPLATES.TemplateResponse(request, "_jobs.html", {"jobs": _job_view()})
