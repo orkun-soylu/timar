@@ -13,12 +13,13 @@ from __future__ import annotations
 import html
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .. import config, jobs, llm as llm_module, notify, state, status as fleet_status, validate
-from ..platforms import PLATFORMS
+from .. import (config, enroll as enroll_module, jobs, keys, llm as llm_module, notify,
+                state, status as fleet_status, validate)
+from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from .auth import require_operator
 
@@ -211,3 +212,75 @@ async def save_schedules(request: Request):
     for name in jobs.JOBS:
         state.set_next_run(name, None)
     return _redirect("saved")
+
+
+@router.get("/servers/{name}/enroll", response_class=HTMLResponse)
+async def enroll_form(request: Request, name: str):
+    server = _find_server(name)
+    platform = get_platform(server.get("platform"))
+    return TEMPLATES.TemplateResponse(request, "enroll.html", {
+        "server": server,
+        "platform": platform,
+        "fingerprint": keys.fingerprint(),
+        "public_key": keys.public_key(),
+        "can_sudo": platform.supports_sudo and server["user"] != "root",
+        "error": None,
+        "result": None,
+    })
+
+
+@router.post("/servers/{name}/enroll", response_class=HTMLResponse)
+async def enroll_submit(request: Request, name: str):
+    """Install Timar's key on a host, using the operator's password once.
+
+    The password lives for the length of this request: it goes to the SSH channel and nowhere
+    else. It is never written to the config, the state file, or the log, and it is never sent
+    back to the page -- including on the error path, where re-rendering the form with the field
+    refilled would put it in the browser's history and any proxy in between.
+    """
+    form = dict(await request.form())
+    server = _find_server(name)
+    platform = get_platform(server.get("platform"))
+    password = form.get("password") or ""
+    wants_sudo = form.get("grant_sudo") in ("on", "true", "1")
+
+    error = None
+    result = None
+    if not password:
+        error = "The SSH password is required."
+    else:
+        try:
+            outcome = enroll_module.enroll(server, password, grant_sudo=wants_sudo)
+            # Proved with the key alone, not with the password connection that just succeeded:
+            # the password working says nothing about whether the key will be accepted, and the
+            # key is what every later run depends on.
+            result = f"{outcome.describe()} — verified: {enroll_module.verify(server)}"
+        except enroll_module.EnrollError as e:
+            error = str(e)
+    del password
+
+    return TEMPLATES.TemplateResponse(request, "enroll.html", {
+        "server": server,
+        "platform": platform,
+        "fingerprint": keys.fingerprint(),
+        "public_key": keys.public_key(),
+        "can_sudo": platform.supports_sudo and server["user"] != "root",
+        "error": error,
+        "result": result,
+    }, status_code=400 if error else 200)
+
+
+@router.post("/servers/{name}/verify", response_class=HTMLResponse)
+async def verify_server(name: str):
+    server = _find_server(name)
+    try:
+        return HTMLResponse(f'<span class="ok">{_escape(enroll_module.verify(server))}</span>')
+    except enroll_module.EnrollError as e:
+        return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
+
+
+def _find_server(name: str) -> dict:
+    server = next((s for s in config.load().get("servers", []) if s["name"] == name), None)
+    if server is None:
+        raise HTTPException(404)
+    return server

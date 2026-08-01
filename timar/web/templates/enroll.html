@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Enrol {{ server.name }} — Timar{% endblock %}
+{% block body %}
+<header>
+  <h1>Enrol {{ server.name }}</h1>
+  <span class="spacer"></span>
+  <a href="/settings" class="muted">← settings</a>
+</header>
+
+{% if result %}
+  <div class="panel notice good">{{ result }}</div>
+{% elif error %}
+  <div class="panel notice bad">{{ error }}</div>
+{% endif %}
+
+<section class="panel">
+  <h2>Timar's key</h2>
+  <div class="stack">
+    <p class="hint" style="margin-top:0">
+      This installation has one keypair, generated on first use and kept in its data volume.
+      Enrolling installs the public half on <code>{{ server.name }}</code>. Compare the
+      fingerprint if you want to confirm what is being installed.
+    </p>
+    <p><code>{{ fingerprint }}</code></p>
+    <details>
+      <summary class="muted" style="cursor:pointer; font-size:0.875rem">show the public key</summary>
+      <pre style="white-space:pre-wrap; word-break:break-all; font-size:0.75rem">{{ public_key }}</pre>
+      <p class="hint">
+        You can also install this by hand and skip the form below — Timar only needs the key to
+        be accepted, not to have put it there itself.
+      </p>
+    </details>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Install it</h2>
+  <form method="post" action="/settings/servers/{{ server.name }}/enroll" class="stack">
+    <p class="hint" style="margin-top:0">
+      Connects once as <code>{{ server.user }}@{{ server.host }}</code> with the password, appends
+      the key to <code>{{ platform.authorized_keys }}</code>, then proves the key works on its own.
+      <strong>The password is used for this request and nothing else</strong> — it is not stored,
+      not logged, and not sent back to this page.
+    </p>
+
+    <label><span>SSH password for {{ server.user }}</span>
+      <input name="password" type="password" autocomplete="off" required autofocus></label>
+
+    {% if can_sudo %}
+    <label class="inline">
+      <input type="checkbox" name="grant_sudo">
+      <span>Also grant passwordless sudo</span>
+    </label>
+    <p class="hint">
+      Writes <code>{{ server.user }} ALL=(ALL) NOPASSWD:ALL</code> to
+      <code>/etc/sudoers.d/timar</code>. The file is validated with <code>visudo</code> before it
+      is put in place — if validation fails nothing is changed, because a malformed sudoers file
+      breaks <code>sudo</code> for everyone on the machine, including the session you would
+      repair it from.
+    </p>
+    {% elif platform.supports_sudo %}
+    <p class="hint">Passwordless sudo is not offered: this user is already root.</p>
+    {% else %}
+    <p class="hint">Passwordless sudo is not offered: {{ platform.label }} has no sudo.</p>
+    {% endif %}
+
+    <div class="actions">
+      <button type="submit">Enrol</button>
+      <a href="/settings" class="muted" style="margin-left:0.4rem">cancel</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Check an existing enrolment</h2>
+  <div class="stack">
+    <p class="hint" style="margin-top:0">
+      Connects with the key alone — no password — and reports who it becomes and whether
+      passwordless sudo works.
+    </p>
+    <div class="actions">
+      <button type="button" class="secondary"
+              hx-post="/settings/servers/{{ server.name }}/verify"
+              hx-target="#verify-result" hx-swap="innerHTML"
+              hx-indicator="#verify-result">Verify</button>
+      <span id="verify-result" class="result"></span>
+    </div>
+  </div>
+</section>
+{% endblock %}

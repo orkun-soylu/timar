@@ -335,9 +335,55 @@ first, because it wakes machines and installs packages.
 conflating "could not reach Telegram" with "the update broke" sends the operator to the wrong
 problem.
 
-## Open / next
+## Enrolment — the most dangerous surface in the product
 
-- SSH key generation, key push, and sudoers enrolment from the UI
+Installing Timar's key on a host, and optionally granting it passwordless sudo. One keypair per
+installation, Ed25519, generated in-process with `cryptography` (the image carries no OpenSSH
+client) into `/data` on first use — regenerating on start would mean re-enrolling every host
+after every restart, which is the kind of friction that gets solved by turning key checking off.
+
+**The password.** Enrolment is the one operation that takes the operator's SSH password. It is
+held for the length of one request, written only to the SSH channel, and never persisted, never
+logged, and never echoed back to the page — including on the error path, where re-rendering the
+form with the field refilled would put it in browser history and every proxy in between. For
+sudo it goes to `sudo -S` on **stdin**, never the command line, where `ps` on the target would
+show it to every other user on that machine.
+
+**The sudoers file is validated before it is installed.** A malformed file in `/etc/sudoers.d/`
+does not degrade — it breaks `sudo` for everyone on that machine, including the session you
+would repair it from. The candidate is written to a temp file, checked with `visudo -cqf`, and
+only then moved into place with `install -m 0440 -o root -g root`. A rejected file is discarded
+and `/etc/sudoers.d/` is untouched. **That step is not optional and must never be optimised
+away**; a test asserts the validation precedes the install rather than merely sitting near it.
+
+Sudo is not offered where it cannot work — OpenWrt has none, and a root account already has it.
+Offering a button that cannot work is worse than not offering one.
+
+**Host keys are pinned on first sight** (`/data/ssh/known_hosts`), for enrolment *and* for every
+routine connection. This replaces a bare `AutoAddPolicy` with no known-hosts file, which
+accepted any key from any host on every connection and wrote nothing down — not weaker
+protection than TOFU, but none, and indistinguishable from the outside.
+
+### The bug this feature found in itself
+
+The first version used `~/.ssh/authorized_keys` as the platform path. `shlex.quote` wraps a
+value in single quotes, and **a tilde inside quotes is not expanded by the shell** — so the
+command created a literal directory named `~`, wrote an authorized_keys file into it that
+nothing would ever read, exited 0, and reported success. Exactly the silent failure the comment
+above that constant warns about.
+
+Nothing caught it except connecting afterwards with the key. That is why `verify()` exists and
+why the enrolment result reports it: **the password connection succeeding says nothing about
+whether the key will be accepted**, and the key is what every later run depends on. Paths are
+now home-relative or absolute, rendered as `"$HOME"/...`, with a test asserting no platform
+path contains a tilde.
+
+Verified end to end against a throwaway sshd container: wrong password refused, key installed at
+`/home/deploy/.ssh/authorized_keys` mode 600, **one line after three enrolments** (idempotent),
+`/etc/sudoers.d/timar` mode 440 root:root with `visudo -c` reporting *parsed OK*, the host key
+recorded in `known_hosts`, and a key-only connection confirming `passwordless sudo works`.
+
+## Open / next
 - In-process scheduler with supervised tasks and a visible heartbeat
 - WOL relay, for bridge deployments and cross-subnet wake
 - Multi-arch build and publish (amd64 + arm64) to GHCR

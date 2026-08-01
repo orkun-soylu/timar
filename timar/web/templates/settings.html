@@ -30,7 +30,8 @@
         <td class="muted">{{ server.platform | default("linux") }}</td>
         <td class="muted">{{ "on-demand" if server.wol_mac else "always on" }}</td>
         <td style="text-align:right; white-space:nowrap">
-          <a href="/settings?edit={{ server.name }}" class="muted">edit</a>
+          <a href="/settings/servers/{{ server.name }}/enroll" class="muted">enrol</a>
+          <a href="/settings?edit={{ server.name }}" class="muted" style="margin-left:0.6rem">edit</a>
           <form method="post" action="/settings/servers/{{ server.name }}/delete"
                 style="display:inline; margin-left:0.6rem"
                 onsubmit="return confirm('Remove {{ server.name }} from Timar? The machine is not touched.')">

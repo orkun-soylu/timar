@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
+from .config import resolve_ssh_key
 from .ssh import connect, run
 from .wol import send_magic_packet
 
@@ -85,7 +86,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
                                  error="Host did not come up after WOL")]
 
     try:
-        with connect(host, server_cfg["user"], server_cfg["ssh_key"]) as ssh:
+        with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
             logger.info("Updating %s ...", name)
             ok, err = _do_update(ssh, update_cmd)
             results.append(UpdateResult(server=name, success=ok, was_running=was_running,
@@ -124,7 +125,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
         if not vm_was_running:
             logger.info("Starting VM %s (id=%s) on %s ...", vm_name, vm_id, name)
             try:
-                with connect(host, server_cfg["user"], server_cfg["ssh_key"]) as ssh:
+                with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
                     run(ssh, f"qm start {vm_id}", timeout=30)
                 if not wait_for_host(vm_host):
                     results.append(UpdateResult(server=vm_name, success=False, was_running=False,
@@ -135,7 +136,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
                 continue
 
         try:
-            with connect(vm_host, vm_cfg["user"], vm_cfg["ssh_key"]) as ssh:
+            with connect(vm_host, vm_cfg["user"], resolve_ssh_key(vm_cfg)) as ssh:
                 logger.info("Updating VM %s ...", vm_name)
                 ok, err = _do_update(ssh, vm_update_cmd)
                 results.append(UpdateResult(server=vm_name, success=ok, was_running=vm_was_running,
@@ -149,7 +150,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
         if not vm_was_running:
             logger.info("Shutting down VM %s ...", vm_name)
             try:
-                with connect(host, server_cfg["user"], server_cfg["ssh_key"]) as ssh:
+                with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
                     run(ssh, f"qm shutdown {vm_id}", timeout=60)
                 _wait_offline(vm_host)
                 logger.info("VM %s is down", vm_name)
@@ -159,7 +160,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
     if not was_running:
         logger.info("Shutting down %s (was offline before update) ...", name)
         try:
-            with connect(host, server_cfg["user"], server_cfg["ssh_key"]) as ssh:
+            with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
                 _shutdown_host(ssh, platform, user=server_cfg["user"])
             _wait_offline(host)
             logger.info("%s is down", name)

@@ -19,6 +19,16 @@ class Platform:
     supports_sudo = True
     supports_docker = True
 
+    # Where this platform's SSH server reads authorised keys from. Appending to the wrong file
+    # fails silently: the write succeeds, and the key simply never works.
+    #
+    # Relative means relative to the account's home; absolute paths start with "/". Deliberately
+    # NOT written as "~/.ssh/...": the caller shell-quotes this value, and a tilde inside quotes
+    # is not expanded by the shell — it produced a literal directory named `~` and an
+    # authorized_keys file nothing would ever read. The command reported success. See
+    # `enroll._install_key`.
+    authorized_keys = ".ssh/authorized_keys"
+
     # `None` means "this platform has no safe default"; the operator must supply one.
     default_update_cmd = (
         "sudo apt-get update -qq && "
@@ -102,6 +112,10 @@ class OpenWrt(Platform):
 
     supports_sudo = False       # everything already runs as root
     supports_docker = False
+
+    # dropbear, not OpenSSH: it reads this path and ignores ~/.ssh/authorized_keys entirely.
+    # A key appended to the usual location on a router is written successfully and never used.
+    authorized_keys = "/etc/dropbear/authorized_keys"
 
     # Deliberately no default. `apk upgrade` on a router can exhaust the overlay partition or
     # pull a kernel-module mismatch, and the machine that breaks is the one carrying the SSH

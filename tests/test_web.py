@@ -319,3 +319,80 @@ class TestSettings:
     def test_test_button_says_so_when_nothing_is_configured(self, client):
         complete_setup(client)
         assert "Save a model connection first" in client.post("/settings/llm/test").text
+
+
+class TestEnrolmentRoutes:
+    def test_requires_a_session(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        client.cookies.clear()
+        for method, path in [("get", "/settings/servers/a/enroll"),
+                             ("post", "/settings/servers/a/enroll"),
+                             ("post", "/settings/servers/a/verify")]:
+            assert getattr(client, method)(path).headers.get("location") == "/login"
+
+    def test_unknown_server_is_404(self, client):
+        complete_setup(client)
+        assert client.get("/settings/servers/nope/enroll").status_code == 404
+
+    def test_form_shows_the_fingerprint_but_never_a_private_key(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        page = client.get("/settings/servers/a/enroll").text
+        assert "SHA256:" in page
+        assert "ssh-ed25519 " in page
+        assert "PRIVATE KEY" not in page
+
+    def test_sudo_option_is_hidden_where_it_cannot_work(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "router", "host": "h", "user": "root", "platform": "openwrt"},
+            {"name": "box", "host": "h", "user": "root", "platform": "linux"},
+            {"name": "web", "host": "h", "user": "deploy", "platform": "linux"},
+        ]})
+        assert 'name="grant_sudo"' not in client.get("/settings/servers/router/enroll").text
+        assert 'name="grant_sudo"' not in client.get("/settings/servers/box/enroll").text
+        assert 'name="grant_sudo"' in client.get("/settings/servers/web/enroll").text
+
+    def test_the_password_is_never_echoed_back(self, client, monkeypatch):
+        """Re-rendering the form with the field refilled would put it in browser history and
+        in every proxy in between."""
+        complete_setup(client)
+        from timar import config, enroll
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+
+        def refuse(*a, **kw):
+            raise enroll.EnrollError("the password was not accepted for that user")
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll", refuse)
+
+        response = client.post("/settings/servers/a/enroll",
+                               data={"password": "s3cret-passphrase", "grant_sudo": "on"})
+        assert response.status_code == 400
+        assert "s3cret-passphrase" not in response.text
+        assert "was not accepted" in response.text
+
+    def test_missing_password_is_rejected_before_connecting(self, client, monkeypatch):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+
+        called = []
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll",
+                            lambda *a, **kw: called.append(1))
+        response = client.post("/settings/servers/a/enroll", data={"password": ""})
+        assert response.status_code == 400 and not called
+
+    def test_success_reports_the_verification_not_just_the_install(self, client, monkeypatch):
+        """The password connection succeeding says nothing about whether the key is accepted."""
+        complete_setup(client)
+        from timar import config, enroll
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll",
+                            lambda *a, **kw: enroll.Result(key_installed=True))
+        monkeypatch.setattr("timar.web.settings.enroll_module.verify",
+                            lambda server: "connected with the key as u; passwordless sudo works")
+        page = client.post("/settings/servers/a/enroll", data={"password": "pw"}).text
+        assert "key installed" in page and "passwordless sudo works" in page
