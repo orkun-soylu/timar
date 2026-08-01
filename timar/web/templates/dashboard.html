@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+<header>
+  <h1>Timar</h1>
+  <span class="spacer"></span>
+  <span class="muted">{{ operator }}</span>
+  <form method="post" action="/logout" style="margin:0">
+    <button type="submit" class="linkish">sign out</button>
+  </form>
+</header>
+
+<div class="panel"
+     hx-get="/fragments/fleet"
+     hx-trigger="every 10s"
+     hx-swap="innerHTML">
+  {% include "_fleet.html" %}
+</div>
+
+<p class="muted" style="margin-top:1rem">
+  Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is
+  expected; <em>down</em> means it should be reachable and is not.
+</p>
+{% endblock %}

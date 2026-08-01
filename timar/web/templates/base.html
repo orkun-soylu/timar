@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Timar{% endblock %}</title>
+  {# Vendored, not a CDN: the documented deployment is a private network that may have no
+     route to the internet at all, and an air-gapped rack should not get a broken page. #}
+  <script src="/static/htmx.min.js" defer></script>
+  <style>
+    :root {
+      --bg: #14161a; --panel: #1c1f26; --line: #2c313b;
+      --text: #e6e8ec; --muted: #8b93a3;
+      --up: #4ade80; --asleep: #64748b; --down: #f87171;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f7f9; --panel: #ffffff; --line: #e2e5ea;
+        --text: #1a1d23; --muted: #6b7280;
+        --up: #16a34a; --asleep: #94a3b8; --down: #dc2626;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 2rem 1rem; background: var(--bg); color: var(--text);
+      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main { max-width: 62rem; margin: 0 auto; }
+    header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem; }
+    h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; }
+    .spacer { flex: 1; }
+    .muted { color: var(--muted); font-size: 0.875rem; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 10px; overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
+    th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+    .up .dot { background: var(--up); }
+    .asleep .dot { background: var(--asleep); }
+    .down .dot { background: var(--down); }
+    .down td:first-child { font-weight: 600; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: var(--muted); }
+    form.card { max-width: 24rem; margin: 3rem auto; }
+    label { display: block; margin-bottom: 1rem; }
+    label span { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+    input {
+      width: 100%; padding: 0.55rem 0.7rem; border-radius: 7px;
+      border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
+    }
+    button {
+      padding: 0.55rem 1.1rem; border-radius: 7px; border: 1px solid var(--line);
+      background: var(--text); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .linkish { background: none; border: none; color: var(--muted); padding: 0; font-weight: 400; cursor: pointer; }
+    .error { color: var(--down); font-size: 0.875rem; margin-bottom: 1rem; }
+    .empty { padding: 2rem 1rem; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>

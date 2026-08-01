@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Set up Timar{% endblock %}
+{% block body %}
+<form class="card panel" method="post" action="/setup" style="padding:1.5rem">
+  <h1 style="margin-bottom:0.4rem">Set up Timar</h1>
+  <p class="muted" style="margin-top:0">
+    Create the operator account. Timar holds SSH access to every machine it manages, so this
+    password is the only thing standing in front of your fleet — make it long.
+  </p>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <label><span>Username</span><input name="username" autocomplete="username" required autofocus></label>
+  <label><span>Password (at least 12 characters)</span>
+    <input name="password" type="password" autocomplete="new-password" minlength="12" required></label>
+  <button type="submit">Create account</button>
+</form>
+{% endblock %}

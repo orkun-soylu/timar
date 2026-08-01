@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Sign in — Timar{% endblock %}
+{% block body %}
+<form class="card panel" method="post" action="/login" style="padding:1.5rem">
+  <h1 style="margin-bottom:1rem">Sign in</h1>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <label><span>Username</span><input name="username" autocomplete="username" required autofocus></label>
+  <label><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label>
+  <button type="submit">Sign in</button>
+</form>
+{% endblock %}

@@ -1,0 +1,26 @@
+{# Polled on its own by HTMX, so it must render standalone — no `extends`. #}
+{% if fleet %}
+<table>
+  <thead>
+    <tr><th>Server</th><th>Address</th><th>Platform</th><th>State</th></tr>
+  </thead>
+  <tbody>
+  {% for host in fleet %}
+    <tr class="{{ host.state }}">
+      <td>{{ host.name }}</td>
+      <td><code>{{ host.host }}</code></td>
+      <td class="muted">{{ host.platform }}</td>
+      <td>
+        <span class="dot"></span>
+        {%- if host.state == "up" %}up
+        {%- elif host.state == "asleep" %}asleep <span class="muted">(on-demand)</span>
+        {%- else %}down
+        {%- endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No servers configured yet.</p>
+{% endif %}

@@ -122,8 +122,78 @@ reported as an outage. The relationship is followed through `manages_vms` too: a
 by its hypervisor has no `wol_mac` of its own and would otherwise read as a permanently-on
 machine that is down.
 
+## The `/data` volume is the installation
+
+```
+/data/
+  config.yaml     servers, schedules, LLM and notifier settings
+  auth.json       the operator's username and password hash
+  secret_key      signs session cookies
+  state.json      last run results, heartbeats
+  notes.md        operator-authored standing context for the log analysis
+  ssh/id_ed25519  the key this installation presents to every managed host
+```
+
+Flat and non-configurable per-path on purpose: backup and migration are then `cp -a` of one
+directory. **Nothing here ships in the image** — a fresh container starts with an empty volume,
+and `load()` returning `{}` is the first-run state, not an error.
+
+`write_private()` writes through a temporary file in the *same* directory and `os.replace`s it
+into place. Same directory because `/tmp` is a separate mount inside the container and the
+rename would cross filesystems; atomic because a half-written `config.yaml` is an installation
+that will not start, and the web layer rewrites it while the scheduler may be reading it. The
+mode is set to `0600` on the file descriptor **before** the rename — between a default-mode
+create and a later `chmod` there is a window where `auth.json` and the SSH key are world
+readable.
+
+## Web layer — server-rendered, one operator
+
+Jinja templates with HTMX for the live table. One person looking at a list of machines does not
+need a client-side framework, and a build step plus a second container plus a CSP is a lot of
+apparatus to add to a product whose entire shape is "one image, one volume". HTMX is vendored
+rather than loaded from a CDN — the documented deployment is a private network that may have no
+route to the internet, and an air-gapped rack should not get a broken page.
+
+**Authentication is not optional, and "it is only on the LAN" is not an access-control story.**
+This service holds an SSH key that reaches every managed machine and can write `sudoers` on
+them; site-to-site links, a guest VLAN and a forwarded port all end at the same login form.
+Single-user is a deliberate scope — there are no roles to divide when every capability is
+administrative — and that removes user management, not authentication. bcrypt, a JWT in an
+httpOnly `SameSite=Lax` cookie, a 12-character minimum, and a five-attempt lockout.
+
+Four decisions worth keeping:
+
+- **Until an account exists, every path redirects to `/setup`.** Otherwise the window between
+  first boot and the operator finishing setup is a window in which the dashboard — the fleet's
+  inventory — is served to whoever asks. `/health` and `/static/` are the exceptions: an
+  orchestrator has to be able to tell "starting" from "wedged", and the setup page needs its own
+  stylesheet.
+- **`/setup` closes permanently once an account exists**, guarded both in the route and in
+  `create_account()`. It is the one route reachable without a session; without the guard it is a
+  password reset for anyone who can load the page.
+- **The cookie is not `Secure`.** The documented deployment is a private network, often plain
+  http, where a `Secure` cookie is silently dropped — presenting as "the login form works but I
+  am never logged in". TLS belongs to a reverse proxy in front, not to this app.
+- **A cookie whose username is no longer the operator's is rejected.** A restored volume can
+  carry an old session into a fleet that now has a different account.
+
+## Three states, not two
+
+`asleep` and `down` are different conditions and the dashboard paints them differently. A
+machine that is off *and is meant to be off* is not a fault; a status page that shows both in
+red teaches its reader to ignore red. The distinction is derived, not configured — see the
+`wol_mac` note above.
+
+Probes run in a thread pool behind a 10-second TTL cache. A probe is a TCP connect whose
+timeout is the *normal* case here, since most of the fleet is supposed to be asleep: serially, a
+fleet with six sleeping machines costs `6 x timeout` before the page renders. Measured against a
+real three-machine fleet with one sleeping host: **3.02s cold, 0.01s cached** — cold cost is one
+timeout, not the sum of them. The cache also stops a left-open browser tab from generating
+continuous traffic to every machine in the rack.
+
 ## Open / next
 
-- Web UI (FastAPI + templates), single container, `/data` volume
+- Settings editing: servers, schedules, LLM and notifier, written back to `config.yaml`
 - SSH key generation, key push, and sudoers enrolment from the UI
 - In-process scheduler with supervised tasks and a visible heartbeat
+- Dockerfile and compose, with the WOL networking choice documented
