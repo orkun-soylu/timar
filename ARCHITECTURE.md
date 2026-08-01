@@ -77,9 +77,53 @@ The markers are configuration (`job_logs: [{path, started_marker, completed_mark
 constants. Any job that brackets its output with a recognisable start and finish line can be
 watched this way.
 
+## The model is configuration, not a dependency
+
+Log sweeps are summarised by a model the operator chooses: Anthropic, any OpenAI-compatible
+endpoint (LM Studio, vLLM, llama.cpp, OpenRouter, OpenAI itself), or Ollama's native API.
+
+The reason is adoption, not neutrality for its own sake. Requiring a cloud API key to use the
+log analysis would put a paywall in front of a homelab tool — and the audience most likely to
+run this is the audience most likely to already have Ollama on a machine in the same rack.
+**No model configured is a fully supported state**: wake, update and the sweep all work, and
+only the written assessment is absent. A model that is unreachable, out of credit or
+misconfigured returns `None` and is logged; the findings are the product, the prose is
+commentary on top, and commentary must not take the report down with it.
+
+**Raw HTTP, no vendor SDKs.** Three SDKs, kept current, in one container image, to make one
+request each — and they disagree about retries, response shapes and error types, which is the
+disagreement `llm.py` exists to hide. `build_request()` and `extract_text()` are pure functions
+per provider and are where the tests live; `complete()` is those two plus one `httpx` call.
+
+Three differences that are easy to get wrong and are each held by a test:
+
+- **Anthropic sends no sampling parameters.** `temperature`, `top_p` and `top_k` were removed
+  on current Claude models and are now rejected with a 400. A client that builds one uniform
+  body for every backend fails here, so the absence is asserted rather than left to convention.
+- **`content[0]` is not the answer.** Thinking is on by default on current Claude models, so a
+  thinking block can precede the text. Select the block by `type`, never by position.
+- **An OpenAI-compatible endpoint with no key must get no `Authorization` header at all.** A
+  local server is the common case, and some reject a bearer header with an empty token.
+
+## Nothing about a particular fleet is in the code
+
+`analysis.py` derives everything the model is told from configuration: the server list, which
+machines are expected to be asleep, each server's `context` line, and the operator's
+`notes.md`.
+
+This is a correction, not a preference. The predecessor embedded one operator's machines —
+names, addresses, GPU models — directly in the system prompt string. That made the prompt
+unpublishable *and* made adding a server a code change. A test asserts the module contributes
+no digits and no addresses of its own to the prompt.
+
+**On-demand is derived from `wol_mac`, not a separate flag** — a machine with a wake address is
+by definition one expected to sleep, so its being offline is stated as normal rather than
+reported as an outage. The relationship is followed through `manages_vms` too: a guest started
+by its hypervisor has no `wol_mac` of its own and would otherwise read as a permanently-on
+machine that is down.
+
 ## Open / next
 
 - Web UI (FastAPI + templates), single container, `/data` volume
 - SSH key generation, key push, and sudoers enrolment from the UI
-- Provider-agnostic LLM for log analysis (currently Anthropic-only upstream)
 - In-process scheduler with supervised tasks and a visible heartbeat

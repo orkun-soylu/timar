@@ -95,7 +95,7 @@ class TestCommands:
 
     def test_linux_shutdown_uses_sudo_for_non_root(self):
         assert Platform().shutdown_cmd("root") == "shutdown -h now"
-        assert Platform().shutdown_cmd("orkun").startswith("sudo ")
+        assert Platform().shutdown_cmd("deploy").startswith("sudo ")
 
     def test_platforms_without_docker_return_no_command(self):
         assert OpenWrt().docker_cmd() is None

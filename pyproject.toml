@@ -15,6 +15,9 @@ keywords = ["homelab", "ssh", "wake-on-lan", "openwrt", "proxmox", "self-hosted"
 dependencies = [
     "paramiko>=3.0",
     "PyYAML>=6.0",
+    # One HTTP client for all three LLM providers — see the note at the top of timar/llm.py
+    # for why no vendor SDKs.
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
