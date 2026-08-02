@@ -65,13 +65,21 @@ def mark_started(name: str) -> None:
     _update_job(name, status=RUNNING, started_at=_now(), last_error="")
 
 
-def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "") -> None:
+def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "",
+                  report: str = "") -> None:
+    """Record the outcome, including the full report behind the summary.
+
+    Only the latest report is kept, deliberately: this is a record of what the last run found,
+    not an archive. Keeping a history would grow the state file without bound on a machine
+    whose whole job is to run unattended for months.
+    """
     _update_job(
         name,
         status=OK if ok else FAILED,
         last_run=_now(),
         last_summary=summary,
         last_error=error,
+        last_report=report,
     )
 
 

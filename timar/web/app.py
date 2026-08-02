@@ -159,6 +159,7 @@ def _job_view() -> list[dict]:
             "last_error": record.get("last_error"),
             "next_run": record.get("next_run"),
             "heartbeat": state.heartbeats().get(f"job:{name}"),
+            "has_report": bool(record.get("last_report")),
         })
     return rows
 
@@ -205,3 +206,26 @@ async def run_job(request: Request, name: str, operator: str = Depends(current_o
     # already shows "running" rather than a stale idle state the operator has to wait out.
     await asyncio.sleep(0.05)
     return TEMPLATES.TemplateResponse(request, "_jobs.html", {"jobs": _job_view()})
+
+
+@app.get("/jobs/{name}/report", response_class=HTMLResponse)
+async def job_report(request: Request, name: str, operator: str = Depends(current_operator)):
+    """The full findings behind a job's one-line summary.
+
+    A page of its own rather than an expander in the job table: that panel re-renders every
+    fifteen seconds, so anything opened inside it would close again while being read.
+
+    Notifications are not the only copy of a report. Before this existed, an installation with
+    no Telegram token swept its fleet and discarded every finding, leaving a dashboard that
+    said "1 with findings" and no way to find out which.
+    """
+    if name not in jobs.JOBS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    record = state.job(name)
+    return TEMPLATES.TemplateResponse(request, "report.html", {
+        "title": jobs.TITLES[name],
+        "report": record.get("last_report") or "",
+        "last_run": record.get("last_run"),
+        "summary": record.get("last_summary"),
+        "error": record.get("last_error"),
+    })

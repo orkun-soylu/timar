@@ -28,6 +28,11 @@
       </td>
       <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
       <td style="text-align:right; white-space:nowrap">
+        {% if job.has_report %}
+          {# A full page, not an expander: this panel re-renders every 15s and would close it. #}
+          <a href="/jobs/{{ job.name }}/report" class="muted"
+             style="font-size:0.875rem; margin-right:0.6rem">report</a>
+        {% endif %}
         <button type="button" class="linkish"
                 hx-post="/jobs/{{ job.name }}/run"
                 hx-target="#jobs-panel" hx-swap="innerHTML"
