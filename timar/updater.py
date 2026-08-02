@@ -45,10 +45,35 @@ def _timeout_for(server_cfg: dict) -> int:
     return int(server_cfg.get("update_timeout") or DEFAULT_UPDATE_TIMEOUT)
 
 
+# Per stream, not per failure: keeping both is the whole point, and one of them is usually
+# progress output that only earns its place by its last few lines.
+TAIL = 400
+
+
+def _tail(text: str) -> str:
+    text = (text or "").strip()
+    return text if len(text) <= TAIL else "..." + text[-TAIL:]
+
+
+def failure_detail(stdout: str, stderr: str) -> str:
+    """What to show for a command that exited non-zero.
+
+    Both streams, labelled. Picking one and discarding the other cannot be right in either
+    direction: an update command that touches containers always writes progress to stderr, so
+    preferring stderr buries the line a wrapper script prints on stdout to say *which* service
+    failed — and preferring stdout would bury an ordinary error message just as thoroughly.
+    """
+    parts = [f"{name}: {tail}"
+             for name, tail in (("stdout", _tail(stdout)), ("stderr", _tail(stderr))) if tail]
+    # A command can fail silently — a bare `exit 1`, or output swallowed by a redirect. Saying so
+    # is worth a line, because the alternative is an empty red mark that reads like a Timar bug.
+    return "\n".join(parts) or "the command failed without printing anything"
+
+
 def _do_update(ssh, cmd: str, timeout: int = DEFAULT_UPDATE_TIMEOUT):
     stdout, stderr, rc = run(ssh, cmd, timeout=timeout)
     if rc != 0:
-        return False, (stderr or stdout)[-500:]
+        return False, failure_detail(stdout, stderr)
     return True, ""
 
 
