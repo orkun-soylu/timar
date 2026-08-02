@@ -95,6 +95,16 @@ class TestUpdateReport:
         assert "dpkg was interrupted" in outcome.report
         assert "no update command" in outcome.report
 
-    def test_a_failure_reason_is_not_truncated_away_entirely(self, update):
+    def test_a_failure_reason_arrives_whole(self, update):
+        """It is bounded where it is produced, so cutting it again here only loses the cause."""
         outcome = update([UpdateResult(server="db-01", success=False, error="x" * 500)])
-        assert "x" * 300 in outcome.report
+        assert "x" * 500 in outcome.report
+
+    def test_a_multi_line_reason_stays_under_the_host_it_belongs_to(self, update):
+        """Both streams of a failed command are reported, and an unindented second line would
+        read as a separate host."""
+        outcome = update([
+            UpdateResult(server="db-01", success=False, error="stdout: it broke\nstderr: noise"),
+            UpdateResult(server="web-01", success=True),
+        ])
+        assert "❌ db-01: stdout: it broke\n    stderr: noise" in outcome.report

@@ -398,6 +398,28 @@ The cost of a generous default is that `run_updates` walks the fleet in sequence
 host delays the ones behind it by exactly this much. That is why the value is per server and
 bounded, rather than one number for everybody.
 
+### What a failed update is allowed to say
+
+Both streams, tails of each, labelled. This started as `(stderr or stdout)[-500:]`, which reads
+as a sensible preference and is not one.
+
+The first real fleet run proved it. A host's update command was a wrapper script that updates
+every Compose stack on the machine; one service failed to pull, so the script had already stopped
+it, could not bring it back, and exited non-zero after printing the line that mattered — *"these
+services failed: speedtest"* — on **stdout**. But `docker compose` writes its progress to
+**stderr**, so stderr was not empty, so stderr won: the report carried 500 characters of layer
+IDs and `Pull complete`, ending mid-word, naming nothing. Which service had been left down was
+worked out from a container missing in `docker ps -a`.
+
+The lesson is not "prefer stdout" — that buries an ordinary error message just as completely.
+It is that a command has two outputs and a report that shows one of them is guessing which one
+the operator needed. Each is tailed separately, because the noisy stream still earns its last few
+lines, and a command that fails while printing nothing at all says so in words rather than
+leaving a red mark that reads like a bug in Timar.
+
+The report layer does not re-truncate: bounding the text twice, once at each end, is how the
+naming line was lost in the first place.
+
 ## Enrolment — the most dangerous surface in the product
 
 Installing Timar's key on a host, and optionally granting it passwordless sudo. One keypair per

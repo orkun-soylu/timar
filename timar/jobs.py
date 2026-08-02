@@ -106,7 +106,10 @@ def run_update(cfg: dict) -> Outcome:
             note = "" if r.was_running else " (woken, updated, shut down again)"
             rows.append(f"✅ {r.server}{note}")
         else:
-            rows.append(f"❌ {r.server}: {r.error[:300]}")
+            # Not truncated here. The failure text is already bounded where it is produced, and
+            # the 300 characters this used to keep were spent on whichever stream came first —
+            # cutting away the one that named the cause.
+            rows.append(f"❌ {r.server}: {r.error.strip()}".replace("\n", "\n    "))
 
     lines = [f"<b>{TITLES[UPDATE]}</b>", ""] + [notify.escape(row) for row in rows]
     _notify(cfg, "\n".join(lines))
