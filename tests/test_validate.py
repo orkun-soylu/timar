@@ -59,8 +59,23 @@ class TestServer:
             server(MINIMAL | {"wol_broadcast": "10.0.0.255"}, set())
 
     def test_blank_optionals_are_omitted_not_stored_empty(self):
-        entry = server(MINIMAL | {"update_cmd": "  ", "context": "", "wol_mac": ""}, set())
+        entry = server(MINIMAL | {"update_cmd": "  ", "context": "", "wol_mac": "",
+                                  "update_timeout": ""}, set())
         assert set(entry) == set(MINIMAL)
+
+    def test_update_timeout_is_stored_as_an_int(self):
+        """A string would reach paramiko's timeout argument and fail there, not here."""
+        entry = server(MINIMAL | {"update_timeout": "2400"}, set())
+        assert entry["update_timeout"] == 2400
+
+    def test_update_timeout_must_be_a_number(self):
+        with pytest.raises(ValidationError, match="whole number"):
+            server(MINIMAL | {"update_timeout": "half an hour"}, set())
+
+    @pytest.mark.parametrize("seconds", ["30", "86400"])
+    def test_update_timeout_outside_the_bounds_is_rejected(self, seconds):
+        with pytest.raises(ValidationError, match="between"):
+            server(MINIMAL | {"update_timeout": seconds}, set())
 
 
 class TestLogCheck:

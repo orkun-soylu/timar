@@ -15,6 +15,9 @@ from .platforms import PLATFORMS
 MAC = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
+MIN_UPDATE_TIMEOUT = 60
+MAX_UPDATE_TIMEOUT = 14400  # 4 hours
+
 
 class ValidationError(ValueError):
     def __init__(self, errors: list[str]):
@@ -74,6 +77,23 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     for optional in ("update_cmd", "context"):
         if value := (form.get(optional) or "").strip():
             entry[optional] = value
+
+    if raw_timeout := (form.get("update_timeout") or "").strip():
+        try:
+            seconds = int(raw_timeout)
+        except ValueError:
+            errors.append("Update timeout must be a whole number of seconds.")
+        else:
+            # The lower bound is not fussiness. A timeout below a minute cannot outlast an
+            # `apt-get update` on a slow link, so it would fail every run while looking like a
+            # deliberate setting; the upper bound keeps one wedged host from holding the
+            # sequential fleet walk for most of a day.
+            if not MIN_UPDATE_TIMEOUT <= seconds <= MAX_UPDATE_TIMEOUT:
+                errors.append(
+                    f"Update timeout must be between {MIN_UPDATE_TIMEOUT} and "
+                    f"{MAX_UPDATE_TIMEOUT} seconds.")
+            else:
+                entry["update_timeout"] = seconds
 
     if errors:
         raise ValidationError(errors)

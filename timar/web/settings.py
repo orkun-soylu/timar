@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from .. import (config, enroll as enroll_module, jobs, keys, llm as llm_module, notify,
-                state, status as fleet_status, validate, wol)
+                state, status as fleet_status, updater, validate, wol)
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from .auth import require_operator
@@ -56,6 +56,9 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "telegram_chat_id": telegram_cfg.get("chat_id", ""),
         "telegram_has_token": bool(telegram_cfg.get("token")),
         "platforms": list(PLATFORMS),
+        "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
+        "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
+        "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
         "providers": llm_module.PROVIDERS,
         "schedules": cfg.get("schedules") or {},
         "jobs": [{"name": n, "title": jobs.TITLES[n]} for n in jobs.JOBS],

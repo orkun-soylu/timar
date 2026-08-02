@@ -25,7 +25,27 @@ class UpdateResult:
     error: str = ""
 
 
-def _do_update(ssh, cmd: str, timeout: int = 300):
+# How long one host's update command may take. The old value was 300s, which is shorter than
+# real work: a kernel upgrade that rebuilds a DKMS module, or an update command that also pulls
+# container images, passes five minutes routinely. A 7 GB image alone can.
+#
+# Overshooting matters because of *how* the timeout fails. `run` hands it to paramiko as a
+# channel read timeout, so nothing is sent to the far end — the remote command is not killed, it
+# keeps running while Timar reports a failure it invented. The host is then left mid-upgrade and
+# the next run meets a dpkg lock. It is also why the shutdown that would normally follow is
+# skipped for this host: powering a machine off while apt is still writing is the one outcome
+# worse than a late report.
+#
+# So the default is generous. Its real cost is that `run_updates` walks the fleet in sequence,
+# and a genuinely wedged host delays the ones behind it by this much.
+DEFAULT_UPDATE_TIMEOUT = 1800
+
+
+def _timeout_for(server_cfg: dict) -> int:
+    return int(server_cfg.get("update_timeout") or DEFAULT_UPDATE_TIMEOUT)
+
+
+def _do_update(ssh, cmd: str, timeout: int = DEFAULT_UPDATE_TIMEOUT):
     stdout, stderr, rc = run(ssh, cmd, timeout=timeout)
     if rc != 0:
         return False, (stderr or stdout)[-500:]
@@ -91,7 +111,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
             logger.info("Updating %s ...", name)
-            ok, err = _do_update(ssh, update_cmd)
+            ok, err = _do_update(ssh, update_cmd, timeout=_timeout_for(server_cfg))
             results.append(UpdateResult(server=name, success=ok, was_running=was_running,
                                         error=err if not ok else ""))
     except Exception as e:
@@ -141,7 +161,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
         try:
             with connect(vm_host, vm_cfg["user"], resolve_ssh_key(vm_cfg)) as ssh:
                 logger.info("Updating VM %s ...", vm_name)
-                ok, err = _do_update(ssh, vm_update_cmd)
+                ok, err = _do_update(ssh, vm_update_cmd, timeout=_timeout_for(vm_cfg))
                 results.append(UpdateResult(server=vm_name, success=ok, was_running=vm_was_running,
                                             error=err if not ok else ""))
         except Exception as e:

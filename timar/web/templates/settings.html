@@ -130,6 +130,18 @@
       logs but never updated.
     </p>
 
+    <label><span>Update timeout <em class="muted">optional — seconds, default {{ default_update_timeout }}</em></span>
+      <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
+             placeholder="{{ default_update_timeout }}"
+             value="{{ editing.update_timeout if editing and editing.update_timeout else '' }}"></label>
+    <p class="hint">
+      Raise this for a host whose update pulls container images or rebuilds a DKMS module — both
+      pass the default routinely. When the limit is reached the remote command is <strong>not</strong>
+      stopped: it keeps running while the run is recorded as failed, and this host is left powered
+      on rather than shut down mid-upgrade. Updates run one host after another, so a wedged
+      machine delays the rest by whatever is set here.
+    </p>
+
     <label><span>Context for the log analysis <em class="muted">optional</em></span>
       <input name="context" placeholder="Nightly batch job logs connection resets; expected."
              value="{{ editing.context if editing and editing.context else '' }}"></label>

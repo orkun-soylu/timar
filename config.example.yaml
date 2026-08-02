@@ -15,6 +15,12 @@ servers:
     # default -- see the note further down.
     # update_cmd: "sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
 
+    # Optional: how long that command may take, in seconds (default 1800, range 60-14400).
+    # Raise it for a host that pulls container images or rebuilds a DKMS module. Reaching the
+    # limit does NOT stop the remote command -- it keeps running while the run is recorded as a
+    # failure, and the host is left powered on rather than shut down mid-upgrade.
+    # update_timeout: 3600
+
     # Optional: a line of context handed to the log analysis, to explain behaviour that looks
     # alarming but is not. This is the cheapest way to stop a recurring false alarm.
     # context: "Runs a nightly batch job that logs connection resets; those are expected."

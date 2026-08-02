@@ -371,6 +371,33 @@ first, because it wakes machines and installs packages.
 conflating "could not reach Telegram" with "the update broke" sends the operator to the wrong
 problem.
 
+### How long a host gets, and what happens when it runs out
+
+`update_timeout` per server, defaulting to 1800 seconds. The first value was 300, picked before
+anything real had run against it, and it was wrong in a way worth writing down.
+
+Two ordinary things pass five minutes on their own: a kernel upgrade that rebuilds a DKMS
+module, and an update command that also pulls container images — one 7 GB image is enough. So
+the hosts most worth updating were the ones most likely to trip it.
+
+The failure is worse than being early, because the timeout does not reach the far end. `run`
+gives it to paramiko as a *channel read* timeout, so nothing is signalled to the remote: the
+upgrade carries on while Timar records a failure it invented, and the next run arrives to find a
+dpkg lock held by the command it thinks it already lost. Two consequences follow, both
+deliberate:
+
+- **The remote command is not killed.** Wrapping an operator's command in `timeout` would mean
+  re-quoting a shell string that already contains `&&` chains and nested quotes — the same class
+  of bug the WOL relay hit, where a value quoted for the wrong layer arrived as an undefined
+  identifier. A late report is cheaper than a mangled command.
+- **The host is not shut down.** The early return skips the shutdown that normally puts an
+  on-demand machine back as it was found. Powering a machine off while apt is still writing is
+  the one outcome worse than leaving it on.
+
+The cost of a generous default is that `run_updates` walks the fleet in sequence, so a wedged
+host delays the ones behind it by exactly this much. That is why the value is per server and
+bounded, rather than one number for everybody.
+
 ## Enrolment — the most dangerous surface in the product
 
 Installing Timar's key on a host, and optionally granting it passwordless sudo. One keypair per
