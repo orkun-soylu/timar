@@ -83,6 +83,14 @@
     button.secondary { background: none; color: var(--text); font-weight: 400; }
     .result { font-size: 0.875rem; }
     .result.htmx-request::after { content: "…"; color: var(--muted); }
+    /* Findings keep their own line breaks and column alignment; the box scrolls rather than
+       the page, so one long device name cannot push the whole layout sideways. */
+    pre.report {
+      margin: 0 1rem; padding: 0.9rem 1rem; border-radius: 7px;
+      background: var(--bg); border: 1px solid var(--line);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;
+      line-height: 1.5; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+    }
     .notice { padding: 0.8rem 1rem; margin-bottom: 1.25rem; font-size: 0.875rem; }
     .notice.good { border-left: 3px solid var(--up); }
     .notice.bad { border-left: 3px solid var(--down); color: var(--down); }

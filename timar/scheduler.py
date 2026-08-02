@@ -130,9 +130,11 @@ class Scheduler:
             logger.info("%s started", name)
             try:
                 cfg = config.load()
-                summary = await asyncio.to_thread(jobs.RUNNERS[name], cfg)
-                state.mark_finished(name, ok=True, summary=summary)
-                logger.info("%s finished: %s", name, summary)
+                outcome = await asyncio.to_thread(jobs.RUNNERS[name], cfg)
+                state.mark_finished(
+                    name, ok=True, summary=outcome.summary, report=outcome.report
+                )
+                logger.info("%s finished: %s", name, outcome.summary)
                 return True
             except Exception as e:
                 # The failure is recorded against the job and shown in the UI. Re-raising here

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<header>
+  <h1>{{ title }}</h1>
+  <span class="spacer"></span>
+  <a href="/" class="muted">← dashboard</a>
+</header>
+
+<section class="panel">
+  <h2>Last run</h2>
+  <p class="hint">
+    {% if last_run %}
+      {{ last_run | replace("T", " ") }}{% if summary %} — {{ summary }}{% endif %}
+    {% else %}
+      This job has not run yet.
+    {% endif %}
+  </p>
+
+  {% if error %}
+    <p class="error" style="padding:0 1rem 1rem; margin:0">{{ error }}</p>
+  {% endif %}
+
+  {% if report %}
+    {# Preformatted: the findings are laid out in columns, and reflowing them loses the
+       alignment that makes a long list scannable. Scrolls in its own box so a long device
+       name cannot push the page sideways. #}
+    <pre class="report">{{ report }}</pre>
+  {% elif not error %}
+    <p class="empty">
+      Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> on the
+      dashboard.
+    </p>
+  {% endif %}
+</section>
+{% endblock %}

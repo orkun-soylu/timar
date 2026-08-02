@@ -159,6 +159,59 @@ class TestDashboard:
         assert client.get("/fragments/fleet").headers["location"] == "/login"
 
 
+class TestJobReport:
+    """The findings behind a summary. Without this page an installation with no Telegram token
+    swept its fleet and had nowhere to show what it found."""
+
+    def test_shows_the_stored_report(self, client):
+        complete_setup(client)
+        from timar import state
+        state.mark_finished(
+            "log_sweep", ok=True, summary="1 with findings, 0 unreachable, 0 asleep",
+            report="web-01:\n  stopped containers: cache, queue",
+        )
+        body = client.get("/jobs/log_sweep/report").text
+        assert "stopped containers: cache, queue" in body
+        assert "1 with findings" in body
+
+    def test_the_link_appears_only_once_there_is_a_report(self, client):
+        complete_setup(client)
+        assert "/jobs/log_sweep/report" not in client.get("/fragments/jobs").text
+        from timar import state
+        state.mark_finished("log_sweep", ok=True, summary="all clear", report="All clear — 1 checked.")
+        assert "/jobs/log_sweep/report" in client.get("/fragments/jobs").text
+
+    def test_a_job_that_never_ran_says_so_rather_than_erroring(self, client):
+        complete_setup(client)
+        response = client.get("/jobs/update/report")
+        assert response.status_code == 200
+        assert "has not run yet" in response.text
+
+    def test_a_failed_run_shows_its_error(self, client):
+        complete_setup(client)
+        from timar import state
+        state.mark_finished("update", ok=False, error="SSHError: connection refused")
+        assert "SSHError: connection refused" in client.get("/jobs/update/report").text
+
+    def test_an_unknown_job_is_a_404_not_a_blank_page(self, client):
+        complete_setup(client)
+        assert client.get("/jobs/no-such-job/report").status_code == 404
+
+    def test_requires_a_session(self, client):
+        complete_setup(client)
+        client.cookies.clear()
+        assert client.get("/jobs/log_sweep/report").headers["location"] == "/login"
+
+    def test_a_report_is_escaped_rather_than_rendered(self, client):
+        """Findings carry remote log lines. A host that logs `<script>` must not run it here."""
+        complete_setup(client)
+        from timar import state
+        state.mark_finished("log_sweep", ok=True, report="<script>alert(1)</script>")
+        body = client.get("/jobs/log_sweep/report").text
+        assert "<script>alert(1)</script>" not in body
+        assert "&lt;script&gt;" in body
+
+
 class _FakeResponse:
     status = 200
 
