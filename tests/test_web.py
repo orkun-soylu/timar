@@ -361,6 +361,21 @@ class TestSettings:
         assert "on-demand" in row and "via hv" in row
         assert "always on" not in row
 
+    def test_the_update_timeout_field_shows_the_default_and_round_trips_an_override(self, client):
+        """The default has to be visible in the form, or the only way to learn it is the source."""
+        complete_setup(client)
+        from timar import config
+        from timar.updater import DEFAULT_UPDATE_TIMEOUT
+        config.save({"servers": [
+            {"name": "gpu-01", "host": "10.0.0.5", "user": "ops", "platform": "linux",
+             "update_timeout": 3600},
+        ]})
+
+        page = client.get("/settings?edit=gpu-01").text
+        field = page.split('name="update_timeout"', 1)[1].split(">", 1)[0]
+        assert 'value="3600"' in field
+        assert f'placeholder="{DEFAULT_UPDATE_TIMEOUT}"' in field
+
     def test_moving_a_guest_leaves_only_one_hypervisor_owning_it(self, client):
         complete_setup(client)
         from timar import config
