@@ -217,7 +217,10 @@
           {% endfor %}
         </select></label>
       <label><span>Model</span>
-        <input name="model" value="{{ llm.model | default('') }}"></label>
+        {# `list` stays free text — the datalist suggests, it does not restrict, so a model the
+           provider has not advertised yet can still be typed. #}
+        <input name="model" list="model-options" autocomplete="off"
+               value="{{ llm.model | default('') }}"></label>
     </div>
     <div class="row">
       <label><span>Base URL <em class="muted">optional — for self-hosted endpoints</em></span>
@@ -232,8 +235,16 @@
       <button type="button" class="secondary" hx-post="/settings/llm/test"
               hx-target="#llm-test" hx-swap="innerHTML"
               hx-indicator="#llm-test">Test connection</button>
+      <button type="button" class="secondary" hx-post="/settings/llm/models"
+              hx-target="#llm-models" hx-swap="innerHTML"
+              hx-indicator="#llm-models">List models</button>
       <span id="llm-test" class="result"></span>
+      <span id="llm-models" class="result"></span>
     </div>
+    <p class="hint" style="margin-top:0.6rem">
+      Both buttons use the <em>saved</em> connection, so save the provider and key first. The
+      model itself can stay empty until you have the list.
+    </p>
   </form>
 </section>
 

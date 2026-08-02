@@ -116,6 +116,68 @@ def build_request(cfg: LLMConfig, system: str, prompt: str) -> tuple[str, dict, 
     )
 
 
+def build_models_request(cfg: LLMConfig) -> tuple[str, dict]:
+    """(url, headers) for listing the models a provider offers. Pure.
+
+    Deliberately does not go through `build_request`: that one requires a model to be set, and
+    the whole point of this call is to find out what the models are. Asking an operator to type
+    a model name from memory is how `claude-opus-5` becomes `claude-opus5` and the mistake is
+    discovered by a sweep that produced no assessment.
+    """
+    if cfg.provider == ANTHROPIC:
+        return (
+            f"{cfg.base_url}/v1/models?limit=100",
+            {"x-api-key": cfg.api_key, "anthropic-version": ANTHROPIC_API_VERSION},
+        )
+    if cfg.provider == OPENAI:
+        headers = {}
+        if cfg.api_key:
+            headers["Authorization"] = f"Bearer {cfg.api_key}"
+        return f"{cfg.base_url}/models", headers
+    # Ollama's own API, not the OpenAI-compatible shim: `/api/tags` is what a daemon answers
+    # with no key at all, which is the usual shape of a box on the LAN.
+    return f"{cfg.base_url}/api/tags", {}
+
+
+def parse_models(cfg: LLMConfig, data: dict) -> list[str]:
+    """Model identifiers out of a provider's list envelope, in the order the provider gave them.
+
+    Order is preserved rather than sorted: Anthropic returns newest first and Ollama returns
+    most-recently-pulled first, which is the order an operator is looking for. Sorting would
+    bury the model they just installed in the middle of the list.
+    """
+    try:
+        if cfg.provider == OLLAMA:
+            raw = [entry.get("name") for entry in data.get("models") or []]
+        else:
+            # Anthropic and OpenAI share the `{"data": [{"id": ...}]}` shape.
+            raw = [entry.get("id") for entry in data.get("data") or []]
+    except (AttributeError, TypeError) as e:
+        raise LLMError(f"unexpected model list from {cfg.provider}: {e}") from e
+
+    seen, models = set(), []
+    for name in raw:
+        if isinstance(name, str) and name and name not in seen:
+            seen.add(name)
+            models.append(name)
+    return models
+
+
+def list_models(cfg: LLMConfig) -> list[str]:
+    """Ask the provider which models it offers. Raises LLMError."""
+    url, headers = build_models_request(cfg)
+    try:
+        response = httpx.get(url, headers=headers, timeout=cfg.timeout)
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        detail = e.response.text[:300].replace("\n", " ")
+        raise LLMError(f"{cfg.provider} returned HTTP {e.response.status_code}: {detail}") from e
+    except httpx.HTTPError as e:
+        raise LLMError(f"could not reach {cfg.provider} at {cfg.base_url}: {e}") from e
+
+    return parse_models(cfg, response.json())
+
+
 def extract_text(cfg: LLMConfig, data: dict) -> str:
     """Pull the answer out of a provider's response envelope. Pure."""
     try:
