@@ -281,6 +281,7 @@ class TestSettings:
             ("post", "/settings/log-check"),
             ("post", "/settings/llm"),
             ("post", "/settings/llm/test"),
+            ("post", "/settings/llm/models"),
             ("post", "/settings/telegram"),
             ("post", "/settings/telegram/test"),
             ("post", "/settings/servers/web-01/delete"),
@@ -538,3 +539,57 @@ class TestEnrolmentRoutes:
                             lambda server: "connected with the key as u; passwordless sudo works")
         page = client.post("/settings/servers/a/enroll", data={"password": "pw"}).text
         assert "key installed" in page and "passwordless sudo works" in page
+
+
+class TestModelListing:
+    """Typing a model name from memory is how `claude-opus-5` becomes `claude-opus5`."""
+
+    def test_lists_the_models_the_provider_offers(self, client, monkeypatch):
+        complete_setup(client)
+        from timar import config, llm as llm_module
+        config.save({"llm": {"provider": "ollama", "base_url": "http://10.0.0.1:11434"}})
+        monkeypatch.setattr(llm_module, "list_models", lambda _cfg: ["glm-5.2:cloud", "kimi-k2.6"])
+
+        body = client.post("/settings/llm/models").text
+        assert '<datalist id="model-options">' in body
+        assert '<option value="glm-5.2:cloud">' in body
+        assert "2 models" in body
+
+    def test_a_provider_error_is_reported_not_raised(self, client, monkeypatch):
+        complete_setup(client)
+        from timar import config, llm as llm_module
+        config.save({"llm": {"provider": "ollama", "base_url": "http://10.0.0.1:11434"}})
+
+        def fail(_cfg):
+            raise llm_module.LLMError("could not reach ollama")
+
+        monkeypatch.setattr(llm_module, "list_models", fail)
+        response = client.post("/settings/llm/models")
+        assert response.status_code == 200
+        assert "could not reach ollama" in response.text
+        assert "datalist" not in response.text
+
+    def test_no_provider_saved_says_so_rather_than_erroring(self, client):
+        complete_setup(client)
+        assert "Save a provider first" in client.post("/settings/llm/models").text
+
+    def test_a_provider_with_no_models_is_reported(self, client, monkeypatch):
+        complete_setup(client)
+        from timar import config, llm as llm_module
+        config.save({"llm": {"provider": "ollama", "base_url": "http://10.0.0.1:11434"}})
+        monkeypatch.setattr(llm_module, "list_models", lambda _cfg: [])
+        assert "listed no models" in client.post("/settings/llm/models").text
+
+    def test_model_names_are_escaped_into_the_datalist(self, client, monkeypatch):
+        """Model names come from a remote provider and land in an HTML attribute."""
+        complete_setup(client)
+        from timar import config, llm as llm_module
+        config.save({"llm": {"provider": "ollama", "base_url": "http://10.0.0.1:11434"}})
+        monkeypatch.setattr(llm_module, "list_models", lambda _cfg: ['"><script>alert(1)</script>'])
+        body = client.post("/settings/llm/models").text
+        assert "<script>" not in body
+        assert "&lt;script&gt;" in body
+
+    def test_the_model_field_is_wired_to_the_datalist(self, client):
+        complete_setup(client)
+        assert 'list="model-options"' in client.get("/settings").text

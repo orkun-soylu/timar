@@ -5,7 +5,8 @@ tested without a network. `complete()` is a thin wrapper around them plus one ht
 """
 import pytest
 
-from timar.llm import ANTHROPIC_API_VERSION, LLMConfig, LLMError, build_request, extract_text
+from timar.llm import (ANTHROPIC_API_VERSION, LLMConfig, LLMError, build_models_request,
+                       build_request, extract_text, parse_models)
 
 
 def cfg(provider, **kw):
@@ -128,3 +129,68 @@ class TestConfig:
     def test_missing_model_fails_at_request_time_with_a_clear_message(self):
         with pytest.raises(LLMError, match="no model configured"):
             build_request(LLMConfig(provider="openai", base_url="http://x"), "s", "p")
+
+
+class TestModelsRequest:
+    """Listing must work before a model is chosen — that is the whole point of it."""
+
+    def test_no_model_is_needed_to_ask_what_the_models_are(self):
+        for provider in ("anthropic", "openai", "ollama"):
+            url, _ = build_models_request(LLMConfig(provider=provider, base_url=_default_base(provider)))
+            assert url
+
+    def test_anthropic_sends_the_version_header_and_the_key(self):
+        url, headers = build_models_request(cfg("anthropic", api_key="k"))
+        assert url.startswith("https://api.anthropic.com/v1/models")
+        assert headers["anthropic-version"] == ANTHROPIC_API_VERSION
+        assert headers["x-api-key"] == "k"
+        assert "Authorization" not in headers
+
+    def test_openai_uses_bearer_and_the_base_url_already_carries_v1(self):
+        url, headers = build_models_request(cfg("openai", api_key="k"))
+        assert url == "https://api.openai.com/v1/models"
+        assert headers["Authorization"] == "Bearer k"
+
+    def test_openai_sends_no_auth_header_without_a_key(self):
+        # A local OpenAI-compatible server usually wants no key at all.
+        _, headers = build_models_request(cfg("openai", api_key=""))
+        assert "Authorization" not in headers
+
+    def test_ollama_uses_its_native_tags_endpoint(self):
+        url, headers = build_models_request(cfg("ollama"))
+        assert url == "http://localhost:11434/api/tags"
+        assert headers == {}
+
+
+class TestParseModels:
+    def test_anthropic_and_openai_share_the_data_id_shape(self):
+        for provider in ("anthropic", "openai"):
+            data = {"data": [{"id": "one"}, {"id": "two"}]}
+            assert parse_models(cfg(provider), data) == ["one", "two"]
+
+    def test_ollama_names_rather_than_ids(self):
+        data = {"models": [{"name": "gpt-oss:120b-cloud"}, {"name": "glm-5.2:cloud"}]}
+        assert parse_models(cfg("ollama"), data) == ["gpt-oss:120b-cloud", "glm-5.2:cloud"]
+
+    def test_provider_order_is_preserved(self):
+        """Anthropic returns newest first and Ollama most-recently-pulled first — sorting would
+        bury the model the operator just installed."""
+        data = {"data": [{"id": "zebra"}, {"id": "alpha"}]}
+        assert parse_models(cfg("anthropic"), data) == ["zebra", "alpha"]
+
+    def test_duplicates_and_blanks_are_dropped(self):
+        data = {"data": [{"id": "one"}, {"id": "one"}, {"id": ""}, {"other": "x"}]}
+        assert parse_models(cfg("openai"), data) == ["one"]
+
+    def test_an_empty_list_is_not_an_error(self):
+        # A provider with no models is a real state; the caller reports it, it is not a crash.
+        assert parse_models(cfg("openai"), {"data": []}) == []
+        assert parse_models(cfg("ollama"), {}) == []
+
+    @pytest.mark.parametrize("provider,data", [
+        ("anthropic", {"data": "not-a-list"}),
+        ("ollama", {"models": "not-a-list"}),
+    ])
+    def test_a_malformed_envelope_raises_llm_error(self, provider, data):
+        with pytest.raises(LLMError):
+            parse_models(cfg(provider), data)

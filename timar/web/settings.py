@@ -212,6 +212,32 @@ async def test_llm(request: Request):
     return HTMLResponse(f'<span class="ok">Model replied: {_escape(reply[:80]) or "(empty)"}</span>')
 
 
+@router.post("/llm/models", response_class=HTMLResponse)
+async def list_llm_models(request: Request):
+    """Fill the model field's suggestion list from the provider.
+
+    Returns a `<datalist>` rather than a `<select>` on purpose: the field stays free text, so a
+    model the provider does not advertise — a local Ollama tag, one released after this list was
+    fetched — can still be typed. The list is a shortcut, not a whitelist.
+    """
+    cfg = config.load()
+    llm_cfg = llm_module.LLMConfig.from_dict(cfg.get("llm"))
+    if llm_cfg is None:
+        return HTMLResponse('<span class="error">Save a provider first.</span>')
+    try:
+        models = llm_module.list_models(llm_cfg)
+    except llm_module.LLMError as e:
+        return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
+    if not models:
+        return HTMLResponse('<span class="error">The provider listed no models.</span>')
+
+    options = "".join(f'<option value="{_escape(m)}">' for m in models)
+    return HTMLResponse(
+        f'<datalist id="model-options">{options}</datalist>'
+        f'<span class="ok">{len(models)} models — click the model field.</span>'
+    )
+
+
 @router.post("/telegram")
 async def save_telegram(request: Request):
     form = dict(await request.form())
