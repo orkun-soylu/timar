@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timar — agentless fleet care for homelabs</title>
+<meta name="description" content="Timar wakes the machines in your homelab that are asleep, updates them, reads their logs, and puts them back the way it found them. One container, one volume, nothing installed on the machines you manage." />
+<link rel="canonical" href="https://timar.tools/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://timar.tools/" />
+<!-- Keep in step with the <h1>: a share card renders og:title right beside og:image, and
+     og:image is a capture of the hero. A stale title puts two different headlines in one card. -->
+<meta property="og:title" content="Timar — fleet care for machines that are usually off" />
+<meta property="og:description" content="Wake, update, sweep the logs, shut back down. Agentless: SSH and Wake-on-LAN, nothing installed on the machines you manage. Linux, OpenWrt and Proxmox. MIT." />
+<meta property="og:image" content="https://timar.tools/images/og-cover.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Timar's dashboard: six machines, two up, three asleep and one down, each row offering the power action that fits its state." />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314161a'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23e0a458'/%3E%3C/svg%3E" />
+
+<!-- In <head>, before the stylesheet, deliberately: run at the bottom of <body> and a visitor
+     whose system asks for light watches the page paint dark and then flip. Dark is the default
+     because the application's own default is dark; the system setting is honoured when it
+     explicitly asks for light, and the toggle overrides both and is remembered. -->
+<script>
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem("timar-theme"); } catch (e) {}
+    if (!saved && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      saved = "light";
+    }
+    if (saved) document.documentElement.setAttribute("data-theme", saved);
+  })();
+</script>
+
+<style>
+  /* The palette is the application's own, so the screenshots sit in the page rather than on
+     it. The one addition is the amber accent: green and red already mean "up" and "down"
+     inside the product, and borrowing either for navigation would blunt them. */
+  :root {
+    color-scheme: dark;
+    --accent: #e0a458;
+    --accent-ink: #14161a;
+    --up: #4ade80;
+    --down: #f87171;
+
+    --ground: #101216;
+    --surface: #171a20;
+    --surface-2: #1c1f26;
+    --line: #2c313b;
+    --ink: #e6e8ec;
+    --muted: #8b93a3;
+    --code-bg: #0b0d10;
+    --shadow: 0 24px 60px -32px rgba(0,0,0,0.85);
+
+    --maxw: 1080px;
+    --radius: 12px;
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ground: #f4f6f8; --surface: #ffffff; --surface-2: #eef1f5; --line: #dde2e9;
+    --ink: #171a20; --muted: #5b6472; --code-bg: #14171c;
+    --accent: #9a5f0d; --accent-ink: #ffffff; --up: #16a34a; --down: #dc2626;
+    --shadow: 0 1px 2px rgba(20,30,55,0.06), 0 20px 44px -28px rgba(20,30,55,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--font-sans); line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 22px; }
+  a { color: inherit; }
+  code, kbd { font-family: var(--font-mono); font-size: 0.9em; }
+  ::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 0.9rem;
+  }
+
+  /* ---- bar ---- */
+  header.bar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 86%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+  }
+  .bar .wrap { display: flex; align-items: center; gap: 1.1rem; height: 58px; }
+  .brand { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; letter-spacing: -0.01em; }
+  .brand .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--accent); }
+  .bar nav { margin-left: auto; display: flex; align-items: center; gap: 1.1rem; font-size: 0.9rem; }
+  .bar nav a { color: var(--muted); text-decoration: none; }
+  .bar nav a:hover { color: var(--ink); }
+  .ghost {
+    border: 1px solid var(--line); background: none; color: var(--muted);
+    border-radius: 8px; padding: 0.3rem 0.6rem; font: inherit; font-size: 0.85rem; cursor: pointer;
+  }
+  .ghost:hover { color: var(--ink); border-color: var(--muted); }
+  @media (max-width: 640px) { .bar nav a.hide-sm { display: none; } }
+
+  /* ---- hero ---- */
+  .hero { padding: 5rem 0 2.5rem; }
+  h1 {
+    font-size: clamp(2.1rem, 5.2vw, 3.35rem); line-height: 1.08; letter-spacing: -0.025em;
+    margin: 0 0 1.1rem; max-width: 18ch;
+  }
+  .lede { font-size: clamp(1.05rem, 2.1vw, 1.22rem); color: var(--muted); max-width: 62ch; margin: 0 0 1.9rem; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .cta { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; margin-bottom: 1.2rem; }
+  .btn {
+    display: inline-block; text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    padding: 0.62rem 1.15rem; border-radius: 9px; border: 1px solid transparent;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.secondary { border-color: var(--line); color: var(--ink); }
+  .btn.secondary:hover { border-color: var(--muted); }
+  .badges { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; font-size: 0.85rem; color: var(--muted); }
+  .badges span { white-space: nowrap; }
+
+  pre.cmd {
+    margin: 0 0 1.4rem; padding: 1rem 1.1rem; border-radius: var(--radius);
+    background: var(--code-bg); color: #e7e9ee; border: 1px solid var(--line);
+    overflow-x: auto; font-family: var(--font-mono); font-size: 0.855rem; line-height: 1.75;
+  }
+  pre.cmd .p { color: #7c8798; user-select: none; }
+  pre.cmd .c { color: #7c8798; }
+
+  figure.shot { margin: 2.6rem 0 0; }
+  figure.shot img {
+    display: block; width: 100%; height: auto; border-radius: var(--radius);
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  figure.shot figcaption { margin-top: 0.8rem; font-size: 0.85rem; color: var(--muted); }
+  :root[data-theme="light"] .shot-dark, :root:not([data-theme="light"]) .shot-light { display: none; }
+
+  /* ---- sections ---- */
+  section { padding: 4.2rem 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(1.45rem, 3vw, 1.95rem); line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 1rem; max-width: 22ch; }
+  h3 { font-size: 1rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+  p { max-width: 68ch; }
+  .muted { color: var(--muted); }
+
+  .grid { display: grid; gap: 1rem; margin-top: 2rem; }
+  @media (min-width: 720px) { .grid.g3 { grid-template-columns: repeat(3, 1fr); } .grid.g2 { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.25rem 1.3rem;
+  }
+  .card p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+  .card .num {
+    font-family: var(--font-mono); font-size: 1.5rem; color: var(--accent);
+    display: block; margin-bottom: 0.35rem; letter-spacing: -0.02em;
+  }
+
+  ol.flow { list-style: none; counter-reset: step; padding: 0; margin: 2rem 0 0; display: grid; gap: 0.9rem; }
+  ol.flow li {
+    counter-increment: step; position: relative; padding: 1rem 1.2rem 1rem 3.4rem;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  }
+  ol.flow li::before {
+    content: counter(step); position: absolute; left: 1.15rem; top: 1rem;
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent);
+    border: 1px solid var(--line); border-radius: 50%; width: 1.6rem; height: 1.6rem;
+    display: grid; place-items: center;
+  }
+  ol.flow strong { display: block; }
+  ol.flow span { color: var(--muted); font-size: 0.93rem; }
+
+  table.plat { width: 100%; border-collapse: collapse; margin-top: 1.8rem; font-size: 0.93rem; }
+  table.plat th, table.plat td { text-align: left; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); }
+  table.plat th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+  table.plat td:first-child { font-weight: 600; white-space: nowrap; }
+  .yes { color: var(--up); }
+  .no { color: var(--muted); }
+  .scroll-x { overflow-x: auto; }
+
+  .callout {
+    margin-top: 1.8rem; padding: 1rem 1.2rem; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  }
+  .callout p { margin: 0; font-size: 0.93rem; }
+
+  footer { border-top: 1px solid var(--line); padding: 2.6rem 0 3.4rem; color: var(--muted); font-size: 0.88rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; align-items: center; }
+  footer a { color: var(--muted); }
+  footer .sp { margin-left: auto; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <span class="brand"><span class="dot"></span>Timar</span>
+    <nav>
+      <a href="#how" class="hide-sm">How it works</a>
+      <a href="#measured" class="hide-sm">Measured</a>
+      <a href="#run">Run it</a>
+      <a href="https://github.com/orkun-soylu/timar">GitHub</a>
+      <button class="ghost" id="theme" type="button" aria-label="Switch between dark and light">◐</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <p class="eyebrow">MIT · one container · no agents</p>
+  <h1>Fleet care for machines that are usually off.</h1>
+  <p class="lede">
+    Timar wakes the machines in your homelab, updates them, reads their logs, and
+    <strong>puts them back the way it found them</strong>. Nothing is installed on the machines
+    it manages — it needs SSH, and Wake-on-LAN for the ones that sleep.
+  </p>
+
+  <div class="cta">
+    <a class="btn primary" href="#run">Run it</a>
+    <a class="btn secondary" href="https://github.com/orkun-soylu/timar">Source on GitHub</a>
+  </div>
+  <p class="badges">
+    <span>v0.1.0</span><span>amd64 + arm64</span><span>Linux · OpenWrt · Proxmox</span><span>MIT licensed</span>
+  </p>
+
+  <figure class="shot">
+    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1720"
+         alt="Timar's dashboard listing six machines. Two are up, three are asleep and marked on-demand, one is down. Each on-demand row offers a wake or shutdown action; always-on rows show n/a. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." />
+    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1720"
+         alt="The same dashboard in a light theme." />
+    <figcaption>
+      Three states, not two: <em>asleep</em> is a machine that is meant to be off, and it is not
+      painted like a fault. A status page that shows both in red teaches you to ignore red.
+    </figcaption>
+  </figure>
+</div>
+
+<section id="why">
+  <div class="wrap">
+    <p class="eyebrow">The problem</p>
+    <h2>A sleeping machine cannot phone home.</h2>
+    <p class="muted">
+      Homelab machines are mostly <em>off</em>. The GPU box runs when you need it, the hypervisor
+      wakes for a job, the build server sits dark for a week. Every tool built for always-on
+      fleets assumes an agent that reports in — which is the one thing a machine that is powered
+      down cannot do. So the machines that go longest without a security update are exactly the
+      ones nothing is watching.
+    </p>
+    <p class="muted">
+      Timar inverts it. <strong style="color:var(--ink)">Waking the host is step one of the
+      job</strong>, and shutting it back down is the last. A machine that was off before the run
+      is off after it.
+    </p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <p class="eyebrow">What a run does</p>
+    <h2>Wake, work, and put it back.</h2>
+    <ol class="flow">
+      <li><strong>Wake what is asleep</strong>
+        <span>A magic packet, or `qm start` on the hypervisor for a guest — a VM has no wake
+        address of its own. From a different subnet, a relay sends the packet from a machine
+        already on that segment.</span></li>
+      <li><strong>Update it with the command its platform actually has</strong>
+        <span>Debian's apt, Proxmox's dist-upgrade, your own command if you have one. OpenWrt is
+        skipped by default on purpose: an unattended <code>apk upgrade</code> can fill the
+        overlay or land a kernel-module mismatch, and the machine that breaks is the one
+        carrying the session you would repair it from.</span></li>
+      <li><strong>Sweep the logs while it is up</strong>
+        <span>System log errors, disks past a threshold, stopped containers — and scheduled jobs
+        on that machine that did not run today. Watching for <em>absence</em> is the point.</span></li>
+      <li><strong>Shut down whatever started off</strong>
+        <span>Guests first, then their hypervisor, in order. Anything that was already running
+        is left running.</span></li>
+    </ol>
+    <div class="callout">
+      <p>
+        <strong>The reports outlive the notification.</strong> Every finished run is archived and
+        readable in the UI, so a disk creeping upward or an update failing every Friday shows up
+        as a series rather than a single snapshot. Telegram delivery is a copy, not the only
+        place the findings exist.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="measured">
+  <div class="wrap">
+    <p class="eyebrow">Measured, not assumed</p>
+    <h2>The failures here are the quiet kind.</h2>
+    <p class="muted">
+      A magic packet that never leaves the host. A disk check that exits non-zero and reports
+      all-clear. A schedule that stops firing and writes no error anywhere. None of these
+      announce themselves, so the decisions behind them were measured rather than reasoned about
+      — and the measurements are written down in
+      <a href="https://github.com/orkun-soylu/timar/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>.
+    </p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="num">0 → 1</span>
+        <h3>Packets on the wire</h3>
+        <p>Wake-on-LAN from a bridge network: the send succeeds, no error, and <code>tcpdump</code>
+        on the LAN sees nothing. Host networking, same image, same button: one packet. That is
+        why the compose file ships <code>network_mode: host</code>.</p>
+      </div>
+      <div class="card">
+        <span class="num">3.02s → 0.01s</span>
+        <h3>Cold and cached probes</h3>
+        <p>Most of the fleet is supposed to be unreachable, so a probe timeout is the normal case.
+        Probes run in parallel behind a short TTL: the page costs one timeout, not one per
+        sleeping machine.</p>
+      </div>
+      <div class="card">
+        <span class="num">126 MB</span>
+        <h3>The whole thing</h3>
+        <p>One Alpine image, running as a non-root fixed UID, for amd64 and arm64. A Raspberry
+        Pi is a first-class host — it is what Timar is written on.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="platforms">
+  <div class="wrap">
+    <p class="eyebrow">Platforms</p>
+    <h2>Commands that exist on the machine you pointed at.</h2>
+    <p class="muted">
+      A check that cannot run on a platform says so, instead of quietly reporting all-clear.
+      Every command was run against a real host of that platform before it was written down:
+      busybox and coreutils disagree in ways that fail silently — one <code>df</code> flag GNU
+      accepts and busybox rejects turned into a disk check that passed on every router it was
+      pointed at.
+    </p>
+    <div class="scroll-x">
+      <table class="plat">
+        <thead>
+          <tr><th>Platform</th><th>System log</th><th>Disk</th><th>Containers</th><th>Unattended updates</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Linux (systemd)</td><td><code>journalctl</code></td><td class="yes">yes</td><td>Docker</td><td class="yes">yes</td></tr>
+          <tr><td>Proxmox VE</td><td><code>journalctl</code></td><td class="yes">yes</td><td class="no">guests via <code>qm</code></td><td class="yes">yes</td></tr>
+          <tr><td>OpenWrt</td><td><code>logread</code></td><td class="yes">yes</td><td class="no">—</td><td class="no">off by default</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="wrap">
+    <p class="eyebrow">Run it</p>
+    <h2>One container, one volume.</h2>
+    <pre class="cmd"><span class="p">$</span> curl -O https://raw.githubusercontent.com/orkun-soylu/timar/main/docker-compose.yml
+<span class="p">$</span> docker compose up -d</pre>
+    <p class="muted">
+      Then open <code>http://&lt;host&gt;:8080</code> and create the operator account. Nothing else
+      answers until you do — the first screen is the only one served before an account exists.
+      Everything an installation <em>is</em> lives in one directory (<code>/data</code>): config,
+      credentials, state, reports and the SSH key. Backup and migration are <code>cp -a</code>.
+    </p>
+    <div class="callout">
+      <p>
+        <strong>Do not expose this to the internet.</strong> Timar holds an SSH key that reaches
+        every machine it manages and can grant itself <code>sudo</code> on them. The login page
+        is the only thing in front of your fleet. Keep it on a private network, or behind a
+        reverse proxy you control.
+      </p>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Nothing to install on the fleet</h3>
+        <p>SSH, and Wake-on-LAN for the machines that sleep. Timar generates its own keypair on
+        first use, installs it with your password once, and pins each host key on first sight.</p>
+      </div>
+      <div class="card">
+        <h3>Optional, not required</h3>
+        <p>A model to summarise sweeps (Anthropic, any OpenAI-compatible endpoint, or Ollama) and
+        Telegram for delivery. Without either, waking, updating and the sweep all still work —
+        you get the raw findings instead of a written assessment.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Timar — <a href="https://github.com/orkun-soylu/timar/blob/main/LICENSE">MIT</a></span>
+    <a href="https://github.com/orkun-soylu/timar">GitHub</a>
+    <a href="https://github.com/orkun-soylu/timar/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/orkun-soylu/timar/blob/main/ARCHITECTURE.md">Architecture</a>
+    <span class="sp">Early software. Read the changelog before upgrading.</span>
+  </div>
+</footer>
+
+<script>
+  // The toggle itself. Which theme to start in is decided in <head>, before first paint.
+  document.getElementById("theme").addEventListener("click", function () {
+    var root = document.documentElement;
+    var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("timar-theme", next); } catch (e) {}
+  });
+</script>
+</body>
+</html>
