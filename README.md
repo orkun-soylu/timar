@@ -1,5 +1,8 @@
 # Timar
 
+[![tests](https://github.com/orkun-soylu/timar/actions/workflows/tests.yml/badge.svg)](https://github.com/orkun-soylu/timar/actions/workflows/tests.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Agentless fleet care for homelabs — wake machines that are asleep, update them, read their
 logs, and put them back the way they were found.
 
@@ -20,6 +23,10 @@ docker compose up -d
 
 Then open `http://<host>:8080` and create the operator account. Nothing else answers until you
 do — the first screen is the only one served before an account exists.
+
+The image is published for **amd64 and arm64** — a Raspberry Pi is a first-class host here, not
+an afterthought. `:latest` follows the most recent release; pin a version
+(`ghcr.io/orkun-soylu/timar:0.1.0`) if you would rather choose when to move.
 
 Configuration lives in the `timar-data` volume as `config.yaml`; see
 [`config.example.yaml`](config.example.yaml) for the fields.

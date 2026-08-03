@@ -1,0 +1,62 @@
+# Publish the image to GHCR, for amd64 and arm64.
+#
+# **On a tag, not on every push to main.** `docker-compose.yml` pulls `:latest`, so whatever
+# this workflow calls latest is what a stranger following the README gets. On an early project
+# that has to be a version someone chose to publish, not the tip of `main` half an hour after a
+# refactor landed.
+#
+# arm64 is not an afterthought here: Timar is written on a Raspberry Pi and a homelab's
+# always-on machine is often an SBC. Both architectures are built from the same Dockerfile in
+# one run, so they cannot drift apart.
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+# Deliberately no `workflow_dispatch`. A manual run carries no tag, so the semver patterns below
+# would produce an *empty* tag list and the push step would fail — a button that looks like it
+# republishes an image and does not. To republish, move the tag: `git push --force origin v0.1.0`.
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The runner is amd64; arm64 is built under emulation. Slow, but one build produces both
+      # and there is no second runner to keep in step.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # `latest=auto` moves the latest tag only for a real release: a prerelease like
+          # v0.2.0-rc1 publishes under its own version and leaves latest where it was, so an
+          # untested candidate cannot become what `docker compose up` pulls.
+          flavor: latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
