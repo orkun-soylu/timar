@@ -341,6 +341,164 @@ class TestHealthcheck:
         assert healthcheck.main() == 1
 
 
+class TestSettingsTabs:
+    """Two tabs, and the tab is a URL rather than a CSS state.
+
+    Every form on this page saves with a POST and a redirect. A tab remembered only in the page
+    would reset on the way back, dropping the operator on the server list to read a "Saved."
+    about the notifier they were editing.
+    """
+
+    @pytest.fixture
+    def settings(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux",
+             "update_cmd": "make it so", "context": "logs resets nightly"},
+            {"name": "hv-01", "host": "10.0.0.4", "user": "root", "platform": "proxmox",
+             "wol_mac": "aa:bb:cc:dd:ee:01", "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.40", "user": "deploy", "platform": "linux"},
+        ]})
+        return client
+
+    def test_servers_is_the_default_tab_and_carries_no_global_settings(self, settings):
+        page = settings.get("/settings").text
+        assert "web-01" in page
+        assert "Bot token" not in page and "Disk threshold" not in page
+
+    def test_the_global_tab_carries_the_four_fleet_wide_sections(self, settings):
+        page = settings.get("/settings?tab=global").text
+        for heading in ("Log sweep", "Schedules", "Model", "Notifications"):
+            assert f"<h2>{heading}</h2>" in page
+        # And not the server list — the whole point of splitting them.
+        assert "10.0.0.1" not in page
+
+    def test_an_unknown_tab_opens_rather_than_404s(self, settings):
+        """A stale bookmark should land somewhere useful."""
+        response = settings.get("/settings?tab=nonsense")
+        assert response.status_code == 200 and "web-01" in response.text
+
+    def test_saving_a_global_form_comes_back_to_the_global_tab(self, settings):
+        """Otherwise the confirmation appears on a tab the operator is not looking at."""
+        for path, data in [
+            ("/settings/log-check", {"journal_hours": "6", "disk_threshold": "85"}),
+            ("/settings/telegram", {"token": "", "chat_id": ""}),
+            ("/settings/llm", {"provider": "", "model": "", "base_url": "", "api_key": ""}),
+            ("/settings/schedules", {}),
+        ]:
+            location = settings.post(path, data=data).headers["location"]
+            assert location == "/settings?tab=global&notice=saved", path
+
+    def test_a_rejected_global_form_stays_on_the_global_tab(self, settings):
+        body = settings.post("/settings/log-check",
+                             data={"journal_hours": "0", "disk_threshold": "85"}).text
+        assert "Bot token" in body      # still the global tab, not bounced to the server list
+
+    def test_saving_a_server_comes_back_to_the_server_tab(self, settings):
+        location = settings.post("/settings/servers", data={
+            "name": "new-01", "host": "10.0.0.9", "user": "deploy", "platform": "linux",
+        }).headers["location"]
+        assert location == "/settings?notice=saved"
+
+
+class TestServerForm:
+    """The add/edit form is one form in two modes, opened from the list rather than always on."""
+
+    @pytest.fixture
+    def settings(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux"},
+            {"name": "hv-01", "host": "10.0.0.4", "user": "root", "platform": "proxmox",
+             "wol_mac": "aa:bb:cc:dd:ee:01", "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.40", "user": "deploy", "platform": "linux"},
+        ]})
+        return client
+
+    def test_it_is_closed_until_asked_for(self, settings):
+        page = settings.get("/settings").text
+        assert 'id="server-form"' not in page
+        # And the control that opens it is on the heading row, anchored to where it appears.
+        assert "/settings?add=1#server-form" in page
+
+    def test_the_plus_opens_it_empty(self, settings):
+        page = settings.get("/settings?add=1").text
+        assert 'id="server-form"' in page
+        assert "Add a server" in page
+        assert 'name="original_name"' not in page   # an add must not carry an edit's identity
+
+    def test_edit_opens_it_filled(self, settings):
+        page = settings.get("/settings?edit=hv-01").text
+        assert 'value="hv-01"' in page and 'value="aa:bb:cc:dd:ee:01"' in page
+        assert 'name="original_name" value="hv-01"' in page
+
+    def test_a_guest_shows_the_link_that_lives_on_its_hypervisor(self, settings):
+        """The relationship is stored on hv-01's entry, but it is vm-01's form that must show it."""
+        import re
+        page = settings.get("/settings?edit=vm-01").text
+        assert re.search(r'<option value="hv-01"\s+selected', page)
+        assert 'value="100"' in page
+
+    def test_an_empty_fleet_opens_the_form_by_itself(self, client):
+        """A first run whose only panel says "no servers" and offers nothing to press is a dead
+        end."""
+        complete_setup(client)
+        page = client.get("/settings").text
+        assert 'id="server-form"' in page and "Add a server" in page
+        # Nothing to cancel back to, so no cancel link and no close control.
+        assert ">cancel</a>" not in page
+
+    def test_a_rejected_add_keeps_what_was_typed(self, settings):
+        """It used to come back empty: the operator was told what was wrong with input that was
+        no longer on the screen."""
+        response = settings.post("/settings/servers", data={
+            "name": "bad name", "host": "10.0.0.7", "user": "deploy", "platform": "linux",
+            "update_cmd": "sudo apt-get upgrade -y",
+        })
+        assert response.status_code == 400
+        page = response.text
+        assert 'id="server-form"' in page                  # still open
+        assert 'value="bad name"' in page                  # including the value that was refused
+        assert 'value="10.0.0.7"' in page
+        assert "sudo apt-get upgrade -y" in page
+        assert "may contain only letters" in page
+
+    def test_a_rejected_edit_keeps_the_edit_rather_than_the_stored_values(self, settings):
+        """Re-rendering from storage would silently discard the change being complained about."""
+        response = settings.post("/settings/servers", data={
+            "original_name": "web-01", "name": "web-01", "host": "", "user": "deploy",
+            "platform": "linux", "context": "half-finished note",
+        })
+        assert response.status_code == 400
+        page = response.text
+        assert 'name="original_name" value="web-01"' in page   # still an edit, not a new server
+        assert "half-finished note" in page
+        assert "10.0.0.1" not in page.split('id="server-form"')[1]  # not the stored address
+        assert "Address is required." in page
+
+    def test_a_rejected_rename_still_edits_the_original(self, settings):
+        """Or saving again would add a second machine beside the one being renamed."""
+        page = settings.post("/settings/servers", data={
+            "original_name": "web-01", "name": "hv-01", "host": "10.0.0.1", "user": "deploy",
+            "platform": "linux",
+        }).text
+        assert 'name="original_name" value="web-01"' in page
+        assert "already exists" in page
+
+    def test_a_stale_edit_link_does_not_open_an_edit_of_nothing(self, settings):
+        """A bookmark to a server that has since been removed must not offer to save it back."""
+        page = settings.get("/settings?edit=gone-01").text
+        assert 'name="original_name"' not in page
+
+    def test_a_server_cannot_be_its_own_relay_or_its_own_hypervisor(self, settings):
+        """The lists exclude the entry being edited — both would be a cycle."""
+        page = settings.get("/settings?edit=hv-01").text
+        form = page.split('id="server-form"')[1]
+        assert '<option value="hv-01"' not in form
+
+
 class TestSettings:
     def test_every_settings_route_requires_a_session(self, client):
         """Declared on the router, so a new endpoint is protected for being one, not by memory."""
@@ -515,7 +673,7 @@ class TestSettings:
         cfg["telegram"] = {"token": "SECRET-BOT-TOKEN", "chat_id": "123"}
         config.save(cfg)
 
-        page = client.get("/settings").text
+        page = client.get("/settings?tab=global").text
         assert "SECRET-LLM-KEY" not in page
         assert "SECRET-BOT-TOKEN" not in page
         assert "stored — leave blank to keep it" in page
@@ -678,7 +836,7 @@ class TestModelListing:
 
     def test_the_model_field_is_wired_to_the_datalist(self, client):
         complete_setup(client)
-        assert 'list="model-options"' in client.get("/settings").text
+        assert 'list="model-options"' in client.get("/settings?tab=global").text
 
 
 class TestReportArchive:

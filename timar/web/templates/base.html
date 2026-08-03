@@ -91,6 +91,36 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;
       line-height: 1.5; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
     }
+    /* Tabs as cards. The selected one is the one that looks like a panel — same surface, same
+       border as the content below it — while the others stay flat against the background. No
+       accent colour: green and red are the fleet's state vocabulary here and borrowing one for
+       navigation would dilute it. */
+    .tabs { display: flex; gap: 0.7rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .tabs a {
+      flex: 1 1 16rem; padding: 0.75rem 1rem; border-radius: 10px;
+      border: 1px solid var(--line); background: none; text-decoration: none;
+      color: var(--muted);
+    }
+    .tabs a:hover { border-color: var(--muted); }
+    .tabs a.selected {
+      background: var(--panel); color: var(--text); border-color: var(--muted);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    }
+    .tabs .label { display: block; font-weight: 600; font-size: 0.95rem; }
+    .tabs .sub { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* A heading that carries a control on its right — the panel's own affordance, kept on the
+       heading row so it is visible before the list is read. */
+    section.panel h2.with-action { display: flex; align-items: center; justify-content: space-between; }
+    .with-action .action {
+      text-decoration: none; color: var(--muted); font-size: 1.25rem; line-height: 1;
+      padding: 0 0.35rem; border-radius: 6px; border: 1px solid var(--line);
+    }
+    .with-action .action:hover { color: var(--text); border-color: var(--muted); }
+
+    /* An anchored panel lands with breathing room rather than flush against the viewport edge. */
+    :target { scroll-margin-top: 1rem; }
+
     .notice { padding: 0.8rem 1rem; margin-bottom: 1.25rem; font-size: 0.875rem; }
     .notice.good { border-left: 3px solid var(--up); }
     .notice.bad { border-left: 3px solid var(--down); color: var(--down); }
