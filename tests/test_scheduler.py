@@ -194,3 +194,50 @@ class TestSupervision:
         assert not task.done()
         task.cancel()
         assert state.job(jobs.LOG_SWEEP).get("next_run") is None
+
+
+class TestArchiving:
+    """Every finished run leaves an entry behind, not only the latest one in `state.json`."""
+
+    @pytest.mark.asyncio
+    async def test_a_successful_run_is_archived(self, data_dir):
+        from timar import jobs, reports, scheduler as scheduler_module
+
+        sched = scheduler_module.Scheduler()
+        await sched.run(jobs.LOG_SWEEP)
+
+        entries = reports.listing(jobs.LOG_SWEEP)
+        assert len(entries) == 1
+        assert entries[0]["title"] == jobs.TITLES[jobs.LOG_SWEEP]
+
+    @pytest.mark.asyncio
+    async def test_a_failed_run_is_archived_too(self, data_dir, monkeypatch):
+        """The failing Friday update is the entry most worth finding three weeks later."""
+        from timar import jobs, reports, scheduler as scheduler_module
+
+        def explode(cfg):
+            raise ValueError("ssh went wrong")
+
+        monkeypatch.setitem(jobs.RUNNERS, jobs.UPDATE, explode)
+        sched = scheduler_module.Scheduler()
+        await sched.run(jobs.UPDATE)
+
+        entry = reports.listing(jobs.UPDATE)[0]
+        assert entry["ok"] is False and "ssh went wrong" in entry["error"]
+
+    @pytest.mark.asyncio
+    async def test_an_unwritable_archive_does_not_fail_the_run(self, data_dir, monkeypatch):
+        """The work succeeded. A copy that could not be saved must not say otherwise."""
+        from timar import config, jobs, scheduler as scheduler_module, state
+
+        original = config.write_private
+
+        def refuse_reports(name, content):
+            if name.startswith("reports/"):
+                raise OSError("read-only")
+            return original(name, content)
+
+        monkeypatch.setattr(config, "write_private", refuse_reports)
+        sched = scheduler_module.Scheduler()
+        assert await sched.run(jobs.LOG_SWEEP) is True
+        assert state.job(jobs.LOG_SWEEP)["status"] == state.OK

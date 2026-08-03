@@ -33,6 +33,10 @@
           <a href="/jobs/{{ job.name }}/report" class="muted"
              style="font-size:0.875rem; margin-right:0.6rem">report</a>
         {% endif %}
+        {% if job.archived %}
+          <a href="/reports?job={{ job.name }}" class="muted"
+             style="font-size:0.875rem; margin-right:0.6rem">history</a>
+        {% endif %}
         <button type="button" class="linkish"
                 hx-post="/jobs/{{ job.name }}/run"
                 hx-target="#jobs-panel" hx-swap="innerHTML"

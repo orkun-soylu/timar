@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, jobs, state, status as fleet_status
+from .. import config, jobs, reports, state, status as fleet_status
 from ..scheduler import scheduler
 from . import auth, settings
 from .auth import require_operator as current_operator
@@ -144,6 +144,9 @@ def _job_view() -> list[dict]:
     schedules = cfg.get("schedules") or {}
     from .. import schedule as schedule_module
 
+    # Counted once for the whole table rather than per row: this view is re-rendered every
+    # fifteen seconds by the panel's own polling.
+    archived = reports.counts()
     rows = []
     for name in jobs.JOBS:
         record = state.job(name)
@@ -160,6 +163,7 @@ def _job_view() -> list[dict]:
             "next_run": record.get("next_run"),
             "heartbeat": state.heartbeats().get(f"job:{name}"),
             "has_report": bool(record.get("last_report")),
+            "archived": archived.get(name, 0),
         })
     return rows
 
@@ -224,8 +228,71 @@ async def job_report(request: Request, name: str, operator: str = Depends(curren
     record = state.job(name)
     return TEMPLATES.TemplateResponse(request, "report.html", {
         "title": jobs.TITLES[name],
+        "subtitle": "Last run",
         "report": record.get("last_report") or "",
         "last_run": record.get("last_run"),
         "summary": record.get("last_summary"),
         "error": record.get("last_error"),
+        "back": "/",
+        "back_label": "dashboard",
+    })
+
+
+def _filters(selected: str | None) -> list[dict]:
+    """The dropdown's options: every job, plus everything.
+
+    Built from `jobs.JOBS` rather than from what the archive happens to contain, so a job that
+    has never run is still offered — and its empty list is the answer to "why have I seen no
+    update report", which is a question the filter should be able to ask.
+    """
+    tally = reports.counts()
+    options = [{"value": "", "label": "All reports", "count": sum(tally.values())}]
+    options += [{"value": name, "label": jobs.TITLES[name], "count": tally.get(name, 0)}
+                for name in jobs.JOBS]
+    for option in options:
+        option["selected"] = option["value"] == (selected or "")
+    return options
+
+
+@app.get("/reports", response_class=HTMLResponse)
+async def report_archive(request: Request, job: str = "",
+                         operator: str = Depends(current_operator)):
+    """Every report a job has produced, not just the most recent one.
+
+    The dashboard answers "what did the last sweep find". This answers "when did it start" —
+    a disk creeping past 90%, a host that has been unreachable for three sweeps, an update
+    failing every Friday. None of those are visible in a single snapshot.
+
+    There is no fragment route beside this one, unlike the polled panels: the filter re-requests
+    this page and HTMX takes the list out of the response. A one-off click can afford the whole
+    page, and it keeps the URL in the address bar a real one that survives a refresh.
+
+    An unknown job filters to nothing rather than 404s — the value comes from a dropdown, and a
+    stale bookmark naming a job that no longer exists should show an empty list, not an error.
+    """
+    return TEMPLATES.TemplateResponse(request, "reports.html", {
+        "job": job,
+        "filters": _filters(job),
+        "reports": reports.listing(job or None),
+    })
+
+
+@app.get("/reports/{report_id}", response_class=HTMLResponse)
+async def archived_report(request: Request, report_id: str,
+                          operator: str = Depends(current_operator)):
+    entry = reports.get(report_id)
+    if entry is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return TEMPLATES.TemplateResponse(request, "report.html", {
+        "title": entry.get("title") or entry.get("job", "Report"),
+        "subtitle": "Archived run",
+        "report": entry.get("report") or "",
+        "last_run": entry.get("finished_at"),
+        "summary": entry.get("summary"),
+        "error": entry.get("error"),
+        # Back to the filtered list this was almost certainly reached from, not to the whole
+        # archive: an operator comparing four update runs should not re-pick the filter between
+        # each one.
+        "back": f"/reports?job={entry.get('job', '')}",
+        "back_label": "reports",
     })

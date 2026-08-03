@@ -139,6 +139,7 @@ another. The fleet's own description must not depend on which page you are looki
   auth.json       the operator's username and password hash
   secret_key      signs session cookies
   state.json      last run results, heartbeats
+  reports/        one JSON file per finished run — the archive behind /reports
   notes.md        operator-authored standing context for the log analysis
   ssh/id_ed25519  the key this installation presents to every managed host
 ```
@@ -155,6 +156,47 @@ mode is set to `0600` on the file descriptor **before** the rename — between a
 create and a later `chmod` there is a window where `auth.json` and the SSH key are world
 readable.
 
+## The report archive — a series, not a snapshot
+
+`state.json` keeps the latest report per job, and for the dashboard that is the right answer:
+it is read on every poll, and a file that grows without bound would make the cheapest read in
+the product the most expensive one. But a snapshot cannot answer the question an operator
+actually asks a week later — **when did this start?** A disk that crossed 90% last Tuesday, a
+host that has been unreachable for three sweeps, an update that has failed every Friday for a
+month: none of those are visible in one run, only in a series.
+
+Telegram *is* a series, which is why the answer used to be "scroll up in the chat". That copy
+is outside the tool, not searchable by job, gone when the chat is cleared — and an installation
+with no Telegram configured never had it at all. So the archive is kept in `/data/reports/`, and
+the notification becomes what it should always have been: a copy, not the record.
+
+**One JSON file per run, not rows appended to `state.json`.** Writing a report then cannot
+corrupt or lose the job state the scheduler depends on; pruning is `unlink` rather than a
+read-modify-write of a growing file; and the filename carries the timestamp and the job, so
+listing and filtering never open a file.
+
+Four things that are easy to get wrong here, each held by a test:
+
+- **Retention is per job, not overall.** A daily sweep and a weekly update share the archive.
+  One global cap of N silently evicts every update run to make room for sweeps — precisely
+  backwards, since the rarer report is the more valuable one.
+
+- **The filename is the sort key, so it needs sub-second precision.** Seconds alone are not
+  enough: a job that fails immediately can finish twice inside one, and a `-2` disambiguating
+  suffix sorts *before* the entry it followed — reversing the two, and pruning the wrong one
+  first.
+
+- **A failed run is archived too.** The failing Friday update is the entry most worth finding
+  three weeks later; an archive of only the clean runs describes a fleet that never breaks.
+
+- **Archiving never fails a run.** The work happened, the outcome is already in `state.json`
+  and already sent to Telegram. Reporting a successful sweep as failed because its copy could
+  not be written trades something that matters for something that does not.
+
+The id comes back in a URL, so `get()` matches it against a pattern rather than trusting it —
+`../auth.json` would otherwise read the password hash out of the volume and render it on the
+page.
+
 ## Web layer — server-rendered, one operator
 
 Jinja templates with HTMX for the live table. One person looking at a list of machines does not
@@ -162,6 +204,13 @@ need a client-side framework, and a build step plus a second container plus a CS
 apparatus to add to a product whose entire shape is "one image, one volume". HTMX is vendored
 rather than loaded from a CDN — the documented deployment is a private network that may have no
 route to the internet, and an air-gapped rack should not get a broken page.
+
+The panels that poll — fleet, jobs — have fragment endpoints, because sending a whole page every
+ten seconds to redraw one table is waste that repeats forever. The report filter does not: it
+re-requests `/reports` and HTMX takes the list out of the response with `hx-select`. A one-off
+click can afford the page, and it buys a correct URL — `hx-push-url` on a fragment endpoint puts
+`/fragments/...` in the address bar, which renders a bare `<table>` on the next refresh. The
+filter is also a plain `GET` form underneath, so it works with no scripting at all.
 
 **Authentication is not optional, and "it is only on the LAN" is not an access-control story.**
 This service holds an SSH key that reaches every managed machine and can write `sudoers` on
