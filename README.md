@@ -10,6 +10,15 @@ Nothing is installed on the machines you manage. Timar needs SSH and, for hosts 
 Wake-on-LAN. It ships as a single container with a single data volume, so the whole
 installation moves by copying a directory.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
+  <img alt="Timar's dashboard listing six machines. Two are up, three are asleep and marked on-demand, one is down. Each on-demand row offers a wake or shutdown action; always-on rows show n/a. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." src="docs/images/dashboard-light.png">
+</picture>
+
+Three states, not two: *asleep* is a machine that is **meant** to be off, and it is not painted
+like a fault — a status page that shows both in red teaches you to ignore red. There is a
+one-page tour at **[timar.tools](https://timar.tools)**.
+
 > **Status: early.** The engine (wake / update / log sweep / platform command sets), the
 > scheduler, settings and key enrolment work and are tested. See
 > [ARCHITECTURE.md](ARCHITECTURE.md).
