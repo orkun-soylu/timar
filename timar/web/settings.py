@@ -32,24 +32,79 @@ TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 SEE_OTHER = 303
 
 
+SERVERS_TAB = "servers"
+GLOBAL_TAB = "global"
+
+# Which tab is showing is a *URL*, not a CSS state. Every form here saves with a POST and a
+# redirect, and a tab remembered only in the page would reset on the way back — dropping the
+# operator on the server list to read a "Saved." about the notifier they were editing. It also
+# means a tab survives a refresh, a bookmark and the back button, which no CSS-only version does.
+def _tab(raw: str | None) -> str:
+    """Anything unrecognised falls back rather than 404s — a stale bookmark should still open."""
+    return GLOBAL_TAB if raw == GLOBAL_TAB else SERVERS_TAB
+
+
 def _escape(text: str) -> str:
     """These strings carry third-party error bodies straight into the page."""
     return html.escape(text)
 
 
-def _view(request: Request, *, errors: list[str] | None = None, notice: str | None = None,
-          edit: str | None = None, status_code: int = 200):
+def _server_values(servers: list[dict], guest_of: dict, edit: str | None,
+                   submitted: dict | None) -> dict:
+    """What the add/edit form renders with, in priority order.
+
+    **What was typed wins.** Before this, a rejected form was re-rendered from *storage*: an add
+    came back empty and an edit came back showing the values already saved, so the operator was
+    told what was wrong with input that was no longer on the screen — and a long edit had to be
+    retyped from memory. The stored entry is only the starting point for a form nobody has
+    submitted yet.
+
+    The guest link is flattened into the same dict because the form is flat: it lives on the
+    hypervisor's entry as `manages_vms`, not on the guest's, and the two form fields have to come
+    from somewhere.
+    """
+    if submitted is not None:
+        return dict(submitted)
+    if edit:
+        server = next((s for s in servers if s["name"] == edit), None)
+        if server:
+            link = guest_of.get(edit) or {}
+            return {**server,
+                    "hypervisor": link.get("hypervisor", ""),
+                    "vm_id": link.get("vm_id", "")}
+    return {}
+
+
+def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None = None,
+          notice: str | None = None, edit: str | None = None, add: bool = False,
+          submitted: dict | None = None, status_code: int = 200):
     cfg = config.load()
     llm_cfg = cfg.get("llm") or {}
     telegram_cfg = cfg.get("telegram") or {}
+    servers = cfg.get("servers", [])
+    guest_of = {
+        guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"]}
+        for host in servers
+        for guest in host.get("manages_vms", [])
+    }
+
+    # The name being edited comes from the submitted form first: a rejected rename still has to
+    # re-open as an edit of the *original* entry, or saving again would add a second server.
+    editing = (submitted or {}).get("original_name") or edit
+    if editing and not any(s["name"] == editing for s in servers):
+        editing = None  # a stale link to a server that has since been removed
+
     return TEMPLATES.TemplateResponse(request, "settings.html", {
-        "servers": cfg.get("servers", []),
-        "on_demand": config.on_demand(cfg.get("servers", [])),
-        "guest_of": {
-            guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"]}
-            for host in cfg.get("servers", [])
-            for guest in host.get("manages_vms", [])
-        },
+        "tab": tab,
+        "servers": servers,
+        "on_demand": config.on_demand(servers),
+        "guest_of": guest_of,
+        "editing": editing,
+        "values": _server_values(servers, guest_of, editing, submitted),
+        # Open on request, while editing, whenever something was rejected — and always when
+        # there is no fleet yet, because a first-run page whose only panel says "no servers"
+        # and offers nothing to press is a dead end.
+        "form_open": bool(add or editing or errors or not servers),
         "log_check": cfg.get("log_check", {}),
         "llm": {k: v for k, v in llm_cfg.items() if k != "api_key"},
         "llm_has_key": bool(llm_cfg.get("api_key")),
@@ -66,18 +121,22 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "kinds": list(_KINDS),
         "errors": errors or [],
         "notice": notice,
-        "edit": edit,
     }, status_code=status_code)
 
 
-def _redirect(notice: str | None = None):
-    url = f"/settings?notice={notice}" if notice else "/settings"
-    return RedirectResponse(url, status_code=SEE_OTHER)
+def _redirect(notice: str | None = None, tab: str = SERVERS_TAB):
+    """Back to the tab the operator was on, or the notice lands where they cannot see it."""
+    params = [f"tab={tab}"] if tab != SERVERS_TAB else []
+    if notice:
+        params.append(f"notice={notice}")
+    return RedirectResponse("/settings" + ("?" + "&".join(params) if params else ""),
+                            status_code=SEE_OTHER)
 
 
 @router.get("", response_class=HTMLResponse)
-async def page(request: Request, notice: str | None = None, edit: str | None = None):
-    return _view(request, notice=notice, edit=edit)
+async def page(request: Request, tab: str | None = None, notice: str | None = None,
+               edit: str | None = None, add: bool = False):
+    return _view(request, tab=_tab(tab), notice=notice, edit=edit, add=add)
 
 
 def _rename_references(servers: list[dict], old: str, new: str) -> None:
@@ -128,7 +187,9 @@ async def save_server(request: Request):
         entry = validate.server(form, {s["name"] for s in servers}, original_name=original)
         link = validate.guest_link(form, servers, entry["name"], original_name=original)
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, edit=original, status_code=400)
+        # `submitted` carries the typed values back into the form; `original` alone would
+        # re-render it from storage and quietly discard the edit being reported on.
+        return _view(request, errors=e.errors, submitted=form, status_code=400)
 
     if original:
         servers = [entry if s["name"] == original else s for s in servers]
@@ -173,9 +234,9 @@ async def save_log_check(request: Request):
     try:
         cfg["log_check"] = validate.log_check(form)
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
+        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
     config.save(cfg)
-    return _redirect("saved")
+    return _redirect("saved", tab=GLOBAL_TAB)
 
 
 @router.post("/llm")
@@ -185,14 +246,14 @@ async def save_llm(request: Request):
     try:
         entry = validate.llm(form, cfg.get("llm"))
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
+        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
 
     if entry is None:
         cfg.pop("llm", None)
     else:
         cfg["llm"] = entry
     config.save(cfg)
-    return _redirect("saved")
+    return _redirect("saved", tab=GLOBAL_TAB)
 
 
 @router.post("/llm/test", response_class=HTMLResponse)
@@ -248,14 +309,14 @@ async def save_telegram(request: Request):
     try:
         entry = validate.telegram(form, cfg.get("telegram"))
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
+        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
 
     if entry is None:
         cfg.pop("telegram", None)
     else:
         cfg["telegram"] = entry
     config.save(cfg)
-    return _redirect("saved")
+    return _redirect("saved", tab=GLOBAL_TAB)
 
 
 @router.post("/telegram/test", response_class=HTMLResponse)
@@ -276,14 +337,14 @@ async def save_schedules(request: Request):
     try:
         cfg["schedules"] = validate.schedules(form, jobs.JOBS)
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
+        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
     config.save(cfg)
     # The running loops re-read config on their next tick, so no restart is needed -- but the
     # stored next_run is now wrong until that happens, and a dashboard showing a next run that
     # no longer matches the schedule is exactly the kind of thing that erodes trust in it.
     for name in jobs.JOBS:
         state.set_next_run(name, None)
-    return _redirect("saved")
+    return _redirect("saved", tab=GLOBAL_TAB)
 
 
 @router.get("/servers/{name}/enroll", response_class=HTMLResponse)

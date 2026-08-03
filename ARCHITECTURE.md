@@ -358,6 +358,37 @@ Servers, log-sweep defaults, the model connection and Telegram are edited from t
 written back through `config.save()`. Saving rewrites `config.yaml`, which drops hand-written
 comments — the page says so rather than surprising anyone.
 
+### Two tabs, split along the only line that matters
+
+The page divides where the *scope* divides: **Servers**, where every field belongs to one
+machine, and **Global settings**, where one value applies to the whole fleet — the log sweep's
+window and threshold, the schedules, the model, the notifier. That boundary is not cosmetic. A
+single scrolling page invited the question this split answers by itself: *is this setting for
+this machine or for all of them?*
+
+**The tab is a URL (`?tab=global`), not a CSS state.** A pure-CSS tab — hidden radios and
+sibling selectors — needs no server support and breaks here for one reason: every form on this
+page saves with a POST and a redirect, and CSS state does not survive a redirect. Saving the
+notifier would return the operator to the server list to read a "Saved." about a form on the
+other tab. As a URL it also survives a refresh, a bookmark and the back button, and each
+handler redirects back to its own tab. An unrecognised value falls back to the server list
+rather than 404ing — a stale bookmark should still open.
+
+### The server form opens, rather than always being there
+
+The add/edit form is one form in two modes, reached from a `+` on the Servers heading or from
+`edit` on a row, and anchored (`#server-form`) so a fleet long enough to push it below the fold
+does not look like a page that ignored the click. It opens by itself when the fleet is empty:
+a first run whose only panel says "no servers" and offers nothing to press is a dead end.
+
+**A rejected form re-renders from what was typed, not from storage.** This was a real bug that
+hiding the form only made louder: an add came back *empty* and an edit came back showing the
+values already saved — so the operator was told what was wrong with input that was no longer on
+the screen, and a long edit was silently discarded while an error message pointed at it. The
+values now come from the submitted form when there is one, and `original_name` is read back from
+it too, so a rejected **rename** re-opens as an edit of the original entry instead of turning
+into a second machine on the next save.
+
 **Validation lives in `validate.py`, not in the form handlers.** The same rules have to hold for
 a config file written by hand, and a rule that only exists in a request handler does not. Errors
 are collected and reported together: a form that reveals its next problem only after you fix the

@@ -7,6 +7,24 @@
   <a href="/" class="muted">← dashboard</a>
 </header>
 
+{# Which tab is showing is a URL, not a CSS state: every form here POSTs and redirects, and a
+   tab remembered only in the page would reset on the way back — dropping the operator on the
+   server list to read a "Saved." about the notifier they were editing. #}
+<nav class="tabs">
+  <a href="/settings" class="{{ 'selected' if tab == 'servers' }}"
+     {{ 'aria-current=page' if tab == 'servers' }}>
+    <span class="label">Servers</span>
+    <span class="sub">{{ servers | length }} machine{{ '' if servers | length == 1 else 's' }} —
+      each with its own address, wake and update settings</span>
+  </a>
+  <a href="/settings?tab=global" class="{{ 'selected' if tab == 'global' }}"
+     {{ 'aria-current=page' if tab == 'global' }}>
+    <span class="label">Global settings</span>
+    <span class="sub">Log sweep, schedules, model, notifications — one setting for the whole
+      fleet</span>
+  </a>
+</nav>
+
 {% if errors %}
   <div class="panel notice bad">
     {% for message in errors %}<div>{{ message }}</div>{% endfor %}
@@ -17,8 +35,19 @@
   </div>
 {% endif %}
 
+{% if tab == "servers" %}
 <section class="panel">
-  <h2>Servers</h2>
+  <h2 class="with-action">
+    Servers
+    {# The add form and the edit form are the same form in two modes, so the control that opens
+       it doubles as the control that closes it — except when there is nothing to close to. #}
+    {% if form_open and not editing and servers %}
+      <a href="/settings" class="action" title="Close" aria-label="Close the form">×</a>
+    {% else %}
+      <a href="/settings?add=1#server-form" class="action" title="Add a server"
+         aria-label="Add a server">+</a>
+    {% endif %}
+  </h2>
   {% if servers %}
   <table>
     <thead><tr><th>Name</th><th>Address</th><th>Platform</th><th>Wake</th><th></th></tr></thead>
@@ -36,7 +65,10 @@
           {%- endif %}</td>
         <td style="text-align:right; white-space:nowrap">
           <a href="/settings/servers/{{ server.name }}/enroll" class="muted">enrol</a>
-          <a href="/settings?edit={{ server.name }}" class="muted" style="margin-left:0.6rem">edit</a>
+          {# The anchor matters: with a fleet this long the form opens below the fold, and a
+             page that appears not to have reacted is one the operator clicks again. #}
+          <a href="/settings?edit={{ server.name }}#server-form" class="muted"
+             style="margin-left:0.6rem">edit</a>
           <form method="post" action="/settings/servers/{{ server.name }}/delete"
                 style="display:inline; margin-left:0.6rem"
                 onsubmit="return confirm('Remove {{ server.name }} from Timar? The machine is not touched.')">
@@ -50,60 +82,63 @@
   {% else %}
   <p class="empty">No servers yet. Add the first one below.</p>
   {% endif %}
+</section>
 
-  {% set editing = servers | selectattr("name", "equalto", edit) | first if edit else None %}
+{% if form_open %}
+<section class="panel" id="server-form">
+  <h2>{{ "Edit " ~ editing if editing else "Add a server" }}</h2>
   <form method="post" action="/settings/servers" class="stack">
-    <h3>{{ "Edit " ~ editing.name if editing else "Add a server" }}</h3>
-    {% if editing %}<input type="hidden" name="original_name" value="{{ editing.name }}">{% endif %}
+    {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
 
+    {# Every field renders from `values`, which is what was typed when something was rejected
+       and the stored entry otherwise. Reading from storage on the error path is how a rejected
+       form used to hand back an empty page and ask the operator to retype it. #}
     <div class="row">
       <label><span>Name</span>
-        <input name="name" required value="{{ editing.name if editing else '' }}"></label>
+        <input name="name" required value="{{ values.get('name', '') }}"></label>
       <label><span>Address</span>
         <input name="host" required placeholder="10.0.0.5 or host.lan"
-               value="{{ editing.host if editing else '' }}"></label>
+               value="{{ values.get('host', '') }}"></label>
     </div>
     <div class="row">
       <label><span>SSH user</span>
-        <input name="user" required value="{{ editing.user if editing else '' }}"></label>
+        <input name="user" required value="{{ values.get('user', '') }}"></label>
       <label><span>Platform</span>
         <select name="platform">
           {% for platform in platforms %}
           <option value="{{ platform }}"
-            {{ "selected" if editing and editing.platform == platform else "" }}>{{ platform }}</option>
+            {{ "selected" if values.get('platform') == platform else "" }}>{{ platform }}</option>
           {% endfor %}
         </select></label>
     </div>
     <div class="row">
       <label><span>Wake-on-LAN MAC <em class="muted">optional</em></span>
         <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
-               value="{{ editing.wol_mac if editing and editing.wol_mac else '' }}"></label>
+               value="{{ values.get('wol_mac', '') }}"></label>
       <label><span>Broadcast address <em class="muted">optional</em></span>
         <input name="wol_broadcast" placeholder="10.0.0.255"
-               value="{{ editing.wol_broadcast if editing and editing.wol_broadcast else '' }}"></label>
+               value="{{ values.get('wol_broadcast', '') }}"></label>
     </div>
     <label><span>Wake through <em class="muted">optional — another server that sends the packet</em></span>
       <select name="wol_relay">
         <option value="">— send it from Timar itself —</option>
-        {% for other in servers if not editing or other.name != editing.name %}
+        {% for other in servers if other.name != editing %}
         <option value="{{ other.name }}"
-          {{ "selected" if editing and editing.wol_relay == other.name else "" }}>{{ other.name }}</option>
+          {{ "selected" if values.get('wol_relay') == other.name else "" }}>{{ other.name }}</option>
         {% endfor %}
       </select></label>
-    {% set link = guest_of.get(editing.name) if editing else None %}
     <div class="row">
       <label><span>Guest of <em class="muted">optional — a hypervisor that starts it</em></span>
         <select name="hypervisor">
           <option value="">— not a virtual machine —</option>
-          {% for other in servers if other.platform == "proxmox"
-                and (not editing or other.name != editing.name) %}
+          {% for other in servers if other.platform == "proxmox" and other.name != editing %}
           <option value="{{ other.name }}"
-            {{ "selected" if link and link.hypervisor == other.name else "" }}>{{ other.name }}</option>
+            {{ "selected" if values.get('hypervisor') == other.name else "" }}>{{ other.name }}</option>
           {% endfor %}
         </select></label>
       <label><span>VM id <em class="muted">required with a hypervisor</em></span>
         <input name="vm_id" inputmode="numeric" placeholder="100"
-               value="{{ link.vm_id if link else '' }}"></label>
+               value="{{ values.get('vm_id', '') }}"></label>
     </div>
     <p class="hint">
       A guest needs no MAC of its own — it is started with <code>qm</code>, not a magic packet —
@@ -122,7 +157,7 @@
     </p>
 
     <label><span>Update command <em class="muted">optional — overrides the platform default</em></span>
-      <input name="update_cmd" value="{{ editing.update_cmd if editing and editing.update_cmd else '' }}"></label>
+      <input name="update_cmd" value="{{ values.get('update_cmd', '') }}"></label>
     <p class="hint">
       OpenWrt has <strong>no</strong> default on purpose: an unattended upgrade can fill the
       overlay partition or land a kernel-module mismatch, and the machine that breaks is the one
@@ -133,7 +168,7 @@
     <label><span>Update timeout <em class="muted">optional — seconds, default {{ default_update_timeout }}</em></span>
       <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
              placeholder="{{ default_update_timeout }}"
-             value="{{ editing.update_timeout if editing and editing.update_timeout else '' }}"></label>
+             value="{{ values.get('update_timeout', '') }}"></label>
     <p class="hint">
       Raise this for a host whose update pulls container images or rebuilds a DKMS module — both
       pass the default routinely. When the limit is reached the remote command is <strong>not</strong>
@@ -144,17 +179,26 @@
 
     <label><span>Context for the log analysis <em class="muted">optional</em></span>
       <input name="context" placeholder="Nightly batch job logs connection resets; expected."
-             value="{{ editing.context if editing and editing.context else '' }}"></label>
+             value="{{ values.get('context', '') }}"></label>
 
     <div class="actions">
       <button type="submit">{{ "Save changes" if editing else "Add server" }}</button>
-      {% if editing %}<a href="/settings" class="muted" style="margin-left:0.8rem">cancel</a>{% endif %}
+      {% if servers %}
+        <a href="/settings" class="muted" style="margin-left:0.8rem">cancel</a>
+      {% endif %}
     </div>
   </form>
 </section>
+{% endif %}
+
+{% else %}
 
 <section class="panel">
   <h2>Log sweep</h2>
+  <p class="hint">
+    One window and one threshold for every machine in the fleet — there is no per-server
+    override.
+  </p>
   <form method="post" action="/settings/log-check" class="stack">
     <div class="row">
       <label><span>System log window (hours)</span>
@@ -171,8 +215,9 @@
 <section class="panel">
   <h2>Schedules</h2>
   <p class="hint">
-    Times are the container's local time — set <code>TZ</code> on the container if a report
-    scheduled for 07:00 arrives at 04:00.
+    A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit
+    the whole fleet. Times are the container's local time — set <code>TZ</code> on the container
+    if a report scheduled for 07:00 arrives at 04:00.
   </p>
   <form method="post" action="/settings/schedules" class="stack">
     {% for job in jobs %}
@@ -284,6 +329,8 @@
     </div>
   </form>
 </section>
+
+{% endif %}
 
 <p class="muted" style="margin-top:1.5rem">
   Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page
