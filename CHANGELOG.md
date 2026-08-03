@@ -9,12 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
-Nothing has been tagged yet. Everything below is what exists on `main` today, and it is the
-list a first release would be cut from.
+## [0.1.0] — 2026-08-03
+
+The first tagged release, and the first published image. Everything below already worked before
+this tag; it marks a point someone can install and stay on instead of tracking `main`.
 
 > **Early.** The engine, the scheduler, the web UI and enrolment work and are covered by tests,
-> but there is no upgrade path between commits and no stability promise. The whole installation
-> is one directory (`/data`) — copy it before trying a new build.
+> but there is no upgrade path between versions and no stability promise — while the major
+> version is `0`, the shape of `config.yaml` may change under you. The whole installation is one
+> directory (`/data`): copy it before moving to a new version.
 
 ### Added — the engine
 
@@ -61,3 +64,6 @@ list a first release would be cut from.
 - **Enrolment from the UI**: one keypair per installation, installed on a host with the
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
+
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/orkun-soylu/timar/releases/tag/v0.1.0
