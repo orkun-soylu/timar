@@ -18,9 +18,15 @@
   {% include "_fleet.html" %}
 </div>
 
-<p class="muted" style="margin-top:1rem; margin-bottom:2rem">
+{# Outside the polled panel: a message written inside it would be swept away by the next
+   refresh, taking the reason a wake failed with it. #}
+<div id="power-result" class="result" style="margin-top:0.75rem"></div>
+
+<p class="muted" style="margin-top:0.75rem; margin-bottom:2rem">
   Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is
-  expected; <em>down</em> means it should be reachable and is not.
+  expected; <em>down</em> means it should be reachable and is not. Power is offered only for
+  on-demand machines — an always-on host has no wake path, so shutting it down from here would
+  strand it.
 </p>
 
 <section class="panel">

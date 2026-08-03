@@ -1,15 +1,16 @@
-"""The web layer: setup, login, and a read-only fleet dashboard.
-
-Phase 1 is deliberately read-only. Timar can already wake, update and sweep — exposing those
-through a web form is a separate step from being able to *see* the fleet, and the seeing is what
-was missing. Settings editing and manual actions come next.
+"""The web layer: setup, login, and the fleet dashboard.
 
 Server-rendered Jinja with HTMX for the live bits: this is one operator looking at a table of
 machines, and a single-page app would add a build step, a second container and a CSP to a
 product whose whole shape is "one image, one volume".
+
+The dashboard is not read-only. Seeing that a machine is asleep and having to go elsewhere to
+wake it is the same trip an operator makes all day, so the two power actions live on the row
+that reports the state — see the power routes at the end of this file.
 """
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 import asyncio
@@ -20,7 +21,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, jobs, reports, state, status as fleet_status
+from .. import config, jobs, power, reports, state, status as fleet_status
 from ..scheduler import scheduler
 from . import auth, settings
 from .auth import require_operator as current_operator
@@ -275,6 +276,52 @@ async def report_archive(request: Request, job: str = "",
         "filters": _filters(job),
         "reports": reports.listing(job or None),
     })
+
+
+def _power_target(name: str) -> tuple[dict, list[dict]]:
+    servers = config.load().get("servers", [])
+    server = next((s for s in servers if s["name"] == name), None)
+    if server is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return server, servers
+
+
+async def _power(name: str, action) -> HTMLResponse:
+    """Run one power action and report it as a sentence.
+
+    In a thread, like every other blocking call in this codebase: paramiko is synchronous and a
+    `qm shutdown` waits for the guest to stop. On the event loop that would freeze the scheduler
+    and every other browser tab for the duration — including the polling that is the operator's
+    only evidence the action worked.
+
+    The message is escaped because it carries SSH and hypervisor error output verbatim.
+    """
+    server, servers = _power_target(name)
+    try:
+        message = await asyncio.to_thread(action, server, servers)
+    except power.PowerError as e:
+        return HTMLResponse(f'<span class="error">{html.escape(str(e))}</span>')
+    # The machine is about to change state and the cached probe is now a lie; the next poll
+    # should show the truth rather than a ten-second-old snapshot of it.
+    fleet_status.invalidate()
+    return HTMLResponse(f'<span class="ok">{html.escape(message)} — the table follows.</span>')
+
+
+@app.post("/servers/{name}/wake", response_class=HTMLResponse)
+async def wake_server(name: str, operator: str = Depends(current_operator)):
+    """Wake a machine now.
+
+    Waking is the one operation with no feedback of its own — a magic packet is fire and forget,
+    and a machine that stays dark could be a wrong MAC, a packet that never left the host, or
+    Wake-on-LAN disabled in firmware. Pressing the button and watching the row is how an operator
+    tells those apart.
+    """
+    return await _power(name, power.wake)
+
+
+@app.post("/servers/{name}/shutdown", response_class=HTMLResponse)
+async def shutdown_server(name: str, operator: str = Depends(current_operator)):
+    return await _power(name, power.shutdown)
 
 
 @app.get("/reports/{report_id}", response_class=HTMLResponse)

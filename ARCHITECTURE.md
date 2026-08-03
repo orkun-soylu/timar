@@ -249,6 +249,43 @@ real three-machine fleet with one sleeping host: **3.02s cold, 0.01s cached** �
 timeout, not the sum of them. The cache also stops a left-open browser tab from generating
 continuous traffic to every machine in the rack.
 
+## Power from the row that reports the state
+
+The dashboard's last column is the action that fits the state: `wake up` for a machine that is
+asleep, `shutdown` for one that is up, `n/a` for a machine that is always on. Noticing a machine
+is asleep and having to go somewhere else to wake it is the trip an operator makes all day, and
+the state and the button belong to the same row.
+
+Three decisions hold this together:
+
+- **A guest is not woken with a magic packet.** It has no wake address and never can have one —
+  it is started by `qm` on its hypervisor — so `power.wake` dispatches on whether anything in
+  the fleet `manages_vms` this machine, not on whether it has a `wol_mac`. Keying off the MAC
+  would give every VM a button that only ever answers *no MAC address configured*. The same
+  split applies downwards: a guest is stopped with `qm shutdown`, a host over its own SSH
+  connection with the platform's command.
+- **An always-on machine is offered no way down.** Shutting one off over its own SSH connection
+  works perfectly and leaves nothing to bring it back. The refusal lives in `power.shutdown`,
+  not only in the template, because the button not being drawn is not the same as the route
+  refusing — and it is the route that a bookmark, a script or a second browser tab reaches.
+- **`qm shutdown` is bounded and never `--forceStop`.** A guest that ignores ACPI needs its
+  operator, not the equivalent of its power cord pulled. The timeout expiring turns into a
+  non-zero exit, which becomes the sentence on the page.
+
+The failure that took the most care is the one that looks like success: **a connection dropping
+after the shutdown command was accepted is the machine going down**, while a connection that
+never opened means nothing was asked to stop. Both surface as an exception from paramiko, so
+`power.shutdown` tracks whether the session was ever established — without that flag, an
+unreachable host reports *is shutting down* and leaves an operator certain of the opposite. A
+non-zero exit is reported rather than swallowed for the same reason: an account without
+passwordless sudo cannot halt its own machine, and the refusal is otherwise silent.
+
+The result is written to `#power-result`, which lives on the dashboard **outside** the polled
+fragment. Inside it, the ten-second refresh would erase a failure's explanation before it could
+be read. The actions themselves run in a thread, like every other blocking call here — a `qm
+shutdown` on the event loop would freeze the scheduler and every other tab, including the
+polling that is the operator's only evidence the thing worked.
+
 ## Packaging — and the networking choice, measured
 
 One Alpine image, **126 MB** on disk (`docker images` DISK USAGE, not `inspect .Size` — those
