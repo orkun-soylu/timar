@@ -21,7 +21,9 @@
         {%- else %}down
         {%- endif %}
       </td>
-      <td style="text-align:right; white-space:nowrap">
+      {# Left-aligned like every other column, and the button's own padding is zero, so its
+         label starts on the same edge as the "Power" heading above it. #}
+      <td style="white-space:nowrap">
         {%- if not host.on_demand %}
           {# Always on: there is nothing to wake it with, so Timar will not put it to sleep
              either. Offering the button and refusing the click would be worse. #}
@@ -31,14 +33,14 @@
                   hx-post="/servers/{{ host.name }}/shutdown"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
-                  hx-confirm="Shut down {{ host.name }}? It stays off until something wakes it.">
-            shutdown</button>
+                  hx-confirm="Shut down {{ host.name }}? It stays off until something wakes it."
+                  >shutdown</button>
         {%- else %}
           <button type="button" class="linkish"
                   hx-post="/servers/{{ host.name }}/wake"
                   hx-target="#power-result" hx-swap="innerHTML"
-                  hx-indicator="#power-result" hx-disabled-elt="this">
-            wake up</button>
+                  hx-indicator="#power-result" hx-disabled-elt="this"
+                  >wake up</button>
         {%- endif %}
       </td>
     </tr>
