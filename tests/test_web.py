@@ -159,6 +159,77 @@ class TestDashboard:
         assert client.get("/fragments/fleet").headers["location"] == "/login"
 
 
+class TestPowerColumn:
+    """The dashboard is where an operator already is when they notice a machine is asleep."""
+
+    @pytest.fixture
+    def fleet(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "web-01", "host": "10.0.0.1", "user": "op"},
+            {"name": "gpu-01", "host": "10.0.0.2", "user": "op", "wol_mac": "aa:bb:cc:dd:ee:ff"},
+            {"name": "gpu-02", "host": "10.0.0.3", "user": "op", "wol_mac": "aa:bb:cc:dd:ee:aa"},
+        ]})
+        # gpu-01 is on-demand and up; gpu-02 is on-demand and asleep; web-01 is always on.
+        monkeypatch.setattr(fleet_status, "is_host_up",
+                            lambda host, **kw: host in ("10.0.0.1", "10.0.0.2"))
+        fleet_status.invalidate()
+        return client
+
+    def test_each_state_offers_the_action_that_fits_it(self, fleet):
+        rows = fleet.get("/fragments/fleet").text
+        assert "/servers/gpu-01/shutdown" in rows      # up, and wakeable again afterwards
+        assert "/servers/gpu-02/wake" in rows          # asleep
+        # An always-on machine has no wake path, so it is offered no way down.
+        assert "/servers/web-01/shutdown" not in rows
+        assert "n/a" in rows
+
+    def test_the_shutdown_is_confirmed_first(self, fleet):
+        assert "hx-confirm" in fleet.get("/fragments/fleet").text
+
+    def test_requires_a_session(self, fleet):
+        fleet.cookies.clear()
+        for path in ("/servers/gpu-01/shutdown", "/servers/gpu-02/wake"):
+            assert fleet.post(path).headers.get("location") == "/login"
+
+    def test_unknown_server_is_404(self, fleet):
+        assert fleet.post("/servers/nope/wake").status_code == 404
+
+    def test_waking_reports_what_was_done(self, fleet, monkeypatch):
+        monkeypatch.setattr("timar.web.app.power.wake",
+                            lambda server, servers: f"magic packet sent to {server['name']}")
+        body = fleet.post("/servers/gpu-02/wake").text
+        assert "magic packet sent to gpu-02" in body and 'class="ok"' in body
+
+    def test_a_failure_comes_back_as_a_readable_reason(self, fleet, monkeypatch):
+        from timar import power
+
+        def refuse(server, servers):
+            raise power.PowerError("pve-01 is offline — wake it first, then try again")
+        monkeypatch.setattr("timar.web.app.power.wake", refuse)
+        body = fleet.post("/servers/gpu-02/wake").text
+        assert "pve-01 is offline" in body and 'class="error"' in body
+
+    def test_hypervisor_output_cannot_carry_markup_into_the_page(self, fleet, monkeypatch):
+        from timar import power
+
+        def refuse(server, servers):
+            raise power.PowerError("<script>alert(1)</script>")
+        monkeypatch.setattr("timar.web.app.power.shutdown", refuse)
+        body = fleet.post("/servers/gpu-01/shutdown").text
+        assert "<script>" not in body and "&lt;script&gt;" in body
+
+    def test_the_cached_probe_is_dropped_so_the_next_poll_tells_the_truth(self, fleet,
+                                                                         monkeypatch):
+        from timar import status as fleet_status
+        monkeypatch.setattr("timar.web.app.power.shutdown", lambda server, servers: "down it goes")
+        fleet.get("/fragments/fleet")                      # populates the cache
+        assert fleet_status._cache
+        fleet.post("/servers/gpu-01/shutdown")
+        assert not fleet_status._cache
+
+
 class TestJobReport:
     """The findings behind a summary. Without this page an installation with no Telegram token
     swept its fleet and had nowhere to show what it found."""

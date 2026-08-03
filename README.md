@@ -7,9 +7,9 @@ Nothing is installed on the machines you manage. Timar needs SSH and, for hosts 
 Wake-on-LAN. It ships as a single container with a single data volume, so the whole
 installation moves by copying a directory.
 
-> **Status: early.** The engine (wake / update / log sweep / platform command sets) and a
-> read-only dashboard work and are tested. Settings are still edited as YAML; editing them from
-> the UI, the scheduler, and key enrolment are next. See [ARCHITECTURE.md](ARCHITECTURE.md).
+> **Status: early.** The engine (wake / update / log sweep / platform command sets), the
+> scheduler, settings and key enrolment work and are tested. See
+> [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Run it
 
@@ -61,6 +61,10 @@ host is step one of the job, and shutting it back down is the last.
 
 - **Update** — wake if asleep, run the platform's update command, shut down again if it started
   off. Proxmox hosts orchestrate their guests: start, update, shut down, in order.
+- **Power, from the dashboard** — each on-demand machine's row offers the action that fits its
+  state: wake one that is asleep, shut down one that is up. Guests are started and stopped
+  through their hypervisor with `qm`, since a VM has no wake address of its own. Always-on
+  machines are offered nothing: Timar will not shut down a machine it cannot wake again.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
