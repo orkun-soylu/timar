@@ -92,6 +92,29 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/python -m pytest
 ```
 
+Run it against a throwaway installation rather than your real one — `TIMAR_DATA` is the whole
+installation, so pointing it somewhere disposable means you cannot damage a live fleet:
+
+```bash
+TIMAR_DATA=/tmp/timar-dev TIMAR_PORT=8099 .venv/bin/python -m timar.web
+```
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). It covers one habit worth
+knowing about up front: **for anything that touches a machine, a network or a page, verify it by
+running it and put the measurement in the pull request.** Timar's failures are the quiet kind —
+a magic packet that never leaves the host, a disk check that exits non-zero and reports
+all-clear — and a passing test does not always mean the thing works.
+
+Commits must be signed off under the [DCO](DCO) (`git commit -s`). There is no CLA.
+
+Notable changes are recorded in [CHANGELOG.md](CHANGELOG.md); the design decisions and the
+pitfalls behind them are in [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 Orkun Soylu
+
+Third-party components, including the vendored copy of htmx, are listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

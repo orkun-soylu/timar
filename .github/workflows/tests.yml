@@ -1,0 +1,38 @@
+# The test suite, on every push and pull request.
+#
+# The image is built for arm64 as much as amd64 — a Raspberry Pi is the machine this is written
+# on — but the tests touch no architecture-specific code, so one runner is enough to catch a
+# regression. A multi-arch *build* is a separate workflow when there is something to publish.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor declared in pyproject.toml, and the version the image ships.
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: pip install -e '.[dev]'
+
+      - name: Run the tests
+        # Nothing here reaches the network or a real machine: SSH, probes and provider calls are
+        # faked at the seam. A test that needs a live host does not belong in this suite.
+        run: python -m pytest -q
