@@ -64,7 +64,7 @@
           {%- else %}on-demand <span title="started by its hypervisor">via {{ reason }}</span>
           {%- endif %}</td>
         <td style="text-align:right; white-space:nowrap">
-          <a href="/settings/servers/{{ server.name }}/enroll" class="muted">enrol</a>
+          <a href="/settings?enroll={{ server.name }}#enrol" class="muted">enrol</a>
           {# The anchor matters: with a fleet this long the form opens below the fold, and a
              page that appears not to have reacted is one the operator clicks again. #}
           <a href="/settings?edit={{ server.name }}#server-form" class="muted"
@@ -83,6 +83,10 @@
   <p class="empty">No servers yet. Add the first one below.</p>
   {% endif %}
 </section>
+
+{% if enrol %}
+  {% include "_enrol.html" %}
+{% endif %}
 
 {% if form_open %}
 <section class="panel" id="server-form">

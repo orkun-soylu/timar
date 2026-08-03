@@ -561,6 +561,16 @@ away**; a test asserts the validation precedes the install rather than merely si
 Sudo is not offered where it cannot work — OpenWrt has none, and a root account already has it.
 Offering a button that cannot work is worse than not offering one.
 
+**It is a panel, not a page.** Enrolling is one step in setting a machine up, and leaving the
+settings page to take it — then coming back to a list that had forgotten where you were — is a
+trip an operator makes once per machine. It opens under the server list from the row's `enrol`
+link, the same place and shape as the add/edit form, and only one of the two is ever open: two
+forms for two different servers stacked under one list is a page where the wrong button is easy
+to press. The old `/settings/servers/<name>/enroll` URL redirects into the panel rather than
+404ing, because it is what bookmarks and browser history point at. The **result** of an
+enrolment is rendered rather than redirected to: it is the whole point of the request, and a
+redirect would have to carry it in the URL, where it would survive a refresh and a share.
+
 **Host keys are pinned on first sight** (`/data/ssh/known_hosts`), for enrolment *and* for every
 routine connection. This replaces a bare `AutoAddPolicy` with no known-hosts file, which
 accepted any key from any host on every connection and wrote nothing down — not weaker

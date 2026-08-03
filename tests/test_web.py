@@ -723,11 +723,47 @@ class TestEnrolmentRoutes:
         complete_setup(client)
         assert client.get("/settings/servers/nope/enroll").status_code == 404
 
+    def test_the_old_page_url_still_leads_to_the_panel(self, client):
+        """It is what every bookmark and browser-history entry points at."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        response = client.get("/settings/servers/a/enroll")
+        assert response.status_code == 303
+        assert response.headers["location"] == "/settings?enroll=a#enrol"
+
+    def test_the_panel_opens_under_the_server_list(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        page = client.get("/settings?enroll=a").text
+        assert 'id="enrol"' in page
+        # The server list is still above it — not losing your place is the point of inlining.
+        assert "<h2 class=\"with-action\">" in page and "Install it" in page
+
+    def test_the_panel_and_the_edit_form_are_never_open_together(self, client):
+        """Two forms for two different servers under one list is a page where the wrong button
+        is easy to press."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "a", "host": "h", "user": "u", "platform": "linux"},
+            {"name": "b", "host": "h2", "user": "u", "platform": "linux"},
+        ]})
+        page = client.get("/settings?enroll=a&edit=b&add=1").text
+        assert 'id="enrol"' in page and 'id="server-form"' not in page
+
+    def test_a_stale_enrol_link_opens_nothing(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        assert 'id="enrol"' not in client.get("/settings?enroll=gone").text
+
     def test_form_shows_the_fingerprint_but_never_a_private_key(self, client):
         complete_setup(client)
         from timar import config
         config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        page = client.get("/settings/servers/a/enroll").text
+        page = client.get("/settings?enroll=a").text
         assert "SHA256:" in page
         assert "ssh-ed25519 " in page
         assert "PRIVATE KEY" not in page
@@ -740,9 +776,9 @@ class TestEnrolmentRoutes:
             {"name": "box", "host": "h", "user": "root", "platform": "linux"},
             {"name": "web", "host": "h", "user": "deploy", "platform": "linux"},
         ]})
-        assert 'name="grant_sudo"' not in client.get("/settings/servers/router/enroll").text
-        assert 'name="grant_sudo"' not in client.get("/settings/servers/box/enroll").text
-        assert 'name="grant_sudo"' in client.get("/settings/servers/web/enroll").text
+        assert 'name="grant_sudo"' not in client.get("/settings?enroll=router").text
+        assert 'name="grant_sudo"' not in client.get("/settings?enroll=box").text
+        assert 'name="grant_sudo"' in client.get("/settings?enroll=web").text
 
     def test_the_password_is_never_echoed_back(self, client, monkeypatch):
         """Re-rendering the form with the field refilled would put it in browser history and

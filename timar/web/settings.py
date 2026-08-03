@@ -75,9 +75,32 @@ def _server_values(servers: list[dict], guest_of: dict, edit: str | None,
     return {}
 
 
+def _enrol_context(server: dict | None, error: str | None, result: str | None) -> dict | None:
+    """Everything the enrolment panel needs, or `None` when it is not open.
+
+    The keypair is the *installation's*, not this server's — one pair, generated on first use.
+    It is shown here anyway because this is where an operator decides whether to trust it: the
+    fingerprint to compare, and the public key for anyone who would rather install it by hand.
+    """
+    if server is None:
+        return None
+    platform = get_platform(server.get("platform"))
+    return {
+        "server": server,
+        "platform": platform,
+        "fingerprint": keys.fingerprint(),
+        "public_key": keys.public_key(),
+        "can_sudo": platform.supports_sudo and server["user"] != "root",
+        "error": error,
+        "result": result,
+    }
+
+
 def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None = None,
           notice: str | None = None, edit: str | None = None, add: bool = False,
-          submitted: dict | None = None, status_code: int = 200):
+          submitted: dict | None = None, enroll: str | None = None,
+          enroll_error: str | None = None, enroll_result: str | None = None,
+          status_code: int = 200):
     cfg = config.load()
     llm_cfg = cfg.get("llm") or {}
     telegram_cfg = cfg.get("telegram") or {}
@@ -94,6 +117,13 @@ def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None 
     if editing and not any(s["name"] == editing for s in servers):
         editing = None  # a stale link to a server that has since been removed
 
+    # One panel below the list at a time. Enrolling wins because it is the only one that can be
+    # reached while another is open, and two forms for two different servers stacked under one
+    # list is a page where the wrong button is easy to press.
+    enrolling = next((s for s in servers if s["name"] == enroll), None) if enroll else None
+    if enrolling is not None:
+        editing, add = None, False
+
     return TEMPLATES.TemplateResponse(request, "settings.html", {
         "tab": tab,
         "servers": servers,
@@ -101,10 +131,11 @@ def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None 
         "guest_of": guest_of,
         "editing": editing,
         "values": _server_values(servers, guest_of, editing, submitted),
+        "enrol": _enrol_context(enrolling, enroll_error, enroll_result),
         # Open on request, while editing, whenever something was rejected — and always when
         # there is no fleet yet, because a first-run page whose only panel says "no servers"
         # and offers nothing to press is a dead end.
-        "form_open": bool(add or editing or errors or not servers),
+        "form_open": bool(enrolling is None and (add or editing or errors or not servers)),
         "log_check": cfg.get("log_check", {}),
         "llm": {k: v for k, v in llm_cfg.items() if k != "api_key"},
         "llm_has_key": bool(llm_cfg.get("api_key")),
@@ -135,8 +166,8 @@ def _redirect(notice: str | None = None, tab: str = SERVERS_TAB):
 
 @router.get("", response_class=HTMLResponse)
 async def page(request: Request, tab: str | None = None, notice: str | None = None,
-               edit: str | None = None, add: bool = False):
-    return _view(request, tab=_tab(tab), notice=notice, edit=edit, add=add)
+               edit: str | None = None, add: bool = False, enroll: str | None = None):
+    return _view(request, tab=_tab(tab), notice=notice, edit=edit, add=add, enroll=enroll)
 
 
 def _rename_references(servers: list[dict], old: str, new: str) -> None:
@@ -347,19 +378,16 @@ async def save_schedules(request: Request):
     return _redirect("saved", tab=GLOBAL_TAB)
 
 
-@router.get("/servers/{name}/enroll", response_class=HTMLResponse)
-async def enroll_form(request: Request, name: str):
-    server = _find_server(name)
-    platform = get_platform(server.get("platform"))
-    return TEMPLATES.TemplateResponse(request, "enroll.html", {
-        "server": server,
-        "platform": platform,
-        "fingerprint": keys.fingerprint(),
-        "public_key": keys.public_key(),
-        "can_sudo": platform.supports_sudo and server["user"] != "root",
-        "error": None,
-        "result": None,
-    })
+@router.get("/servers/{name}/enroll")
+async def enroll_form(name: str):
+    """Enrolment used to be a page of its own; it is a panel under the server list now.
+
+    Kept as a redirect rather than deleted: this URL is what any bookmark, browser history entry
+    or note-to-self points at, and `_find_server` still answers 404 for a machine that is gone
+    rather than opening the settings page with nothing on it.
+    """
+    _find_server(name)
+    return RedirectResponse(f"/settings?enroll={name}#enrol", status_code=SEE_OTHER)
 
 
 @router.post("/servers/{name}/enroll", response_class=HTMLResponse)
@@ -373,7 +401,6 @@ async def enroll_submit(request: Request, name: str):
     """
     form = dict(await request.form())
     server = _find_server(name)
-    platform = get_platform(server.get("platform"))
     password = form.get("password") or ""
     wants_sudo = form.get("grant_sudo") in ("on", "true", "1")
 
@@ -392,15 +419,10 @@ async def enroll_submit(request: Request, name: str):
             error = str(e)
     del password
 
-    return TEMPLATES.TemplateResponse(request, "enroll.html", {
-        "server": server,
-        "platform": platform,
-        "fingerprint": keys.fingerprint(),
-        "public_key": keys.public_key(),
-        "can_sudo": platform.supports_sudo and server["user"] != "root",
-        "error": error,
-        "result": result,
-    }, status_code=400 if error else 200)
+    # Rendered rather than redirected: the outcome is the whole point of the request and a
+    # redirect would have to carry it in the URL, where it would survive a refresh and a share.
+    return _view(request, enroll=name, enroll_error=error, enroll_result=result,
+                 status_code=400 if error else 200)
 
 
 @router.post("/servers/{name}/verify", response_class=HTMLResponse)
