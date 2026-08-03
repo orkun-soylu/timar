@@ -1,0 +1,45 @@
+{# Swapped on its own when the filter changes, so no `extends` — and the id has to live on
+   this element, not on a wrapper, for the outerHTML swap to replace it. #}
+<div id="report-list">
+{% if reports %}
+  <table>
+    <thead>
+      <tr><th>Finished</th><th>Job</th><th>Outcome</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for entry in reports %}
+      <tr>
+        <td style="white-space:nowrap">{{ entry.finished_at | replace("T", " ") }}</td>
+        <td class="muted">{{ entry.title }}</td>
+        <td>
+          {# Red marks a run that *failed*; a run that finished is left in the body colour even
+             when it found something. Green on "2 with findings" reads as all-clear at a glance,
+             which is the opposite of what the line says. #}
+          {% if entry.error %}
+            {# The failure text, not just "failed": which host and which command is the whole
+               reason to keep the run rather than the fact that it went wrong. #}
+            <span class="error">{{ entry.error }}</span>
+          {% elif entry.ok %}
+            {{ entry.summary or "—" }}
+          {% else %}
+            <span class="error">{{ entry.summary or "failed" }}</span>
+          {% endif %}
+        </td>
+        <td style="text-align:right; white-space:nowrap">
+          <a href="/reports/{{ entry.id }}" class="muted" style="font-size:0.875rem">report</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="empty">
+    {% if job %}
+      No reports archived for this job yet.
+    {% else %}
+      No reports archived yet. Every run a job finishes is kept here — start one with
+      <em>run now</em> on the <a href="/">dashboard</a>.
+    {% endif %}
+  </p>
+{% endif %}
+</div>

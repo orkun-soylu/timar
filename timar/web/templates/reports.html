@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Reports — Timar{% endblock %}
+{% block body %}
+<header>
+  <h1>Reports</h1>
+  <span class="spacer"></span>
+  <a href="/" class="muted">← dashboard</a>
+</header>
+
+<section class="panel">
+  {# A plain GET form, so the filter works with no scripting at all and the choice lands in a
+     URL that can be bookmarked. HTMX upgrades it in place: it re-requests this same page,
+     takes only the list out of the response and pushes the real URL — so a filtered view
+     survives a refresh, which a fragment endpoint in the address bar would not.
+     `outerHTML` rather than `innerHTML`: hx-select returns the container itself, and swapping
+     that inside its own target would nest a second #report-list on every change. #}
+  <form class="stack" method="get" action="/reports">
+    <div class="row" style="align-items:flex-end">
+      <label style="flex:0 1 20rem">
+        <span>Show</span>
+        <select name="job"
+                hx-get="/reports"
+                hx-select="#report-list"
+                hx-target="#report-list"
+                hx-swap="outerHTML"
+                hx-push-url="true">
+          {% for option in filters %}
+            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
+              {{ option.label }} ({{ option.count }})
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      {# Only reachable without scripting; with HTMX the change event has already applied the
+         filter, and a button that does nothing is a button an operator has to think about. #}
+      <noscript><button type="submit" class="secondary" style="margin-bottom:1rem">show</button></noscript>
+    </div>
+  </form>
+
+  {% include "_reports.html" %}
+</section>
+
+<p class="muted">
+  Every run a job finishes is kept here, whether or not it was also sent to Telegram. The
+  dashboard shows the latest one; this shows how a finding developed — a disk creeping upwards,
+  a host that has been unreachable for several sweeps, an update that fails every week.
+</p>
+{% endblock %}

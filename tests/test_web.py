@@ -608,3 +608,88 @@ class TestModelListing:
     def test_the_model_field_is_wired_to_the_datalist(self, client):
         complete_setup(client)
         assert 'list="model-options"' in client.get("/settings").text
+
+
+class TestReportArchive:
+    """The series, not the snapshot.
+
+    `state.json` answers "what did the last sweep find". It cannot answer "when did this
+    start" — a disk creeping past 90%, an update failing every Friday. Only a history can.
+    """
+
+    @staticmethod
+    def archive(job, **fields):
+        from timar import reports
+        return reports.archive(job, title=fields.pop("title", job),
+                               ok=fields.pop("ok", True), **fields)
+
+    def test_lists_archived_runs_newest_first(self, client):
+        complete_setup(client)
+        self.archive("log_sweep", summary="older run")
+        self.archive("log_sweep", summary="newer run")
+        body = client.get("/reports").text
+        assert body.index("newer run") < body.index("older run")
+
+    def test_the_dropdown_offers_every_job_with_its_count(self, client):
+        complete_setup(client)
+        self.archive("update", title="Update run", summary="3 updated")
+        body = client.get("/reports").text
+        assert "Update run (1)" in body
+        # Offered even with nothing archived: an empty list is the answer to "why have I seen
+        # no sweep report", which the filter should be able to ask.
+        assert "Log sweep (0)" in body
+
+    def test_filtering_narrows_the_list(self, client):
+        complete_setup(client)
+        self.archive("log_sweep", title="Log sweep", summary="1 with findings")
+        self.archive("update", title="Update run", summary="3 updated")
+        body = client.get("/reports?job=update").text
+        assert "3 updated" in body and "1 with findings" not in body
+
+    def test_an_unknown_job_shows_an_empty_list_rather_than_an_error(self, client):
+        """The value can come from a stale bookmark naming a job that no longer exists."""
+        complete_setup(client)
+        response = client.get("/reports?job=retired")
+        assert response.status_code == 200 and "No reports archived" in response.text
+
+    def test_an_archived_report_is_shown_in_full(self, client):
+        complete_setup(client)
+        report_id = self.archive("log_sweep", title="Log sweep",
+                                 report="web-01:\n  disk 91% on /")
+        assert "disk 91% on /" in client.get(f"/reports/{report_id}").text
+
+    def test_an_archived_report_links_back_to_its_own_filter(self, client):
+        """Comparing four update runs must not mean re-picking the filter between each one."""
+        complete_setup(client)
+        report_id = self.archive("update", title="Update run", report="ok")
+        assert 'href="/reports?job=update"' in client.get(f"/reports/{report_id}").text
+
+    def test_an_archived_report_is_escaped_rather_than_rendered(self, client):
+        """Findings carry remote log lines. A host that logs `<script>` must not run it here."""
+        complete_setup(client)
+        report_id = self.archive("log_sweep", report="<script>alert(1)</script>")
+        body = client.get(f"/reports/{report_id}").text
+        assert "<script>alert(1)</script>" not in body and "&lt;script&gt;" in body
+
+    def test_an_id_that_climbs_out_of_the_archive_is_a_404(self, client):
+        """`auth.json` holds the password hash and lives one directory up."""
+        complete_setup(client)
+        assert client.get("/reports/..%2Fauth.json").status_code == 404
+        assert client.get("/reports/20260101-000000.000000-update").status_code == 404
+
+    def test_the_archive_requires_a_session(self, client):
+        complete_setup(client)
+        report_id = self.archive("update", report="fleet inventory")
+        client.cookies.clear()
+        assert client.get("/reports").headers["location"] == "/login"
+        assert client.get(f"/reports/{report_id}").headers["location"] == "/login"
+
+    def test_the_dashboard_links_to_the_archive(self, client):
+        complete_setup(client)
+        assert 'href="/reports"' in client.get("/").text
+
+    def test_the_history_link_appears_only_once_something_is_archived(self, client):
+        complete_setup(client)
+        assert "/reports?job=update" not in client.get("/fragments/jobs").text
+        self.archive("update", title="Update run", summary="3 updated")
+        assert "/reports?job=update" in client.get("/fragments/jobs").text

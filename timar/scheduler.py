@@ -25,7 +25,7 @@ import logging
 import traceback
 from datetime import datetime
 
-from . import config, jobs, schedule as schedule_module, state
+from . import config, jobs, reports, schedule as schedule_module, state
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +113,20 @@ class Scheduler:
     def is_running(self, name: str) -> bool:
         return name in self._running
 
+    @staticmethod
+    def _record(name: str, *, ok: bool, summary: str = "", error: str = "",
+                report: str = "") -> None:
+        """Write the outcome to both places a run is remembered.
+
+        `state` keeps the latest run, which is what the dashboard reads; `reports` keeps the
+        series. One call site for both, because the two must never disagree about whether a run
+        happened — and because a failed run belongs in the archive just as much as a clean one.
+        The failing Friday update is the entry an operator most wants to find three weeks later.
+        """
+        state.mark_finished(name, ok=ok, summary=summary, error=error, report=report)
+        reports.archive(name, title=jobs.TITLES.get(name, name), ok=ok, summary=summary,
+                        error=error, report=report)
+
     async def run(self, name: str) -> bool:
         """Run one job. Returns False if it was already running.
 
@@ -131,9 +145,7 @@ class Scheduler:
             try:
                 cfg = config.load()
                 outcome = await asyncio.to_thread(jobs.RUNNERS[name], cfg)
-                state.mark_finished(
-                    name, ok=True, summary=outcome.summary, report=outcome.report
-                )
+                self._record(name, ok=True, summary=outcome.summary, report=outcome.report)
                 logger.info("%s finished: %s", name, outcome.summary)
                 return True
             except Exception as e:
@@ -141,7 +153,7 @@ class Scheduler:
                 # would kill the loop that called us, which is the failure this module exists
                 # to prevent.
                 logger.exception("%s failed", name)
-                state.mark_finished(name, ok=False, error=f"{type(e).__name__}: {e}")
+                self._record(name, ok=False, error=f"{type(e).__name__}: {e}")
                 return True
             finally:
                 self._running.discard(name)

@@ -69,9 +69,11 @@ def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "",
                   report: str = "") -> None:
     """Record the outcome, including the full report behind the summary.
 
-    Only the latest report is kept, deliberately: this is a record of what the last run found,
-    not an archive. Keeping a history would grow the state file without bound on a machine
-    whose whole job is to run unattended for months.
+    Only the latest report is kept *here*, deliberately: this file is what the dashboard reads
+    on every poll, and growing it without bound on a machine that runs unattended for months
+    would make the cheapest read in the product the most expensive one. The history lives in
+    `reports.py` as one file per run, where reading it is a page an operator asked for rather
+    than something every request pays for.
     """
     _update_job(
         name,

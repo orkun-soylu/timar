@@ -65,6 +65,9 @@ host is step one of the job, and shutting it back down is the last.
   did not run.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
   them. A check that cannot run says so instead of quietly reporting all-clear.
+- **Report archive** — every run a job finishes is kept and browsable under `/reports`, filtered
+  by job. Telegram delivery is a copy of that, not the only place the findings exist; a disk
+  creeping upwards or an update that fails every week is visible as a series, not one snapshot.
 
 ## Supported platforms
 
