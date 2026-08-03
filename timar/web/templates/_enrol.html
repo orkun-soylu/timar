@@ -1,111 +1,104 @@
-{% extends "base.html" %}
-{% block title %}Enrol {{ server.name }} — Timar{% endblock %}
-{% block body %}
-<header>
-  <h1>Enrol {{ server.name }}</h1>
-  <span class="spacer"></span>
-  <a href="/settings" class="muted">← settings</a>
-</header>
+{# The enrolment panel, opened under the server list by the `enrol` link on a row.
 
-{% if result %}
-  <div class="panel notice good">{{ result }}</div>
-{% elif error %}
-  <div class="panel notice bad">{{ error }}</div>
-{% endif %}
+   It was a page of its own until it became this: leaving the settings page to install a key and
+   coming back to a list that had forgotten where you were is a trip an operator makes once per
+   machine, and the panel is the same shape as the add/edit form beside it. #}
+<section class="panel" id="enrol">
+  <h2>Enrol {{ enrol.server.name }}</h2>
 
-<section class="panel">
-  <h2>Timar's key</h2>
+  {% if enrol.result %}
+    <div class="notice good" style="margin:0">{{ enrol.result }}</div>
+  {% elif enrol.error %}
+    <div class="notice bad" style="margin:0">{{ enrol.error }}</div>
+  {% endif %}
+
   <div class="stack">
+    <h3>Timar's key</h3>
     <p class="hint" style="margin-top:0">
       This installation has one keypair, generated on first use and kept in its data volume.
-      Enrolling installs the public half on <code>{{ server.name }}</code>. Compare the
+      Enrolling installs the public half on <code>{{ enrol.server.name }}</code>. Compare the
       fingerprint if you want to confirm what is being installed.
     </p>
-    <p><code>{{ fingerprint }}</code></p>
+    <p><code>{{ enrol.fingerprint }}</code></p>
     <details>
       <summary class="muted" style="cursor:pointer; font-size:0.875rem">show the public key</summary>
-      <pre style="white-space:pre-wrap; word-break:break-all; font-size:0.75rem">{{ public_key }}</pre>
+      <pre style="white-space:pre-wrap; word-break:break-all; font-size:0.75rem">{{ enrol.public_key }}</pre>
       <p class="hint">
         You can also install this by hand and skip the form below — Timar only needs the key to
         be accepted, not to have put it there itself.
       </p>
     </details>
   </div>
-</section>
 
-<section class="panel">
-  <h2>Install it</h2>
-  <form method="post" action="/settings/servers/{{ server.name }}/enroll" class="stack">
+  <form method="post" action="/settings/servers/{{ enrol.server.name }}/enroll" class="stack">
+    <h3>Install it</h3>
     <p class="hint" style="margin-top:0">
-      Connects once as <code>{{ server.user }}@{{ server.host }}</code> with the password, appends
-      the key to <code>{{ platform.authorized_keys }}</code>, then proves the key works on its own.
+      Connects once as <code>{{ enrol.server.user }}@{{ enrol.server.host }}</code> with the
+      password, appends the key to <code>{{ enrol.platform.authorized_keys }}</code>, then proves
+      the key works on its own.
       <strong>The password is used for this request and nothing else</strong> — it is not stored,
       not logged, and not sent back to this page.
     </p>
 
-    <label><span>SSH password for {{ server.user }}</span>
+    <label><span>SSH password for {{ enrol.server.user }}</span>
       <input name="password" type="password" autocomplete="off" required autofocus></label>
 
-    {% if can_sudo %}
+    {% if enrol.can_sudo %}
     <label class="inline">
       <input type="checkbox" name="grant_sudo">
       <span>Also grant passwordless sudo</span>
     </label>
     <p class="hint">
-      Writes <code>{{ server.user }} ALL=(ALL) NOPASSWD:ALL</code> to
+      Writes <code>{{ enrol.server.user }} ALL=(ALL) NOPASSWD:ALL</code> to
       <code>/etc/sudoers.d/timar</code>. The file is validated with <code>visudo</code> before it
       is put in place — if validation fails nothing is changed, because a malformed sudoers file
       breaks <code>sudo</code> for everyone on the machine, including the session you would
       repair it from.
     </p>
-    {% elif platform.supports_sudo %}
+    {% elif enrol.platform.supports_sudo %}
     <p class="hint">Passwordless sudo is not offered: this user is already root.</p>
     {% else %}
-    <p class="hint">Passwordless sudo is not offered: {{ platform.label }} has no sudo.</p>
+    <p class="hint">Passwordless sudo is not offered: {{ enrol.platform.label }} has no sudo.</p>
     {% endif %}
 
     <div class="actions">
       <button type="submit">Enrol</button>
-      <a href="/settings" class="muted" style="margin-left:0.4rem">cancel</a>
+      <a href="/settings" class="muted" style="margin-left:0.4rem">close</a>
     </div>
   </form>
-</section>
 
-{% if server.wol_mac %}
-<section class="panel">
-  <h2>Wake it</h2>
+  {% if enrol.server.wol_mac %}
   <div class="stack">
+    <h3>Wake it</h3>
     <p class="hint" style="margin-top:0">
-      Sends a magic packet{% if server.wol_relay %} from <code>{{ server.wol_relay }}</code>{% endif %}.
+      Sends a magic packet{% if enrol.server.wol_relay %} from
+      <code>{{ enrol.server.wol_relay }}</code>{% endif %}.
       Waking has no feedback of its own — if the machine stays dark it could be a wrong MAC, a
       packet that never left the network, or Wake-on-LAN disabled in its firmware. Watch the
       dashboard.
     </p>
     <div class="actions">
       <button type="button" class="secondary"
-              hx-post="/settings/servers/{{ server.name }}/wake"
+              hx-post="/settings/servers/{{ enrol.server.name }}/wake"
               hx-target="#wake-result" hx-swap="innerHTML"
               hx-indicator="#wake-result">Send magic packet</button>
       <span id="wake-result" class="result"></span>
     </div>
   </div>
-</section>
-{% endif %}
+  {% endif %}
 
-<section class="panel">
-  <h2>Check an existing enrolment</h2>
   <div class="stack">
+    <h3>Check an existing enrolment</h3>
     <p class="hint" style="margin-top:0">
       Connects with the key alone — no password — and reports who it becomes and whether
       passwordless sudo works.
     </p>
     <div class="actions">
       <button type="button" class="secondary"
-              hx-post="/settings/servers/{{ server.name }}/verify"
+              hx-post="/settings/servers/{{ enrol.server.name }}/verify"
               hx-target="#verify-result" hx-swap="innerHTML"
               hx-indicator="#verify-result">Verify</button>
       <span id="verify-result" class="result"></span>
     </div>
   </div>
 </section>
-{% endblock %}
