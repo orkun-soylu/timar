@@ -23,12 +23,12 @@ one-page tour at **[timar.tools](https://timar.tools)**.
 > scheduler, settings and key enrolment work and are tested. See
 > [ARCHITECTURE.md](ARCHITECTURE.md).
 
-> ⚠️ **Running 0.1.0? Your schedules are not firing.** In that release a daily or weekly
-> schedule never ran once — the loop asked for the next run time again at the moment a job came
-> due, and got tomorrow. Manual *run now* worked, which is why it looked fine: the dashboard
-> kept counting down to a run that never happened. Fixed on `main`, shipping in the next tagged
-> image. Check your archive — if every report in it is at an odd time, none of them were
-> scheduled. See [CHANGELOG.md](CHANGELOG.md).
+> ⚠️ **Running 0.1.0? Upgrade to 0.1.1 — your schedules are not firing.** In 0.1.0 a daily or
+> weekly schedule never ran once: the loop asked for the next run time again at the moment a job
+> came due, and got tomorrow. Manual *run now* worked, which is why it looked fine — the
+> dashboard kept counting down to a run that never happened. Check your archive afterwards; if
+> every report in it is at an odd time, none of them were scheduled. See
+> [CHANGELOG.md](CHANGELOG.md).
 
 ## Run it
 
@@ -42,7 +42,7 @@ do — the first screen is the only one served before an account exists.
 
 The image is published for **amd64 and arm64** — a Raspberry Pi is a first-class host here, not
 an afterthought. `:latest` follows the most recent release; pin a version
-(`ghcr.io/orkun-soylu/timar:0.1.0`) if you would rather choose when to move.
+(`ghcr.io/orkun-soylu/timar:0.1.1`) if you would rather choose when to move.
 
 Configuration lives in the `timar-data` volume as `config.yaml`; see
 [`config.example.yaml`](config.example.yaml) for the fields. You can also edit the fleet from
