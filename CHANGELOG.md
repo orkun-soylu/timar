@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Editing a server in settings no longer deletes the parts of its entry the form does not
+  show.** Saving rebuilt the entry from the form alone, so `job_logs`, `watch_logs`, `ssh_key`
+  and a hypervisor's `manages_vms` were dropped by an unrelated edit — silently, and in the
+  direction nothing reports. A sweep that stops watching a backup log writes no error, because
+  a job nobody watches produces none; and a hypervisor edited into forgetting its guests leaves
+  a VM that is then treated as always-on, turning every night it correctly spends powered off
+  into an outage report. If you edited a server through the UI, check those fields in
+  `config.yaml`.
+
 ## [0.1.0] — 2026-08-03
 
 The first tagged release, and the first published image. Everything below already worked before

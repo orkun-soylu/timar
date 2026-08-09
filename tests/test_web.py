@@ -546,6 +546,55 @@ class TestSettings:
         names = [s["name"] for s in config.load()["servers"]]
         assert names == ["a", "b2", "c"]
 
+    def test_edit_keeps_the_fields_the_form_does_not_show(self, client):
+        """The form is not the whole entry. `job_logs`, `watch_logs` and `ssh_key` are written by
+        hand, have no input on this page, and an edit that rebuilt the entry from the form alone
+        deleted them — silently, and in the one direction nothing reports: the sweep simply stops
+        watching a backup, and a job that is no longer watched writes no error anywhere.
+        """
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{
+            "name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux",
+            "ssh_key": "~/.ssh/legacy_ed25519",
+            "job_logs": [{"path": "/var/log/backup.log",
+                          "started_marker": "Backup started",
+                          "completed_marker": "Backup completed"}],
+            "watch_logs": ["/var/log/myapp.log"],
+        }]})
+
+        client.post("/settings/servers", data={
+            "original_name": "web-01", "name": "web-01", "host": "10.0.0.2",
+            "user": "deploy", "platform": "linux"})
+
+        entry = config.load()["servers"][0]
+        assert entry["host"] == "10.0.0.2"          # the edit still applied
+        assert entry["ssh_key"] == "~/.ssh/legacy_ed25519"
+        assert entry["job_logs"][0]["path"] == "/var/log/backup.log"
+        assert entry["watch_logs"] == ["/var/log/myapp.log"]
+
+    def test_editing_a_hypervisor_does_not_orphan_its_guests(self, client):
+        """Same rebuild, worse blow. `manages_vms` names the guests this host is responsible for,
+        and dropping it leaves a VM nothing will ever start — and one that `config.on_demand` then
+        calls always-on, so every night it correctly spends powered off is reported as an outage.
+        """
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv-01", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "wol_mac": "aa:bb:cc:dd:ee:01",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+
+        client.post("/settings/servers", data={
+            "original_name": "hv-01", "name": "hv-01", "host": "10.0.0.9",
+            "user": "root", "platform": "proxmox", "wol_mac": "aa:bb:cc:dd:ee:01"})
+
+        servers = config.load()["servers"]
+        assert servers[0]["manages_vms"] == [{"vm_id": 100, "server_name": "vm-01"}]
+        assert config.on_demand(servers)["vm-01"] == "hv-01"
+
     def test_delete_also_drops_the_hypervisor_relationship(self, client):
         """A guest left in manages_vms after its entry is gone is one nothing will ever start."""
         complete_setup(client)

@@ -5,7 +5,8 @@ not in a form handler.
 """
 import pytest
 
-from timar.validate import ValidationError, guest_link, llm, log_check, server, telegram
+from timar.validate import (SERVER_FIELDS, ValidationError, guest_link, llm, log_check, server,
+                            telegram)
 
 MINIMAL = {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "linux"}
 
@@ -13,6 +14,20 @@ MINIMAL = {"name": "web-01", "host": "10.0.0.1", "user": "deploy", "platform": "
 class TestServer:
     def test_minimal_entry(self):
         assert server(MINIMAL, set()) == MINIMAL
+
+    def test_server_fields_names_everything_this_form_can_write(self):
+        """The drift guard for `SERVER_FIELDS`.
+
+        A caller uses that set to decide which parts of a stored entry the form owns and which it
+        must carry across untouched. A field this function learns to write but the set does not
+        name would be mistaken for hand-written config, and clearing it in the form would look
+        like it worked and never persist.
+        """
+        maximal = server({**MINIMAL, "wol_mac": "aa:bb:cc:dd:ee:ff", "wol_broadcast": "10.0.0.255",
+                          "wol_relay": "other-01", "update_cmd": "true", "context": "a note",
+                          "update_timeout": "3600"},
+                         {"other-01"})
+        assert set(maximal) == SERVER_FIELDS
 
     def test_all_missing_fields_reported_at_once(self):
         """A form that reveals one problem at a time is a form people learn to dread."""
