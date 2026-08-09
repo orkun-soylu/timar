@@ -297,3 +297,60 @@ class TestInterruptedRuns:
         sched = scheduler_module.Scheduler()
         await sched.run(jobs.LOG_SWEEP)
         assert state.job(jobs.LOG_SWEEP)["status"] == state.OK
+
+
+class TestTheLoopActuallyFires:
+    """Schedule arithmetic being right is not the feature. Reaching the run is.
+
+    `next_run` answers "the next moment in the future", so at the due moment it answers
+    *tomorrow*. A loop that re-asked it instead of sleeping to the time it had already been
+    given therefore never arrived: `wait` was never less than zero, `run` was never called, and
+    not one scheduled run fired in the product's life. Nothing looked wrong — the dashboard's
+    "next run" kept ticking over every minute, which is the most convincing possible lie.
+    """
+
+    @pytest.mark.asyncio
+    async def test_a_daily_job_fires_at_its_time(self, data_dir, monkeypatch):
+        import asyncio
+        from datetime import datetime as real_datetime, timedelta
+
+        from timar import config, jobs, scheduler as scheduler_module
+
+        config.save({"schedules": {"log_sweep": {"enabled": True, "kind": "daily",
+                                                 "at": "09:30"}}})
+        clock = {"now": real_datetime(2026, 8, 8, 9, 0)}
+
+        class FakeDatetime:
+            @staticmethod
+            def now():
+                return clock["now"]
+
+        real_sleep = asyncio.sleep
+
+        async def fake_sleep(seconds):
+            # Simulated time, so the test costs no wall clock and cannot flake on a slow box.
+            clock["now"] += timedelta(seconds=seconds)
+            await real_sleep(0)
+
+        monkeypatch.setattr(scheduler_module, "datetime", FakeDatetime)
+        monkeypatch.setattr(scheduler_module.asyncio, "sleep", fake_sleep)
+
+        fired = []
+        monkeypatch.setitem(jobs.RUNNERS, jobs.LOG_SWEEP,
+                            lambda cfg: fired.append(clock["now"]) or jobs.Outcome("swept", ""))
+
+        task = asyncio.create_task(scheduler_module.Scheduler()._job_loop(jobs.LOG_SWEEP))
+        for _ in range(500):        # bounded: a loop that never fires ends the test, not hangs
+            await real_sleep(0)
+            if fired:
+                break
+        for _ in range(300):        # and then keep it turning, well past the run
+            await real_sleep(0)
+        task.cancel()
+
+        assert fired, "the daily job never fired"
+        assert fired[0] == real_datetime(2026, 8, 8, 9, 30)
+        # Sleeping to the due moment must not become running *at* it, repeatedly: once the run
+        # is recorded the schedule is a day away, and a loop that fired on every tick until
+        # then would sweep the fleet hundreds of times.
+        assert len(fired) == 1
