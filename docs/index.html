@@ -278,6 +278,19 @@
         <span>Guests first, then their hypervisor, in order. Anything that was already running
         is left running.</span></li>
     </ol>
+
+    <figure class="shot">
+      <img class="shot-dark" src="images/report-update-dark.png" width="2560" height="758"
+           alt="An archived update run, summarised as five updated, none failed, one skipped. Three machines are annotated 'woken, updated, shut down again'; two that were already on carry no annotation; the OpenWrt router is marked skipped because no update command is configured for it." />
+      <img class="shot-light" src="images/report-update-light.png" width="2560" height="758"
+           alt="The same update run in a light theme." />
+      <figcaption>
+        A run says what it <em>did</em> to each machine, not just that it succeeded. The three
+        annotated lines were asleep when the run started and are asleep again now; the router
+        was skipped rather than quietly left out.
+      </figcaption>
+    </figure>
+
     <div class="callout">
       <p>
         <strong>The reports outlive the notification.</strong> Every finished run is archived and
@@ -286,6 +299,19 @@
         place the findings exist.
       </p>
     </div>
+
+    <figure class="shot">
+      <img class="shot-dark" src="images/report-sweep-dark.png" width="2560" height="1180"
+           alt="An archived log sweep: one machine with findings, none unreachable, three asleep. A written assessment at the top singles out a disk at 91 percent and a drive reporting a pending sector, and says which of the two is the more urgent. Below it, the raw per-host findings — the two smartd lines and the disk, then 'clean' for two hosts and 'offline, not checked' for the three that were asleep." />
+      <img class="shot-light" src="images/report-sweep-light.png" width="2560" height="1180"
+           alt="The same log sweep in a light theme." />
+      <figcaption>
+        The written assessment sits above the findings it was written from, never instead of
+        them. A machine that was asleep is recorded as <em>not checked</em> rather than clean —
+        a sweep does not wake the fleet, and reporting an unchecked host as healthy is the one
+        thing a status page must not do.
+      </figcaption>
+    </figure>
   </div>
 </section>
 
@@ -363,6 +389,20 @@
       Everything an installation <em>is</em> lives in one directory (<code>/data</code>): config,
       credentials, state, reports and the SSH key. Backup and migration are <code>cp -a</code>.
     </p>
+
+    <figure class="shot">
+      <img class="shot-dark" src="images/settings-dark.png" width="2560" height="1388"
+           alt="Timar's settings page, servers tab: six machines with their SSH login, platform and wake column. Two are always on, two are on-demand, and a Proxmox guest reads 'on-demand via hv-01'. Each row offers enrol, edit and remove. A second tab holds the settings that belong to the whole fleet." />
+      <img class="shot-light" src="images/settings-light.png" width="2560" height="1388"
+           alt="The same settings page in a light theme." />
+      <figcaption>
+        The fleet is edited here, not in a YAML file you hand-write — though it is still just
+        <code>config.yaml</code> underneath. A guest reads <em>on-demand via hv-01</em> because it
+        inherits that from its hypervisor: a VM has no wake address of its own, and calling it
+        always-on would turn every night it spends off into an outage report.
+      </figcaption>
+    </figure>
+
     <div class="callout">
       <p>
         <strong>Do not expose this to the internet.</strong> Timar holds an SSH key that reaches
