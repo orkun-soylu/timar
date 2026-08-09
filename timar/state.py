@@ -85,6 +85,47 @@ def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "",
     )
 
 
+def mark_interrupted(name: str) -> datetime | None:
+    """Close out a run that was still marked `running` when this process started.
+
+    `mark_started` writes before the work begins and `mark_finished` after it ends, so a process
+    killed in between leaves `running` in the file for good — nothing else ever clears it. The
+    dashboard then describes a job that stopped days ago as in progress, which is precisely the
+    "reports itself as running while nothing is happening" failure this module was written to
+    make visible. Producing it would be a poor joke.
+
+    Returns when that run started, or None if the job was not marked running.
+
+    **`last_run` is set to the start of the interrupted run, not to now.** The run did happen —
+    dating it now would reset the staleness the dashboard exists to show, hiding a scheduler
+    that has been dead for a week behind a fresh-looking timestamp.
+    """
+    record = job(name)
+    if record.get("status") != RUNNING:
+        return None
+
+    started = record.get("started_at")
+    try:
+        when = datetime.fromisoformat(started) if started else None
+    except ValueError:
+        when = None
+
+    fields: dict[str, Any] = {
+        "status": FAILED,
+        "last_error": (
+            f"Interrupted: Timar stopped during a run that began at "
+            f"{started or 'an unknown time'}. An update run that stops here has already woken "
+            f"machines and not shut them down again."
+        ),
+        "last_summary": "",
+        "last_report": "",
+    }
+    if when:
+        fields["last_run"] = when.isoformat(timespec="seconds")
+    _update_job(name, **fields)
+    return when
+
+
 def set_next_run(name: str, when: datetime | None) -> None:
     _update_job(name, next_run=when.isoformat(timespec="seconds") if when else None)
 

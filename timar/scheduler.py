@@ -49,10 +49,36 @@ class Scheduler:
     # -- lifecycle -----------------------------------------------------------
 
     def start(self) -> None:
+        self._reconcile_interrupted()
         for name in jobs.JOBS:
             self._tasks.append(asyncio.create_task(
                 self._supervise(f"job:{name}", lambda n=name: self._job_loop(n))
             ))
+
+    def _reconcile_interrupted(self) -> None:
+        """Close out any run the last process died in the middle of.
+
+        A job marked `running` in a process that has only just started cannot be running: the
+        set that tracks live runs is in memory and is empty here. So the flag is a leftover, and
+        nothing else in the system ever clears it — it survives restarts, because it lives in
+        the volume.
+
+        Recorded as a failed run rather than quietly reset. An interrupted update is not a
+        non-event: it stops before the shutdown phase, so the machines it woke are still on, and
+        the operator finding an unexpectedly awake fleet deserves the entry that explains it.
+        The archive gets a copy dated to when that run started, so the series shows a gap with a
+        reason in it instead of an unexplained absence.
+        """
+        for name in jobs.JOBS:
+            if state.job(name).get("status") != state.RUNNING:
+                continue
+            # None when the record carries no usable start time; the archive then falls back to
+            # stamping now, which is worse than the truth but better than dropping the entry.
+            started = state.mark_interrupted(name)
+            logger.warning("%s was interrupted (started %s); recording it as a failed run",
+                           name, started or "unknown")
+            reports.archive(name, title=jobs.TITLES.get(name, name), ok=False,
+                            error=state.job(name).get("last_error", ""), when=started)
 
     async def stop(self) -> None:
         for task in self._tasks:

@@ -241,3 +241,59 @@ class TestArchiving:
         sched = scheduler_module.Scheduler()
         assert await sched.run(jobs.LOG_SWEEP) is True
         assert state.job(jobs.LOG_SWEEP)["status"] == state.OK
+
+
+class TestInterruptedRuns:
+    """What a process that was killed mid-run leaves behind.
+
+    `mark_started` writes before the work and `mark_finished` after it, so a container stopped
+    in between leaves `running` in `state.json` — where it survives every restart, because it
+    lives in the volume. Found on a live installation: a Friday update run upgraded Docker on
+    the host it was running on, the daemon restart killed the container mid-run, and two days
+    later the dashboard still called that job in progress.
+    """
+
+    @pytest.mark.asyncio
+    async def test_a_run_left_running_is_closed_out_as_failed(self, data_dir):
+        from timar import jobs, reports, scheduler as scheduler_module, state
+
+        state.mark_started(jobs.UPDATE)
+        started = state.job(jobs.UPDATE)["started_at"]
+
+        scheduler_module.Scheduler()._reconcile_interrupted()
+
+        record = state.job(jobs.UPDATE)
+        assert record["status"] == state.FAILED
+        assert "Interrupted" in record["last_error"]
+        # The operator's actual next question after an interrupted update.
+        assert "not shut them down" in record["last_error"]
+        # Dated to the run, not to the restart: a fresh timestamp would hide the staleness.
+        assert record["last_run"] == started
+        assert reports.listing(jobs.UPDATE)[0]["ok"] is False
+
+    @pytest.mark.asyncio
+    async def test_a_finished_run_is_left_alone(self, data_dir):
+        from timar import jobs, reports, scheduler as scheduler_module, state
+
+        state.mark_finished(jobs.LOG_SWEEP, ok=True, summary="all clear")
+        before = state.job(jobs.LOG_SWEEP)
+
+        scheduler_module.Scheduler()._reconcile_interrupted()
+
+        assert state.job(jobs.LOG_SWEEP) == before
+        assert reports.listing(jobs.LOG_SWEEP) == []
+
+    @pytest.mark.asyncio
+    async def test_a_real_run_is_not_mistaken_for_an_interrupted_one(self, data_dir, monkeypatch):
+        """The reconciliation happens at startup, where nothing can be running yet. This pins
+        that it reads the stored status and not something a live run would also match."""
+        from timar import jobs, scheduler as scheduler_module, state
+
+        def slow(cfg):
+            assert state.job(jobs.LOG_SWEEP)["status"] == state.RUNNING
+            return jobs.Outcome("done", "report")
+
+        monkeypatch.setitem(jobs.RUNNERS, jobs.LOG_SWEEP, slow)
+        sched = scheduler_module.Scheduler()
+        await sched.run(jobs.LOG_SWEEP)
+        assert state.job(jobs.LOG_SWEEP)["status"] == state.OK
