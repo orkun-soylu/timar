@@ -71,15 +71,20 @@ def _stem(when: datetime, job: str) -> str:
 
 
 def archive(job: str, *, title: str, ok: bool, summary: str = "", error: str = "",
-            report: str = "") -> str | None:
+            report: str = "", when: datetime | None = None) -> str | None:
     """Record a finished run. Returns its id, or None if it could not be written.
 
     Never raises. A job whose work succeeded must not be reported as failed because the
     archive copy could not be saved — the run happened, the outcome is already in `state.json`
     and already sent to Telegram, and losing one entry of history is not worth losing the
     knowledge that the fleet is fine.
+
+    `when` defaults to now, which is right for a run that has just ended. It is passed
+    explicitly for a run being closed out *after the fact* — an interrupted one, found on the
+    next start — so the entry lands in the archive under the time it actually happened rather
+    than the time it was noticed.
     """
-    now = datetime.now()
+    now = when or datetime.now()
     try:
         stem = _stem(now, job)
         config.write_private(f"{DIR}/{stem}.json", json.dumps({
