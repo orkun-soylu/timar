@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timar"
-version = "0.1.0"
+version = "0.1.1"
 description = "Agentless fleet care for homelabs: wake, update, and read the logs of machines that are usually off"
 readme = "README.md"
 requires-python = ">=3.11"

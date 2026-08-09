@@ -23,6 +23,13 @@ one-page tour at **[timar.tools](https://timar.tools)**.
 > scheduler, settings and key enrolment work and are tested. See
 > [ARCHITECTURE.md](ARCHITECTURE.md).
 
+> ⚠️ **Running 0.1.0? Upgrade to 0.1.1 — your schedules are not firing.** In 0.1.0 a daily or
+> weekly schedule never ran once: the loop asked for the next run time again at the moment a job
+> came due, and got tomorrow. Manual *run now* worked, which is why it looked fine — the
+> dashboard kept counting down to a run that never happened. Check your archive afterwards; if
+> every report in it is at an odd time, none of them were scheduled. See
+> [CHANGELOG.md](CHANGELOG.md).
+
 ## Run it
 
 ```bash
@@ -35,10 +42,20 @@ do — the first screen is the only one served before an account exists.
 
 The image is published for **amd64 and arm64** — a Raspberry Pi is a first-class host here, not
 an afterthought. `:latest` follows the most recent release; pin a version
-(`ghcr.io/orkun-soylu/timar:0.1.0`) if you would rather choose when to move.
+(`ghcr.io/orkun-soylu/timar:0.1.1`) if you would rather choose when to move.
 
 Configuration lives in the `timar-data` volume as `config.yaml`; see
-[`config.example.yaml`](config.example.yaml) for the fields.
+[`config.example.yaml`](config.example.yaml) for the fields. You can also edit the fleet from
+the settings page — it writes the same file.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
+  <img alt="Timar's settings page, servers tab: six machines with their SSH login, platform and wake column. Two are always on, two are on-demand, and a Proxmox guest reads 'on-demand via hv-01'. Each row offers enrol, edit and remove." src="docs/images/settings-light.png">
+</picture>
+
+A guest reads *on-demand via hv-01* because it inherits that from its hypervisor: a VM has no
+wake address of its own, and calling it always-on would turn every night it correctly spends
+powered off into an outage report.
 
 > ⚠️ **Do not expose this to the internet.** Timar holds an SSH key that reaches every machine
 > it manages and can grant itself `sudo` on them. The login page is the only thing in front of
@@ -88,6 +105,16 @@ host is step one of the job, and shutting it back down is the last.
 - **Report archive** — every run a job finishes is kept and browsable under `/reports`, filtered
   by job. Telegram delivery is a copy of that, not the only place the findings exist; a disk
   creeping upwards or an update that fails every week is visible as a series, not one snapshot.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/report-sweep-dark.png">
+  <img alt="An archived log sweep: one machine with findings, none unreachable, three asleep. A written assessment at the top singles out a disk at 91 percent and a drive reporting a pending sector, and says which of the two is more urgent. Below it, the raw per-host findings, then 'clean' for two hosts and 'offline, not checked' for the three that were asleep." src="docs/images/report-sweep-light.png">
+</picture>
+
+The written assessment sits above the findings it was written from, never instead of them. A
+machine that was asleep is recorded as *not checked* rather than clean — a sweep does not wake
+the fleet, and reporting an unchecked host as healthy is the one thing a status page must not
+do.
 
 ## Supported platforms
 

@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-08-09
+
+A bug-fix release, and one of the three is the reason it exists: **in 0.1.0 no scheduled run
+ever fired.** If you installed 0.1.0 and left it to do its work, it did none — upgrade, then
+look at your report archive to see what was actually run and what only appeared to be.
+
+All three were found by running 0.1.0 against a real fleet rather than by reading it.
+
 ### Fixed
 
 - **Scheduled runs now actually fire.** Daily and weekly schedules never ran once: the loop
@@ -89,5 +97,6 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/orkun-soylu/timar/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/orkun-soylu/timar/releases/tag/v0.1.0
