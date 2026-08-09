@@ -25,6 +25,18 @@ class ValidationError(ValueError):
         super().__init__("; ".join(errors))
 
 
+# Every key `server()` below can produce — that is, everything the server form owns. A caller
+# editing an entry needs this to tell the fields it may replace from the ones it must carry
+# across untouched, and it lives here rather than at the call site so the two cannot drift: a
+# field added to the form and forgotten in a copy of this set would be treated as hand-written,
+# and clearing it in the form would silently never stick.
+SERVER_FIELDS = frozenset({
+    "name", "host", "user", "platform",
+    "wol_mac", "wol_broadcast", "wol_relay",
+    "update_cmd", "context", "update_timeout",
+})
+
+
 def server(form: dict, existing_names: set[str], original_name: str | None = None) -> dict:
     """Validate and normalise one server entry.
 

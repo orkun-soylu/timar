@@ -185,6 +185,29 @@ def _rename_references(servers: list[dict], old: str, new: str) -> None:
             server["wol_relay"] = new
 
 
+def _carry_hand_written(entry: dict, previous: dict) -> dict:
+    """Keep the parts of a server entry this form cannot edit.
+
+    `validate.server` builds an entry out of the form, which is right — it is what makes clearing
+    a field actually clear it. But the form is not the whole entry: `job_logs`, `watch_logs`,
+    `ssh_key` and the `manages_vms` relationship have no input on this page, so a save that wrote
+    only what the form knows about **deleted them**.
+
+    Both halves of that failure are silent by construction. A sweep that stops watching a backup
+    log reports nothing, because a job nobody is watching writes no error — the exact blindness
+    `job_logs` exists to remove. And a hypervisor edited into forgetting its guests leaves a VM
+    that `config.on_demand` then calls always-on, so every night it correctly spends powered off
+    is reported as an outage.
+
+    Keyed off `validate.SERVER_FIELDS` rather than a list of names to preserve: the question is
+    "did the form own this?", and anything else belongs to whoever wrote it.
+    """
+    for key, value in previous.items():
+        if key not in validate.SERVER_FIELDS:
+            entry.setdefault(key, value)
+    return entry
+
+
 def _relink_guest(servers: list[dict], name: str, link: tuple[str, int] | None) -> None:
     """Make `name` a guest of exactly the hypervisor in `link`, or of none at all."""
     for server in servers:
@@ -223,6 +246,9 @@ async def save_server(request: Request):
         return _view(request, errors=e.errors, submitted=form, status_code=400)
 
     if original:
+        previous = next((s for s in servers if s["name"] == original), None)
+        if previous:
+            _carry_hand_written(entry, previous)
         servers = [entry if s["name"] == original else s for s in servers]
         if entry["name"] != original:
             _rename_references(servers, original, entry["name"])
