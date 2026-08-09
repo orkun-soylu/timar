@@ -11,6 +11,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 
+- **Scheduled runs now actually fire.** Daily and weekly schedules never ran once: the loop
+  re-asked `next_run` at the moment a job came due, and that function answers "the next moment
+  in the future" — so at 09:30 it answered tomorrow, every time. Only manually triggered runs
+  ever happened. Nothing looked wrong, because *next run* on the dashboard kept updating every
+  minute. Check your archive: if every report in it is at an odd time, none of them were
+  scheduled. Interval schedules were unaffected.
 - **A run the process was killed in the middle of is no longer reported as still running.**
   The status is written before the work starts and after it ends, so a container stopped in
   between left `running` in `state.json` for good — it survives restarts, because it lives in
@@ -18,7 +24,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   than to the restart, and archives it, so the gap in the series carries a reason. The error
   says the part that matters after an interrupted update: machines it woke were never shut
   down again.
-
 - **Editing a server in settings no longer deletes the parts of its entry the form does not
   show.** Saving rebuilt the entry from the form alone, so `job_logs`, `watch_logs`, `ssh_key`
   and a hypervisor's `manages_vms` were dropped by an unrelated edit — silently, and in the

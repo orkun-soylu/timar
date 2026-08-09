@@ -126,11 +126,20 @@ class Scheduler:
                 continue
 
             wait = (due - datetime.now()).total_seconds()
-            if wait > 0:
-                # Capped at TICK rather than slept through in one go: a long sleep would keep
-                # the heartbeat frozen for days and ignore a schedule changed in the meantime.
-                await asyncio.sleep(min(wait, TICK))
+            if wait > TICK:
+                # Capped rather than slept through in one go: a long sleep would keep the
+                # heartbeat frozen for days and ignore a schedule changed in the meantime.
+                await asyncio.sleep(TICK)
                 continue
+
+            if wait > 0:
+                # Slept *to* the due moment, and then run without asking again. Re-asking is
+                # what broke this: `next_run` answers "the next moment in the future", so the
+                # instant the time arrives it answers tomorrow. A loop that recomputed here
+                # therefore never reached the run — `wait` was never less than zero — and no
+                # scheduled run fired at all, while "next run" on the dashboard kept ticking
+                # over every minute. Nothing about that looks broken, which is why it survived.
+                await asyncio.sleep(wait)
 
             await self.run(name)
 
