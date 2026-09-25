@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-09-26
+
 ### Fixed
 
 - **The language selector is in the header now**, beside *settings* on the dashboard and at the
@@ -153,7 +155,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/orkun-soylu/timar/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/orkun-soylu/timar/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/orkun-soylu/timar/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/orkun-soylu/timar/compare/v0.1.2...v0.1.3
