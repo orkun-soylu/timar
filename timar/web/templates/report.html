@@ -7,6 +7,7 @@
   {# Serves both the latest report and an archived one, so the way back is passed in rather
      than hardcoded — an archived report reached from a filtered list returns to that list. #}
   <a href="{{ back | default('/', true) }}" class="muted">← {{ back_label or _("dashboard") }}</a>
+  {% include "_lang.html" %}
 </header>
 
 <section class="panel">

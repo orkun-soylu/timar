@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Set up Timar") }}{% endblock %}
 {% block body %}
+<header><span class="spacer"></span>{% include "_lang.html" %}</header>
 <form class="card panel" method="post" action="/setup" style="padding:1.5rem">
   <h1 style="margin-bottom:0.4rem">{{ _("Set up Timar") }}</h1>
   <p class="muted" style="margin-top:0">
