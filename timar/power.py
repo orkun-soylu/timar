@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 
 from . import config, wol
+from .i18n import gettext as _
 from .network import is_host_up
 from .platforms import get as get_platform
 from .ssh import connect, run
@@ -62,10 +63,9 @@ def _on_hypervisor(hypervisor: dict, command: str, timeout: int) -> None:
                      config.resolve_ssh_key(hypervisor), timeout=CONNECT_TIMEOUT) as ssh:
             stdout, stderr, code = run(ssh, command, timeout=timeout)
     except Exception as e:
-        raise PowerError(f"could not reach {hypervisor['name']}: {e}") from e
+        raise PowerError(_("could not reach {name}: {error}", name=hypervisor["name"], error=e)) from e
     if code != 0:
-        detail = (stderr.strip() or stdout.strip() or "the command failed without printing "
-                                                      "anything")
+        detail = stderr.strip() or stdout.strip() or _("the command failed without printing anything")
         raise PowerError(f"{hypervisor['name']}: {detail[:200]}")
 
 
@@ -76,24 +76,24 @@ def wake(server: dict, servers: list[dict]) -> str:
         hypervisor, vm_id = link
         _on_hypervisor(hypervisor, f"qm start {vm_id}", timeout=60)
         logger.info("started %s (vm %s) on %s", server["name"], vm_id, hypervisor["name"])
-        return f"{server['name']} started on {hypervisor['name']}"
+        return _("{name} started on {hypervisor}", name=server["name"], hypervisor=hypervisor["name"])
 
     try:
         wol.wake(server, {s["name"]: s for s in servers})
     except wol.WolError as e:
         raise PowerError(str(e)) from e
-    via = f" via {server['wol_relay']}" if server.get("wol_relay") else ""
-    return f"magic packet sent to {server['name']}{via}"
+    if relay := server.get("wol_relay"):
+        return _("magic packet sent to {name} via {relay}", name=server["name"], relay=relay)
+    return _("magic packet sent to {name}", name=server["name"])
 
 
 def shutdown(server: dict, servers: list[dict]) -> str:
     """Power `server` off, refusing any machine Timar has no way to wake again."""
     name = server["name"]
     if name not in config.on_demand(servers):
-        raise PowerError(
-            f"{name} is always on — Timar will not shut down a machine it cannot wake again. "
-            "Give it a MAC address, or a hypervisor, first."
-        )
+        raise PowerError(_(
+            "{name} is always on — Timar will not shut down a machine it cannot wake again. "
+            "Give it a MAC address, or a hypervisor, first.", name=name))
 
     link = guest_link(name, servers)
     if link:
@@ -101,7 +101,7 @@ def shutdown(server: dict, servers: list[dict]) -> str:
         _on_hypervisor(hypervisor, f"qm shutdown {vm_id} --timeout {GUEST_SHUTDOWN_TIMEOUT}",
                        timeout=GUEST_SHUTDOWN_TIMEOUT + 15)
         logger.info("shut down %s (vm %s) via %s", name, vm_id, hypervisor["name"])
-        return f"{name} shut down via {hypervisor['name']}"
+        return _("{name} shut down via {hypervisor}", name=name, hypervisor=hypervisor["name"])
 
     platform = get_platform(server.get("platform"))
     user = server["user"]
@@ -120,14 +120,14 @@ def shutdown(server: dict, servers: list[dict]) -> str:
     except Exception as e:
         if connected:
             logger.info("%s dropped the connection while shutting down", name)
-            return f"{name} is shutting down"
-        raise PowerError(f"could not reach {name}: {e}") from e
+            return _("{name} is shutting down", name=name)
+        raise PowerError(_("could not reach {name}: {error}", name=name, error=e)) from e
 
     if code != 0:
         # Almost always sudo: an account without passwordless sudo cannot halt its own machine,
         # and the refusal is silent unless it is repeated here.
-        detail = stderr.strip() or stdout.strip() or "the command failed without printing anything"
-        raise PowerError(f"{name} refused the shutdown: {detail[:200]}")
+        detail = stderr.strip() or stdout.strip() or _("the command failed without printing anything")
+        raise PowerError(_("{name} refused the shutdown: {detail}", name=name, detail=detail[:200]))
 
     logger.info("%s is shutting down", name)
-    return f"{name} is shutting down"
+    return _("{name} is shutting down", name=name)

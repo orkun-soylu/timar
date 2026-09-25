@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Settings — Timar{% endblock %}
+{% block title %}{{ _("Settings") }} — Timar{% endblock %}
 {% block body %}
 <header>
-  <h1>Settings</h1>
+  <h1>{{ _("Settings") }}</h1>
   <span class="spacer"></span>
-  <a href="/" class="muted">← dashboard</a>
+  <a href="/" class="muted">← {{ _("dashboard") }}</a>
 </header>
 
 {# Which tab is showing is a URL, not a CSS state: every form here POSTs and redirects, and a
@@ -13,15 +13,14 @@
 <nav class="tabs">
   <a href="/settings" class="{{ 'selected' if tab == 'servers' }}"
      {{ 'aria-current=page' if tab == 'servers' }}>
-    <span class="label">Servers</span>
-    <span class="sub">{{ servers | length }} machine{{ '' if servers | length == 1 else 's' }} —
-      each with its own address, wake and update settings</span>
+    <span class="label">{{ _("Servers") }}</span>
+    <span class="sub">{{ _("1 machine") if servers | length == 1 else _("{n} machines", n=servers | length) }} —
+      {{ _("each with its own address, wake and update settings") }}</span>
   </a>
   <a href="/settings?tab=global" class="{{ 'selected' if tab == 'global' }}"
      {{ 'aria-current=page' if tab == 'global' }}>
-    <span class="label">Global settings</span>
-    <span class="sub">Log sweep, schedules, model, notifications — one setting for the whole
-      fleet</span>
+    <span class="label">{{ _("Global settings") }}</span>
+    <span class="sub">{{ _("Log sweep, schedules, model, notifications — one setting for the whole fleet") }}</span>
   </a>
 </nav>
 
@@ -31,26 +30,26 @@
   </div>
 {% elif notice %}
   <div class="panel notice good">
-    {{ "Saved." if notice == "saved" else "Server removed." }}
+    {{ _("Saved.") if notice == "saved" else _("Server removed.") }}
   </div>
 {% endif %}
 
 {% if tab == "servers" %}
 <section class="panel">
   <h2 class="with-action">
-    Servers
+    {{ _("Servers") }}
     {# The add form and the edit form are the same form in two modes, so the control that opens
        it doubles as the control that closes it — except when there is nothing to close to. #}
     {% if form_open and not editing and servers %}
-      <a href="/settings" class="action" title="Close" aria-label="Close the form">×</a>
+      <a href="/settings" class="action" title="{{ _("Close") }}" aria-label="{{ _("Close the form") }}">×</a>
     {% else %}
-      <a href="/settings?add=1#server-form" class="action" title="Add a server"
-         aria-label="Add a server">+</a>
+      <a href="/settings?add=1#server-form" class="action" title="{{ _("Add a server") }}"
+         aria-label="{{ _("Add a server") }}">+</a>
     {% endif %}
   </h2>
   {% if servers %}
   <table>
-    <thead><tr><th>Name</th><th>Address</th><th>Platform</th><th>Wake</th><th></th></tr></thead>
+    <thead><tr><th>{{ _("Name") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("Wake") }}</th><th></th></tr></thead>
     <tbody>
       {% for server in servers %}
       <tr>
@@ -59,20 +58,22 @@
         <td class="muted">{{ server.platform | default("linux") }}</td>
         {% set reason = on_demand.get(server.name) %}
         <td class="muted">
-          {%- if not reason %}always on
-          {%- elif reason == "wol" %}on-demand
-          {%- else %}on-demand <span title="started by its hypervisor">via {{ reason }}</span>
+          {%- if not reason %}{{ _("always on") }}
+          {%- elif reason == "wol" %}{{ _("on-demand") }}
+          {%- else %}{{ _("on-demand") }} <span title="{{ _("started by its hypervisor") }}">{{ _("via {hypervisor}", hypervisor=reason) }}</span>
           {%- endif %}</td>
         <td style="text-align:right; white-space:nowrap">
-          <a href="/settings?enroll={{ server.name }}#enrol" class="muted">enrol</a>
+          <a href="/settings?enroll={{ server.name }}#enrol" class="muted">{{ _("enrol") }}</a>
           {# The anchor matters: with a fleet this long the form opens below the fold, and a
              page that appears not to have reacted is one the operator clicks again. #}
           <a href="/settings?edit={{ server.name }}#server-form" class="muted"
-             style="margin-left:0.6rem">edit</a>
+             style="margin-left:0.6rem">{{ _("edit") }}</a>
           <form method="post" action="/settings/servers/{{ server.name }}/delete"
                 style="display:inline; margin-left:0.6rem"
-                onsubmit="return confirm('Remove {{ server.name }} from Timar? The machine is not touched.')">
-            <button type="submit" class="linkish">remove</button>
+                {# tojson, not a quoted string: a translation with an apostrophe in it would
+                   otherwise close the JavaScript string early. #}
+                onsubmit='return confirm({{ _("Remove {name} from Timar? The machine is not touched.", name=server.name) | tojson }})'>
+            <button type="submit" class="linkish">{{ _("remove") }}</button>
           </form>
         </td>
       </tr>
@@ -80,7 +81,7 @@
     </tbody>
   </table>
   {% else %}
-  <p class="empty">No servers yet. Add the first one below.</p>
+  <p class="empty">{{ _("No servers yet. Add the first one below.") }}</p>
   {% endif %}
 </section>
 
@@ -90,7 +91,7 @@
 
 {% if form_open %}
 <section class="panel" id="server-form">
-  <h2>{{ "Edit " ~ editing if editing else "Add a server" }}</h2>
+  <h2>{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}</h2>
   <form method="post" action="/settings/servers" class="stack">
     {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
 
@@ -98,16 +99,16 @@
        and the stored entry otherwise. Reading from storage on the error path is how a rejected
        form used to hand back an empty page and ask the operator to retype it. #}
     <div class="row">
-      <label><span>Name</span>
+      <label><span>{{ _("Name") }}</span>
         <input name="name" required value="{{ values.get('name', '') }}"></label>
-      <label><span>Address</span>
-        <input name="host" required placeholder="10.0.0.5 or host.lan"
+      <label><span>{{ _("Address") }}</span>
+        <input name="host" required placeholder="{{ _("10.0.0.5 or host.lan") }}"
                value="{{ values.get('host', '') }}"></label>
     </div>
     <div class="row">
-      <label><span>SSH user</span>
+      <label><span>{{ _("SSH user") }}</span>
         <input name="user" required value="{{ values.get('user', '') }}"></label>
-      <label><span>Platform</span>
+      <label><span>{{ _("Platform") }}</span>
         <select name="platform">
           {% for platform in platforms %}
           <option value="{{ platform }}"
@@ -116,87 +117,71 @@
         </select></label>
     </div>
     <div class="row">
-      <label><span>Wake-on-LAN MAC <em class="muted">optional</em></span>
+      <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
         <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
                value="{{ values.get('wol_mac', '') }}"></label>
-      <label><span>Broadcast address <em class="muted">optional</em></span>
+      <label><span>{{ _("Broadcast address") }} <em class="muted">{{ _("optional") }}</em></span>
         <input name="wol_broadcast" placeholder="10.0.0.255"
                value="{{ values.get('wol_broadcast', '') }}"></label>
     </div>
-    <label><span>Wake through <em class="muted">optional — another server that sends the packet</em></span>
+    <label><span>{{ _("Wake through") }} <em class="muted">{{ _("optional — another server that sends the packet") }}</em></span>
       <select name="wol_relay">
-        <option value="">— send it from Timar itself —</option>
+        <option value="">— {{ _("send it from Timar itself") }} —</option>
         {% for other in servers if other.name != editing %}
         <option value="{{ other.name }}"
           {{ "selected" if values.get('wol_relay') == other.name else "" }}>{{ other.name }}</option>
         {% endfor %}
       </select></label>
     <div class="row">
-      <label><span>Guest of <em class="muted">optional — a hypervisor that starts it</em></span>
+      <label><span>{{ _("Guest of") }} <em class="muted">{{ _("optional — a hypervisor that starts it") }}</em></span>
         <select name="hypervisor">
-          <option value="">— not a virtual machine —</option>
+          <option value="">— {{ _("not a virtual machine") }} —</option>
           {% for other in servers if other.platform == "proxmox" and other.name != editing %}
           <option value="{{ other.name }}"
             {{ "selected" if values.get('hypervisor') == other.name else "" }}>{{ other.name }}</option>
           {% endfor %}
         </select></label>
-      <label><span>VM id <em class="muted">required with a hypervisor</em></span>
+      <label><span>{{ _("VM id") }} <em class="muted">{{ _("required with a hypervisor") }}</em></span>
         <input name="vm_id" inputmode="numeric" placeholder="100"
                value="{{ values.get('vm_id', '') }}"></label>
     </div>
     <label class="inline">
       <input type="checkbox" name="guest_on_demand"
              {{ "checked" if values.get('guest_on_demand') else "" }}>
-      <span>Kept off on purpose <em class="muted">— only for a guest of an always-on host</em></span>
+      <span>{{ _("Kept off on purpose") }} <em class="muted">— {{ _("only for a guest of an always-on host") }}</em></span>
     </label>
     <p class="hint">
-      A guest needs no MAC of its own — it is started with <code>qm</code>, not a magic packet —
-      but it <strong>is</strong> on-demand whenever its hypervisor is, so being off is never
-      reported as a fault. Updates reach it through its host: wake the hypervisor, start the
-      guest, update, shut both back down in order.
-      A guest of an <strong>always-on</strong> host is always on too, so a crash is never
-      mistaken for sleep — tick <em>kept off on purpose</em> only for a VM you start when you
-      need it.
+      {{ _("A guest needs no MAC of its own — it is started with <code>qm</code>, not a magic packet — but it <strong>is</strong> on-demand whenever its hypervisor is, so being off is never reported as a fault. Updates reach it through its host: wake the hypervisor, start the guest, update, shut both back down in order.") }}
+      {{ _("A guest of an <strong>always-on</strong> host is always on too, so a crash is never mistaken for sleep — tick <em>kept off on purpose</em> only for a VM you start when you need it.") }}
     </p>
 
     <p class="hint">
-      A MAC marks the machine as on-demand: it shows as <em>asleep</em> rather than <em>down</em>
-      when off, and updates wake it, update it, and shut it back down.
-      A magic packet is a broadcast and only reaches its own segment — pick a relay for a machine
-      in a <strong>different subnet</strong> (another site, an office network), or if Timar runs
-      on a bridge network. The relay must be always on, already enrolled, and have
-      <code>python3</code> or <code>wakeonlan</code>.
+      {{ _("A MAC marks the machine as on-demand: it shows as <em>asleep</em> rather than <em>down</em> when off, and updates wake it, update it, and shut it back down.") }}
+      {{ _("A magic packet is a broadcast and only reaches its own segment — pick a relay for a machine in a <strong>different subnet</strong> (another site, an office network), or if Timar runs on a bridge network. The relay must be always on, already enrolled, and have <code>python3</code> or <code>wakeonlan</code>.") }}
     </p>
 
-    <label><span>Update command <em class="muted">optional — overrides the platform default</em></span>
+    <label><span>{{ _("Update command") }} <em class="muted">{{ _("optional — overrides the platform default") }}</em></span>
       <input name="update_cmd" value="{{ values.get('update_cmd', '') }}"></label>
     <p class="hint">
-      OpenWrt has <strong>no</strong> default on purpose: an unattended upgrade can fill the
-      overlay partition or land a kernel-module mismatch, and the machine that breaks is the one
-      carrying the session you would repair it from. Leave this empty and the host is swept for
-      logs but never updated.
+      {{ _("OpenWrt has <strong>no</strong> default on purpose: an unattended upgrade can fill the overlay partition or land a kernel-module mismatch, and the machine that breaks is the one carrying the session you would repair it from. Leave this empty and the host is swept for logs but never updated.") }}
     </p>
 
-    <label><span>Update timeout <em class="muted">optional — seconds, default {{ default_update_timeout }}</em></span>
+    <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
       <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
              placeholder="{{ default_update_timeout }}"
              value="{{ values.get('update_timeout', '') }}"></label>
     <p class="hint">
-      Raise this for a host whose update pulls container images or rebuilds a DKMS module — both
-      pass the default routinely. When the limit is reached the remote command is <strong>not</strong>
-      stopped: it keeps running while the run is recorded as failed, and this host is left powered
-      on rather than shut down mid-upgrade. Updates run one host after another, so a wedged
-      machine delays the rest by whatever is set here.
+      {{ _("Raise this for a host whose update pulls container images or rebuilds a DKMS module — both pass the default routinely. When the limit is reached the remote command is <strong>not</strong> stopped: it keeps running while the run is recorded as failed, and this host is left powered on rather than shut down mid-upgrade. Updates run one host after another, so a wedged machine delays the rest by whatever is set here.") }}
     </p>
 
-    <label><span>Context for the log analysis <em class="muted">optional</em></span>
-      <input name="context" placeholder="Nightly batch job logs connection resets; expected."
+    <label><span>{{ _("Context for the log analysis") }} <em class="muted">{{ _("optional") }}</em></span>
+      <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
              value="{{ values.get('context', '') }}"></label>
 
     <div class="actions">
-      <button type="submit">{{ "Save changes" if editing else "Add server" }}</button>
+      <button type="submit">{{ _("Save changes") if editing else _("Add server") }}</button>
       {% if servers %}
-        <a href="/settings" class="muted" style="margin-left:0.8rem">cancel</a>
+        <a href="/settings" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
       {% endif %}
     </div>
   </form>
@@ -206,30 +191,27 @@
 {% else %}
 
 <section class="panel">
-  <h2>Log sweep</h2>
+  <h2>{{ _("Log sweep") }}</h2>
   <p class="hint">
-    One window and one threshold for every machine in the fleet — there is no per-server
-    override.
+    {{ _("One window and one threshold for every machine in the fleet — there is no per-server override.") }}
   </p>
   <form method="post" action="/settings/log-check" class="stack">
     <div class="row">
-      <label><span>System log window (hours)</span>
+      <label><span>{{ _("System log window (hours)") }}</span>
         <input name="journal_hours" type="number" min="1" max="168"
                value="{{ log_check.journal_hours | default(6) }}"></label>
-      <label><span>Disk threshold (percent full)</span>
+      <label><span>{{ _("Disk threshold (percent full)") }}</span>
         <input name="disk_threshold" type="number" min="50" max="99"
                value="{{ log_check.disk_threshold | default(85) }}"></label>
     </div>
-    <div class="actions"><button type="submit">Save</button></div>
+    <div class="actions"><button type="submit">{{ _("Save") }}</button></div>
   </form>
 </section>
 
 <section class="panel">
-  <h2>Schedules</h2>
+  <h2>{{ _("Schedules") }}</h2>
   <p class="hint">
-    A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit
-    the whole fleet. Times are the container's local time — set <code>TZ</code> on the container
-    if a report scheduled for 07:00 arrives at 04:00.
+    {{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.") }}
   </p>
   <form method="post" action="/settings/schedules" class="stack">
     {% for job in jobs %}
@@ -238,105 +220,100 @@
       <label class="inline">
         <input type="checkbox" name="{{ job.name }}_enabled"
                {{ "checked" if current.get("enabled") else "" }}>
-        <span>Run on a schedule</span>
+        <span>{{ _("Run on a schedule") }}</span>
       </label>
       <div class="row">
-        <label><span>How often</span>
+        <label><span>{{ _("How often") }}</span>
           <select name="{{ job.name }}_kind">
             {% for kind in kinds %}
-            <option value="{{ kind }}" {{ "selected" if current.get("kind", "daily") == kind else "" }}>{{ kind }}</option>
+            <option value="{{ kind }}" {{ "selected" if current.get("kind", "daily") == kind else "" }}>{{ _(kind) }}</option>
             {% endfor %}
           </select></label>
-        <label><span>At (for daily and weekly)</span>
+        <label><span>{{ _("At (for daily and weekly)") }}</span>
           <input name="{{ job.name }}_at" placeholder="09:00" value="{{ current.get('at', '09:00') }}"></label>
-        <label><span>Day (for weekly)</span>
+        <label><span>{{ _("Day (for weekly)") }}</span>
           <select name="{{ job.name }}_day">
             {% for day in days %}
-            <option value="{{ day }}" {{ "selected" if current.get("day", "monday") == day else "" }}>{{ day }}</option>
+            <option value="{{ day }}" {{ "selected" if current.get("day", "monday") == day else "" }}>{{ _(day.capitalize()) }}</option>
             {% endfor %}
           </select></label>
-        <label><span>Every N hours (for interval)</span>
+        <label><span>{{ _("Every N hours (for interval)") }}</span>
           <input name="{{ job.name }}_every_hours" type="number" min="1" max="168"
                  value="{{ current.get('every_hours', 6) }}"></label>
       </div>
       {% if job.name == "update" %}
       <p class="hint">
-        An update run wakes machines that are asleep, updates them, and shuts them back down.
-        OpenWrt hosts are skipped unless you gave them an update command of their own.
+        {{ _("An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.") }}
       </p>
       {% endif %}
     {% endfor %}
-    <div class="actions"><button type="submit">Save schedules</button></div>
+    <div class="actions"><button type="submit">{{ _("Save schedules") }}</button></div>
   </form>
 </section>
 
 <section class="panel">
-  <h2>Model</h2>
+  <h2>{{ _("Model") }}</h2>
   <p class="hint">
-    Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all
-    still work; you just get the raw findings instead of a written assessment.
+    {{ _("Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.") }}
   </p>
   <form method="post" action="/settings/llm" class="stack">
     <div class="row">
-      <label><span>Provider</span>
+      <label><span>{{ _("Provider") }}</span>
         <select name="provider">
-          <option value="">— none —</option>
+          <option value="">— {{ _("none") }} —</option>
           {% for provider in providers %}
           <option value="{{ provider }}" {{ "selected" if llm.provider == provider else "" }}>{{ provider }}</option>
           {% endfor %}
         </select></label>
-      <label><span>Model</span>
+      <label><span>{{ _("Model") }}</span>
         {# `list` stays free text — the datalist suggests, it does not restrict, so a model the
            provider has not advertised yet can still be typed. #}
         <input name="model" list="model-options" autocomplete="off"
                value="{{ llm.model | default('') }}"></label>
     </div>
     <div class="row">
-      <label><span>Base URL <em class="muted">optional — for self-hosted endpoints</em></span>
+      <label><span>{{ _("Base URL") }} <em class="muted">{{ _("optional — for self-hosted endpoints") }}</em></span>
         <input name="base_url" placeholder="http://10.0.0.40:11434"
                value="{{ llm.base_url | default('') }}"></label>
-      <label><span>API key</span>
+      <label><span>{{ _("API key") }}</span>
         <input name="api_key" type="password" autocomplete="off"
-               placeholder="{{ 'stored — leave blank to keep it' if llm_has_key else 'not set' }}"></label>
+               placeholder="{{ _("stored — leave blank to keep it") if llm_has_key else _("not set") }}"></label>
     </div>
     <div class="actions">
-      <button type="submit">Save</button>
+      <button type="submit">{{ _("Save") }}</button>
       <button type="button" class="secondary" hx-post="/settings/llm/test"
               hx-target="#llm-test" hx-swap="innerHTML"
-              hx-indicator="#llm-test">Test connection</button>
+              hx-indicator="#llm-test">{{ _("Test connection") }}</button>
       <button type="button" class="secondary" hx-post="/settings/llm/models"
               hx-target="#llm-models" hx-swap="innerHTML"
-              hx-indicator="#llm-models">List models</button>
+              hx-indicator="#llm-models">{{ _("List models") }}</button>
       <span id="llm-test" class="result"></span>
       <span id="llm-models" class="result"></span>
     </div>
     <p class="hint" style="margin-top:0.6rem">
-      Both buttons use the <em>saved</em> connection, so save the provider and key first. The
-      model itself can stay empty until you have the list.
+      {{ _("Both buttons use the <em>saved</em> connection, so save the provider and key first. The model itself can stay empty until you have the list.") }}
     </p>
   </form>
 </section>
 
 <section class="panel">
-  <h2>Notifications</h2>
+  <h2>{{ _("Notifications") }}</h2>
   <p class="hint">
-    Telegram delivery for reports. The machines Timar watches are the ones nobody is looking at,
-    so a report that only exists in this page is one nobody reads until they already suspect
-    something.
+    {{ _("Telegram delivery for reports. The machines Timar watches are the ones nobody is looking at, so a report that only exists in this page is one nobody reads until they already suspect something.") }}
   </p>
   <form method="post" action="/settings/telegram" class="stack">
     <div class="row">
-      <label><span>Bot token</span>
+      <label><span>{{ _("Bot token") }}</span>
         <input name="token" type="password" autocomplete="off"
-               placeholder="{{ 'stored — leave blank to keep it' if telegram_has_token else 'not set' }}"></label>
-      <label><span>Chat ID</span>
+               placeholder="{{ _("stored — leave blank to keep it") if telegram_has_token else _("not set") }}"></label>
+      <label><span>{{ _("Chat ID") }}</span>
         <input name="chat_id" value="{{ telegram_chat_id }}"></label>
     </div>
     <div class="actions">
-      <button type="submit">Save</button>
+      <button type="submit">{{ _("Save") }}</button>
       <button type="button" class="secondary" hx-post="/settings/telegram/test"
               hx-target="#tg-test" hx-swap="innerHTML"
-              hx-indicator="#tg-test">Send test message</button>
+              hx-indicator="#tg-test">{{ _("Send test message") }}</button>
       <span id="tg-test" class="result"></span>
     </div>
   </form>
@@ -345,7 +322,6 @@
 {% endif %}
 
 <p class="muted" style="margin-top:1.5rem">
-  Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page
-  rewrites that file, which drops any comments you added by hand.
+  {{ _("Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.") }}
 </p>
 {% endblock %}

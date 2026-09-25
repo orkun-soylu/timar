@@ -242,6 +242,30 @@ Four decisions worth keeping:
 - **A cookie whose username is no longer the operator's is rejected.** A restored volume can
   carry an old session into a fleet that now has a different account.
 
+### Languages — the reader's for the page, English for the record
+
+The interface is translated; what Timar *writes down* is not. The language lives in a context
+variable that a middleware sets per request (cookie, then `Accept-Language`, then English), and
+nothing outside a request ever sets it. So a form error follows the browser, while a report, a
+job summary or a Telegram message — written by a background job, stored, and read later by
+whoever happens to read it — is always English. The alternative, a stored summary in the
+language of whichever tab pressed *run now*, makes the archive a patchwork and turns a copied
+error into something a search engine cannot find.
+
+- **The English sentence is the message id**, gettext-style, in flat JSON catalogs. Templates
+  and code read as they did, and a missing translation degrades to English rather than to a key
+  name. The cost — rewording an English message orphans its translations — is paid by
+  `tests/test_i18n.py`, which discovers the messages itself and fails on missing, stale or
+  placeholder-mangled entries.
+- **Translations are trusted markup; the values in them are not.** A sentence may carry
+  `<code>` or `<em>`, but its placeholders are filled through `Markup.format`, which escapes
+  them. Translations may not contain a straight `"`: they are inserted unescaped into
+  double-quoted attributes (`hx-confirm`, `placeholder`), and one quote would end the attribute.
+- **The switch is open before setup and before login.** Whoever cannot read the setup page is
+  the one who most needs it. It is a redirect back to where it was used, so `next` is limited to
+  same-site paths — otherwise it is an open redirect on the one unauthenticated route that takes
+  a URL.
+
 ## Three states, not two
 
 `asleep` and `down` are different conditions and the dashboard paints them differently. A

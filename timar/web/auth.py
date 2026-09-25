@@ -19,6 +19,7 @@ import jwt
 from fastapi import HTTPException, Request, status
 
 from .. import config
+from ..i18n import gettext as _
 
 ALGORITHM = "HS256"
 SESSION_COOKIE = "timar_session"
@@ -72,14 +73,14 @@ def create_account(username: str, password: str) -> None:
     can load the page.
     """
     if account() is not None:
-        raise AuthError("an operator account already exists")
+        raise AuthError(_("an operator account already exists"))
     username = username.strip()
     if not username:
-        raise AuthError("username is required")
+        raise AuthError(_("username is required"))
     if len(password) < 12:
         # Long rather than ornate: this password guards SSH access to every managed host, and a
         # composition rule ("one symbol, one digit") buys far less than length.
-        raise AuthError("password must be at least 12 characters")
+        raise AuthError(_("password must be at least 12 characters"))
 
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     config.write_private(config.AUTH, json.dumps({"username": username, "password_hash": hashed}))
@@ -99,7 +100,7 @@ def verify(username: str, password: str) -> str:
     difference tells an attacker which half to keep working on.
     """
     if remaining := _locked_for(username):
-        raise AuthError(f"too many attempts, try again in {remaining}s")
+        raise AuthError(_("too many attempts, try again in {seconds}s", seconds=remaining))
 
     acct = account()
     ok = (
@@ -113,7 +114,7 @@ def verify(username: str, password: str) -> str:
         if record.count >= MAX_ATTEMPTS:
             record.locked_until = time.monotonic() + LOCKOUT_SECONDS
             record.count = 0
-        raise AuthError("incorrect username or password")
+        raise AuthError(_("incorrect username or password"))
 
     _failures.pop(username, None)
     return username

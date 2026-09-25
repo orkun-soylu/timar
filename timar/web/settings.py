@@ -17,8 +17,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .. import (config, enroll as enroll_module, jobs, keys, llm as llm_module, notify,
+from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_module, notify,
                 state, status as fleet_status, updater, validate, wol)
+from ..i18n import gettext as _
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from .auth import require_operator
@@ -28,6 +29,7 @@ from .auth import require_operator
 # because whoever added it remembered a decorator.
 router = APIRouter(prefix="/settings", dependencies=[Depends(require_operator)])
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+i18n.install(TEMPLATES.env)
 
 SEE_OTHER = 303
 
@@ -149,7 +151,7 @@ def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None 
         "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
         "providers": llm_module.PROVIDERS,
         "schedules": cfg.get("schedules") or {},
-        "jobs": [{"name": n, "title": jobs.TITLES[n]} for n in jobs.JOBS],
+        "jobs": [{"name": n, "title": _(jobs.TITLES[n])} for n in jobs.JOBS],
         "days": list(_DAYS),
         "kinds": list(_KINDS),
         "errors": errors or [],
@@ -332,13 +334,13 @@ async def test_llm(request: Request):
     try:
         llm_cfg = llm_module.LLMConfig.from_dict(cfg.get("llm"))
         if llm_cfg is None:
-            return HTMLResponse('<span class="error">Save a model connection first.</span>')
+            return HTMLResponse(f'<span class="error">{_escape(_("Save a model connection first."))}</span>')
         reply = llm_module.complete(
             llm_cfg, "You are a connection test. Answer with a single word.", "Reply with: ok"
         )
     except llm_module.LLMError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
-    return HTMLResponse(f'<span class="ok">Model replied: {_escape(reply[:80]) or "(empty)"}</span>')
+    return HTMLResponse(f'<span class="ok">{_escape(_("Model replied: {reply}", reply=reply[:80] or _("(empty)")))}</span>')
 
 
 @router.post("/llm/models", response_class=HTMLResponse)
@@ -352,18 +354,18 @@ async def list_llm_models(request: Request):
     cfg = config.load()
     llm_cfg = llm_module.LLMConfig.from_dict(cfg.get("llm"))
     if llm_cfg is None:
-        return HTMLResponse('<span class="error">Save a provider first.</span>')
+        return HTMLResponse(f'<span class="error">{_escape(_("Save a provider first."))}</span>')
     try:
         models = llm_module.list_models(llm_cfg)
     except llm_module.LLMError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
     if not models:
-        return HTMLResponse('<span class="error">The provider listed no models.</span>')
+        return HTMLResponse(f'<span class="error">{_escape(_("The provider listed no models."))}</span>')
 
     options = "".join(f'<option value="{_escape(m)}">' for m in models)
     return HTMLResponse(
         f'<datalist id="model-options">{options}</datalist>'
-        f'<span class="ok">{len(models)} models — click the model field.</span>'
+        f'<span class="ok">{_escape(_("{n} models — click the model field.", n=len(models)))}</span>'
     )
 
 
@@ -392,7 +394,7 @@ async def test_telegram():
         notify.send_test(telegram_cfg.get("token", ""), telegram_cfg.get("chat_id", ""))
     except notify.NotifyError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
-    return HTMLResponse('<span class="ok">Sent — check your chat.</span>')
+    return HTMLResponse(f'<span class="ok">{_escape(_("Sent — check your chat."))}</span>')
 
 
 @router.post("/schedules")
@@ -441,14 +443,15 @@ async def enroll_submit(request: Request, name: str):
     error = None
     result = None
     if not password:
-        error = "The SSH password is required."
+        error = _("The SSH password is required.")
     else:
         try:
             outcome = enroll_module.enroll(server, password, grant_sudo=wants_sudo)
             # Proved with the key alone, not with the password connection that just succeeded:
             # the password working says nothing about whether the key will be accepted, and the
             # key is what every later run depends on.
-            result = f"{outcome.describe()} — verified: {enroll_module.verify(server)}"
+            result = _("{outcome} — verified: {check}", outcome=outcome.describe(),
+                       check=enroll_module.verify(server))
         except enroll_module.EnrollError as e:
             error = str(e)
     del password
@@ -491,6 +494,8 @@ async def wake_server(name: str):
     except wol.WolError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
     fleet_status.invalidate()  # the machine is about to change state; a cached probe would lie
-    via = f" via {server['wol_relay']}" if server.get("wol_relay") else ""
-    return HTMLResponse(
-        f'<span class="ok">Magic packet sent{_escape(via)} — watch the dashboard.</span>')
+    if relay := server.get("wol_relay"):
+        message = _("Magic packet sent via {relay} — watch the dashboard.", relay=relay)
+    else:
+        message = _("Magic packet sent — watch the dashboard.")
+    return HTMLResponse(f'<span class="ok">{_escape(message)}</span>')

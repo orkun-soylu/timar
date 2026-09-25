@@ -6,16 +6,16 @@
   <span class="spacer"></span>
   {# Serves both the latest report and an archived one, so the way back is passed in rather
      than hardcoded — an archived report reached from a filtered list returns to that list. #}
-  <a href="{{ back | default('/', true) }}" class="muted">← {{ back_label | default('dashboard', true) }}</a>
+  <a href="{{ back | default('/', true) }}" class="muted">← {{ back_label or _("dashboard") }}</a>
 </header>
 
 <section class="panel">
-  <h2>{{ subtitle | default('Last run', true) }}</h2>
+  <h2>{{ subtitle or _("Last run") }}</h2>
   <p class="hint">
     {% if last_run %}
       {{ last_run | replace("T", " ") }}{% if summary %} — {{ summary }}{% endif %}
     {% else %}
-      This job has not run yet.
+      {{ _("This job has not run yet.") }}
     {% endif %}
   </p>
 
@@ -30,8 +30,7 @@
     <pre class="report">{{ report }}</pre>
   {% elif not error %}
     <p class="empty">
-      Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> on the
-      dashboard.
+      {{ _("Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> on the dashboard.") }}
     </p>
   {% endif %}
 </section>

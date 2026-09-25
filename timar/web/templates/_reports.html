@@ -4,13 +4,13 @@
 {% if reports %}
   <table>
     <thead>
-      <tr><th>Finished</th><th>Job</th><th>Outcome</th><th></th></tr>
+      <tr><th>{{ _("Finished") }}</th><th>{{ _("Job") }}</th><th>{{ _("Outcome") }}</th><th></th></tr>
     </thead>
     <tbody>
     {% for entry in reports %}
       <tr>
         <td style="white-space:nowrap">{{ entry.finished_at | replace("T", " ") }}</td>
-        <td class="muted">{{ entry.title }}</td>
+        <td class="muted">{{ _(entry.title) }}</td>
         <td>
           {# Red marks a run that *failed*; a run that finished is left in the body colour even
              when it found something. Green on "2 with findings" reads as all-clear at a glance,
@@ -22,11 +22,11 @@
           {% elif entry.ok %}
             {{ entry.summary or "—" }}
           {% else %}
-            <span class="error">{{ entry.summary or "failed" }}</span>
+            <span class="error">{{ entry.summary or _("failed") }}</span>
           {% endif %}
         </td>
         <td style="text-align:right; white-space:nowrap">
-          <a href="/reports/{{ entry.id }}" class="muted" style="font-size:0.875rem">report</a>
+          <a href="/reports/{{ entry.id }}" class="muted" style="font-size:0.875rem">{{ _("report") }}</a>
         </td>
       </tr>
     {% endfor %}
@@ -35,10 +35,9 @@
 {% else %}
   <p class="empty">
     {% if job %}
-      No reports archived for this job yet.
+      {{ _("No reports archived for this job yet.") }}
     {% else %}
-      No reports archived yet. Every run a job finishes is kept here — start one with
-      <em>run now</em> on the <a href="/">dashboard</a>.
+      {{ _("No reports archived yet. Every run a job finishes is kept here — start one with <em>run now</em> on the <a href='/'>dashboard</a>.") }}
     {% endif %}
   </p>
 {% endif %}

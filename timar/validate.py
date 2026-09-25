@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 
+from .i18n import gettext as _
 from .platforms import PLATFORMS
 
 MAC = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
@@ -49,42 +50,42 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     platform = (form.get("platform") or "").strip()
 
     if not name:
-        errors.append("Name is required.")
+        errors.append(_("Name is required."))
     elif not NAME.match(name):
         # The name is used in report text, log lines and as a dictionary key; keeping it to
         # plain characters avoids a whole class of quoting surprises later.
-        errors.append("Name may contain only letters, digits, dot, dash and underscore.")
+        errors.append(_("Name may contain only letters, digits, dot, dash and underscore."))
     elif name != original_name and name in existing_names:
-        errors.append(f"A server named {name!r} already exists.")
+        errors.append(_("A server named {name!r} already exists.", name=name))
 
     if not host:
-        errors.append("Address is required.")
+        errors.append(_("Address is required."))
     if not user:
-        errors.append("SSH user is required.")
+        errors.append(_("SSH user is required."))
     if platform not in PLATFORMS:
-        errors.append(f"Platform must be one of: {', '.join(PLATFORMS)}.")
+        errors.append(_("Platform must be one of: {options}.", options=", ".join(PLATFORMS)))
 
     entry: dict = {"name": name, "host": host, "user": user, "platform": platform}
 
     mac = (form.get("wol_mac") or "").strip()
     if mac:
         if not MAC.match(mac):
-            errors.append("Wake-on-LAN MAC must look like aa:bb:cc:dd:ee:ff.")
+            errors.append(_("Wake-on-LAN MAC must look like aa:bb:cc:dd:ee:ff."))
         else:
             entry["wol_mac"] = mac.lower().replace("-", ":")
         if broadcast := (form.get("wol_broadcast") or "").strip():
             entry["wol_broadcast"] = broadcast
         if relay := (form.get("wol_relay") or "").strip():
             if relay == name:
-                errors.append("A server cannot be its own wake relay.")
+                errors.append(_("A server cannot be its own wake relay."))
             elif relay not in existing_names and relay != original_name:
-                errors.append(f"Wake relay {relay!r} is not a configured server.")
+                errors.append(_("Wake relay {relay!r} is not a configured server.", relay=relay))
             else:
                 entry["wol_relay"] = relay
     elif (form.get("wol_broadcast") or "").strip() or (form.get("wol_relay") or "").strip():
         # Silently keeping a broadcast address or a relay for a machine with no MAC would leave
         # a setting visible in the file that can never take effect.
-        errors.append("Wake settings need a MAC address to go with them.")
+        errors.append(_("Wake settings need a MAC address to go with them."))
 
     for optional in ("update_cmd", "context"):
         if value := (form.get(optional) or "").strip():
@@ -94,16 +95,16 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
         try:
             seconds = int(raw_timeout)
         except ValueError:
-            errors.append("Update timeout must be a whole number of seconds.")
+            errors.append(_("Update timeout must be a whole number of seconds."))
         else:
             # The lower bound is not fussiness. A timeout below a minute cannot outlast an
             # `apt-get update` on a slow link, so it would fail every run while looking like a
             # deliberate setting; the upper bound keeps one wedged host from holding the
             # sequential fleet walk for most of a day.
             if not MIN_UPDATE_TIMEOUT <= seconds <= MAX_UPDATE_TIMEOUT:
-                errors.append(
-                    f"Update timeout must be between {MIN_UPDATE_TIMEOUT} and "
-                    f"{MAX_UPDATE_TIMEOUT} seconds.")
+                errors.append(_(
+                    "Update timeout must be between {low} and {high} seconds.",
+                    low=MIN_UPDATE_TIMEOUT, high=MAX_UPDATE_TIMEOUT))
             else:
                 entry["update_timeout"] = seconds
 
@@ -126,33 +127,33 @@ def guest_link(form: dict, servers: list[dict], name: str,
 
     if not hypervisor:
         if raw_id:
-            raise ValidationError(["A VM id needs a hypervisor to go with it."])
+            raise ValidationError([_("A VM id needs a hypervisor to go with it.")])
         return None
 
     errors: list[str] = []
     host = next((s for s in servers if s["name"] == hypervisor), None)
     if host is None:
-        errors.append(f"Hypervisor {hypervisor!r} is not a configured server.")
+        errors.append(_("Hypervisor {hypervisor!r} is not a configured server.", hypervisor=hypervisor))
     elif host.get("platform") != "proxmox":
-        errors.append(f"{hypervisor!r} is not a hypervisor — its platform is "
-                      f"{host.get('platform', 'linux')!r}.")
+        errors.append(_("{hypervisor!r} is not a hypervisor — its platform is {platform!r}.",
+                        hypervisor=hypervisor, platform=host.get("platform", "linux")))
     # `original_name` is the entry being edited: it still carries the old name in the stored
     # config, so without it a rename collides with the very link it is renaming.
     own_names = {name, original_name}
     if hypervisor in own_names:
-        errors.append("A server cannot be its own hypervisor.")
+        errors.append(_("A server cannot be its own hypervisor."))
 
     vm_id = 0
     if not raw_id:
-        errors.append("A VM id is required when a hypervisor is set.")
+        errors.append(_("A VM id is required when a hypervisor is set."))
     else:
         try:
             vm_id = int(raw_id)
         except ValueError:
-            errors.append("VM id must be a whole number.")
+            errors.append(_("VM id must be a whole number."))
         else:
             if vm_id < 1:
-                errors.append("VM id must be a positive number.")
+                errors.append(_("VM id must be a positive number."))
             else:
                 clash = next(
                     (g for s in servers if s["name"] == hypervisor
@@ -161,8 +162,9 @@ def guest_link(form: dict, servers: list[dict], name: str,
                     None,
                 )
                 if clash:
-                    errors.append(f"VM {vm_id} on {hypervisor} is already "
-                                  f"{clash['server_name']!r}.")
+                    errors.append(_("VM {vm_id} on {hypervisor} is already {guest!r}.",
+                                    vm_id=vm_id, hypervisor=hypervisor,
+                                    guest=clash["server_name"]))
 
     if errors:
         raise ValidationError(errors)
@@ -174,9 +176,9 @@ def log_check(form: dict) -> dict:
     try:
         hours = int(form.get("journal_hours", 6))
         if not 1 <= hours <= 168:
-            errors.append("Log window must be between 1 and 168 hours.")
+            errors.append(_("Log window must be between 1 and 168 hours."))
     except (TypeError, ValueError):
-        errors.append("Log window must be a whole number of hours.")
+        errors.append(_("Log window must be a whole number of hours."))
         hours = 6
 
     try:
@@ -184,9 +186,9 @@ def log_check(form: dict) -> dict:
         if not 50 <= threshold <= 99:
             # Below 50 every machine is a finding and the report becomes noise; at 100 a full
             # disk is reported only once it is too late to act on.
-            errors.append("Disk threshold must be between 50 and 99 percent.")
+            errors.append(_("Disk threshold must be between 50 and 99 percent."))
     except (TypeError, ValueError):
-        errors.append("Disk threshold must be a whole number.")
+        errors.append(_("Disk threshold must be a whole number."))
         threshold = 85
 
     if errors:
@@ -204,7 +206,7 @@ def llm(form: dict, existing: dict | None) -> dict | None:
 
     errors: list[str] = []
     if provider not in PROVIDERS:
-        errors.append(f"Provider must be one of: {', '.join(PROVIDERS)}.")
+        errors.append(_("Provider must be one of: {options}.", options=", ".join(PROVIDERS)))
 
     entry: dict = {"provider": provider}
     if model := (form.get("model") or "").strip():
@@ -223,7 +225,7 @@ def llm(form: dict, existing: dict | None) -> dict | None:
         entry["api_key"] = existing["api_key"]
 
     if provider == "anthropic" and not entry.get("api_key"):
-        errors.append("An API key is required for Anthropic.")
+        errors.append(_("An API key is required for Anthropic."))
 
     if errors:
         raise ValidationError(errors)
@@ -241,9 +243,9 @@ def telegram(form: dict, existing: dict | None) -> dict | None:
 
     errors: list[str] = []
     if not token:
-        errors.append("Bot token is required.")
+        errors.append(_("Bot token is required."))
     if not chat_id:
-        errors.append("Chat ID is required.")
+        errors.append(_("Chat ID is required."))
     if errors:
         raise ValidationError(errors)
     return {"token": token, "chat_id": chat_id}
@@ -267,7 +269,7 @@ def schedules(form: dict, job_names) -> dict:
     for name in job_names:
         kind = (form.get(f"{name}_kind") or "daily").strip()
         if kind not in KINDS:
-            errors.append(f"{name}: schedule type must be one of {', '.join(KINDS)}.")
+            errors.append(_("{job}: schedule type must be one of {options}.", job=name, options=", ".join(KINDS)))
             continue
 
         spec = Schedule(
@@ -279,10 +281,10 @@ def schedules(form: dict, job_names) -> dict:
         )
 
         if kind == INTERVAL and spec.every_hours < 1:
-            errors.append(f"{name}: interval must be at least one hour.")
+            errors.append(_("{job}: interval must be at least one hour.", job=name))
             continue
         if kind == WEEKLY and spec.day not in DAYS:
-            errors.append(f"{name}: unknown day {spec.day!r}.")
+            errors.append(_("{job}: unknown day {day!r}.", job=name, day=spec.day))
             continue
 
         try:
