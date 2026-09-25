@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **The language selector is in the header now**, beside *settings* on the dashboard and at the
+  top right of the sign-in and setup pages. In 0.1.5 it sat at the foot of every page, which on
+  the dashboard is below the jobs table, and it went unnoticed.
+
 ## [0.1.5] — 2026-09-26
 
 ### Added

@@ -126,25 +126,12 @@
     .notice.bad { border-left: 3px solid var(--down); color: var(--down); }
     section.panel table { margin-bottom: 0; }
     a { color: inherit; }
-    form.lang { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 2rem; }
-    form.lang select { width: auto; padding: 0.3rem 0.5rem; font-size: 0.8rem; color: var(--muted); }
+    form.lang { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
+    form.lang select { width: auto; padding: 0.25rem 0.45rem; font-size: 0.8rem; color: var(--muted); }
   </style>
 </head>
 <body>
 <main>{% block body %}{% endblock %}
-{# On every page, including setup and sign-in: whoever cannot read the setup page is the one who
-   most needs to find this. A plain GET form so it works without scripting; the select submits
-   itself when scripting is there. #}
-<form method="get" action="/lang" class="lang">
-  <input type="hidden" name="next"
-         value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query }}">
-  <select name="code" aria-label="Language" onchange="this.form.submit()">
-    {% for code, name in languages.items() %}
-    <option value="{{ code }}" {{ "selected" if code == current_lang() }}>{{ name }}</option>
-    {% endfor %}
-  </select>
-  <noscript><button type="submit" class="secondary">OK</button></noscript>
-</form>
 </main>
 </body>
 </html>

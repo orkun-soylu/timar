@@ -1,0 +1,15 @@
+{# In every page's header, including setup and sign-in: whoever cannot read the setup page is the
+   one who most needs to find this. It used to sit at the foot of the page, which on the
+   dashboard is below the jobs table — out of sight, and it was not found.
+   A plain GET form so it works without scripting; the select submits itself when there is. #}
+<form method="get" action="/lang" class="lang">
+  <span aria-hidden="true">🌐</span>
+  <input type="hidden" name="next"
+         value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query }}">
+  <select name="code" aria-label="Language" onchange="this.form.submit()">
+    {% for code, name in languages.items() %}
+    <option value="{{ code }}" {{ "selected" if code == current_lang() }}>{{ name }}</option>
+    {% endfor %}
+  </select>
+  <noscript><button type="submit" class="secondary">OK</button></noscript>
+</form>

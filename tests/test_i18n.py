@@ -163,6 +163,18 @@ class TestPages:
             assert response.status_code == 200, path
             assert f'<html lang="{code}">' in response.text or path.startswith("/fragments")
 
+    @pytest.mark.parametrize("path", ["/setup", "/login", "/", "/settings", "/reports"])
+    def test_the_switch_is_in_the_header(self, client, path):
+        """At the foot of the page it sat below the jobs table on the dashboard and went unfound."""
+        if path != "/setup":
+            client.post("/setup", data={"username": "op", "password": "correct-horse-battery"})
+        if path == "/login":
+            client.cookies.clear()
+        body = client.get(path).text
+        header = body[body.index("<header>"):body.index("</header>")]
+        assert 'action="/lang"' in header
+        assert body.count('action="/lang"') == 1
+
     def test_form_errors_come_back_translated(self, client):
         client.cookies.set(i18n.COOKIE, "de")
         client.post("/setup", data={"username": "op", "password": "correct-horse-battery"})

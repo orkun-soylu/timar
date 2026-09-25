@@ -5,6 +5,7 @@
   <span class="spacer"></span>
   <a href="/reports" class="muted">{{ _("reports") }}</a>
   <a href="/settings" class="muted">{{ _("settings") }}</a>
+  {% include "_lang.html" %}
   <span class="muted">{{ operator }}</span>
   <form method="post" action="/logout" style="margin:0">
     <button type="submit" class="linkish">{{ _("sign out") }}</button>
