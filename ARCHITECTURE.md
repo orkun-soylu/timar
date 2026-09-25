@@ -126,6 +126,13 @@ Calling an on-demand guest always-on produces a nightly false alarm, which is no
 guest of an *always-on* host on-demand normalises its outage, so a 24/7 VM that has actually
 crashed is described as sleeping soundly. Noise is recoverable, silence is not.
 
+**The one flag: `on_demand: true` on a `manages_vms` entry.** Inheritance has no answer for a
+guest kept off on an *always-on* host — a management VM started only when it is needed. Without
+the flag it is reported down every night it spends off, the power page refuses to stop it, and
+the update run still starts and stops it correctly, so the fleet is described wrong in every
+place but one. The flag is the operator taking the trade above for one named VM; it is never
+set by default and never inherited from anything, so no guest gets it by accident.
+
 The rule lives in exactly one function, `config.on_demand`, because it did not used to. It was
 written out once per consumer — dashboard, analysis prompt, settings table — and the third copy
 dropped the guest clause, so the same Kali VM was *asleep* on one page and *always on* on

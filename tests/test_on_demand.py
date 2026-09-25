@@ -74,3 +74,25 @@ def test_a_guest_named_before_its_hypervisor_still_inherits():
          "manages_vms": [{"vm_id": 100, "server_name": "vm-01"}]},
     ]
     assert on_demand(servers)["vm-01"] == "hv-01"
+
+
+def test_a_guest_marked_on_demand_is_on_demand_on_an_always_on_host():
+    """A management VM started only when needed, on a host that never sleeps. Inheritance says
+    always on, so every night it spent off was reported as an outage."""
+    servers = [
+        {"name": "hv-01", "platform": "proxmox",
+         "manages_vms": [{"vm_id": 100, "server_name": "vm-01", "on_demand": True},
+                         {"vm_id": 101, "server_name": "vm-02"}]},
+        {"name": "vm-01"},
+        {"name": "vm-02"},
+    ]
+    assert on_demand(servers) == {"vm-01": "hv-01"}
+
+
+def test_the_flag_does_not_override_the_guests_own_mac():
+    servers = [
+        {"name": "hv-01", "platform": "proxmox",
+         "manages_vms": [{"vm_id": 100, "server_name": "vm-01", "on_demand": True}]},
+        {"name": "vm-01", "wol_mac": "aa:bb:cc:dd:ee:02"},
+    ]
+    assert on_demand(servers)["vm-01"] == "wol"

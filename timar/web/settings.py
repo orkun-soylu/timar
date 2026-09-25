@@ -71,7 +71,8 @@ def _server_values(servers: list[dict], guest_of: dict, edit: str | None,
             link = guest_of.get(edit) or {}
             return {**server,
                     "hypervisor": link.get("hypervisor", ""),
-                    "vm_id": link.get("vm_id", "")}
+                    "vm_id": link.get("vm_id", ""),
+                    "guest_on_demand": link.get("guest_on_demand", False)}
     return {}
 
 
@@ -106,7 +107,8 @@ def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None 
     telegram_cfg = cfg.get("telegram") or {}
     servers = cfg.get("servers", [])
     guest_of = {
-        guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"]}
+        guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"],
+                               "guest_on_demand": bool(guest.get("on_demand"))}
         for host in servers
         for guest in host.get("manages_vms", [])
     }
@@ -208,8 +210,12 @@ def _carry_hand_written(entry: dict, previous: dict) -> dict:
     return entry
 
 
-def _relink_guest(servers: list[dict], name: str, link: tuple[str, int] | None) -> None:
-    """Make `name` a guest of exactly the hypervisor in `link`, or of none at all."""
+def _relink_guest(servers: list[dict], name: str, link: tuple[str, int] | None,
+                  on_demand: bool = False) -> None:
+    """Make `name` a guest of exactly the hypervisor in `link`, or of none at all.
+
+    `on_demand` is written only when set, so an entry that never used it stays as it was.
+    """
     for server in servers:
         if guests := server.get("manages_vms"):
             server["manages_vms"] = [g for g in guests if g["server_name"] != name]
@@ -221,8 +227,10 @@ def _relink_guest(servers: list[dict], name: str, link: tuple[str, int] | None) 
     hypervisor, vm_id = link
     for server in servers:
         if server["name"] == hypervisor:
-            server.setdefault("manages_vms", []).append(
-                {"vm_id": vm_id, "server_name": name})
+            guest = {"vm_id": vm_id, "server_name": name}
+            if on_demand:
+                guest["on_demand"] = True
+            server.setdefault("manages_vms", []).append(guest)
 
 
 @router.post("/servers")
@@ -255,7 +263,7 @@ async def save_server(request: Request):
     else:
         servers.append(entry)
 
-    _relink_guest(servers, entry["name"], link)
+    _relink_guest(servers, entry["name"], link, on_demand=bool(form.get("guest_on_demand")))
 
     cfg["servers"] = servers
     config.save(cfg)

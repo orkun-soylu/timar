@@ -120,11 +120,16 @@ def on_demand(servers: list[dict]) -> dict[str, str]:
     2. **Its hypervisor is on-demand.** A guest has no wake address of its own — it cannot have
        one, it is started by `qm` — so keying off `wol_mac` alone calls a sleeping VM always-on
        and every sweep then reports it as an outage. Value: the hypervisor's name.
+    3. **The operator said so**, with `on_demand: true` on its `manages_vms` entry. The one case
+       inheritance cannot answer: a guest kept off on an always-on host — a management VM
+       started only when it is needed. Value: the hypervisor's name, as in 2.
 
     Inherited rather than granted to every guest, because the two mistakes are not equal. Calling
     an on-demand guest always-on produces a nightly false alarm, which is merely noise; calling a
     guest of an always-on host on-demand normalises its outage, so a VM that has actually crashed
-    is reported as sleeping soundly. Inheritance is also transitive — nested virtualisation is
+    is reported as sleeping soundly. That is why 3 is opt-in per guest and never a default: it
+    is the operator accepting that trade for one VM, not Timar assuming it for all of them.
+    Inheritance is also transitive — nested virtualisation is
     unusual but the fixpoint costs nothing and the alternative is a wrong answer at depth two.
 
     Lives here, not in each caller, because it was written out three times and the third copy
@@ -132,6 +137,10 @@ def on_demand(servers: list[dict]) -> dict[str, str]:
     the settings page called it always on.
     """
     reasons = {s["name"]: "wol" for s in servers if s.get("wol_mac")}
+    for host in servers:
+        for guest in host.get("manages_vms", []):
+            if guest.get("on_demand"):
+                reasons.setdefault(guest["server_name"], host["name"])
     guests = [(host["name"], guest["server_name"])
               for host in servers for guest in host.get("manages_vms", [])]
 
