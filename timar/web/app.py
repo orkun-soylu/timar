@@ -21,13 +21,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, jobs, power, reports, state, status as fleet_status
+from .. import config, i18n, jobs, power, reports, state, status as fleet_status
+from ..i18n import gettext as _
 from ..scheduler import scheduler
 from . import auth, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
+i18n.install(TEMPLATES.env)
 
 
 @asynccontextmanager
@@ -78,12 +80,38 @@ async def force_setup_first(request: Request, call_next):
     """
     path = request.url.path
     if not config.is_configured() and not (
-        path in ("/setup", "/health") or path.startswith("/static/")
+        path in ("/setup", "/health", "/lang") or path.startswith("/static/")
     ):
         return RedirectResponse("/setup", status_code=status.HTTP_303_SEE_OTHER)
     if config.is_configured() and path == "/setup":
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     return await call_next(request)
+
+
+# Registered after `force_setup_first`, so it runs *before* it: Starlette wraps each new
+# middleware around the ones already added. The language has to be settled before anything
+# renders, including the setup page that the redirect above leads to.
+@app.middleware("http")
+async def choose_language(request: Request, call_next):
+    i18n.activate(i18n.negotiate(request.cookies.get(i18n.COOKIE),
+                                 request.headers.get("accept-language")))
+    return await call_next(request)
+
+
+@app.get("/lang")
+async def set_language(code: str = "", next: str = "/"):
+    """Remember a language choice for this browser and go back to where it was made.
+
+    Open before setup and before login: the person who cannot read the setup page is the one who
+    most needs the switch. `next` must be a path on this site — anything else would turn the
+    route into an open redirect.
+    """
+    if not next.startswith("/") or next.startswith("//") or "\\" in next:
+        next = "/"
+    response = RedirectResponse(next, status_code=status.HTTP_303_SEE_OTHER)
+    if code in i18n.LANGUAGES:
+        response.set_cookie(i18n.COOKIE, code, max_age=365 * 86400, samesite="lax")
+    return response
 
 
 @app.get("/health")
@@ -154,7 +182,7 @@ def _job_view() -> list[dict]:
         spec = schedule_module.Schedule.from_dict(schedules.get(name))
         rows.append({
             "name": name,
-            "title": jobs.TITLES[name],
+            "title": _(jobs.TITLES[name]),
             "schedule": spec.describe(),
             "running": scheduler.is_running(name),
             "status": record.get("status"),
@@ -228,14 +256,14 @@ async def job_report(request: Request, name: str, operator: str = Depends(curren
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     record = state.job(name)
     return TEMPLATES.TemplateResponse(request, "report.html", {
-        "title": jobs.TITLES[name],
-        "subtitle": "Last run",
+        "title": _(jobs.TITLES[name]),
+        "subtitle": _("Last run"),
         "report": record.get("last_report") or "",
         "last_run": record.get("last_run"),
         "summary": record.get("last_summary"),
         "error": record.get("last_error"),
         "back": "/",
-        "back_label": "dashboard",
+        "back_label": _("dashboard"),
     })
 
 
@@ -247,8 +275,8 @@ def _filters(selected: str | None) -> list[dict]:
     update report", which is a question the filter should be able to ask.
     """
     tally = reports.counts()
-    options = [{"value": "", "label": "All reports", "count": sum(tally.values())}]
-    options += [{"value": name, "label": jobs.TITLES[name], "count": tally.get(name, 0)}
+    options = [{"value": "", "label": _("All reports"), "count": sum(tally.values())}]
+    options += [{"value": name, "label": _(jobs.TITLES[name]), "count": tally.get(name, 0)}
                 for name in jobs.JOBS]
     for option in options:
         option["selected"] = option["value"] == (selected or "")
@@ -304,7 +332,8 @@ async def _power(name: str, action) -> HTMLResponse:
     # The machine is about to change state and the cached probe is now a lie; the next poll
     # should show the truth rather than a ten-second-old snapshot of it.
     fleet_status.invalidate()
-    return HTMLResponse(f'<span class="ok">{html.escape(message)} — the table follows.</span>')
+    return HTMLResponse(
+        f'<span class="ok">{html.escape(_("{message} — the table follows.", message=message))}</span>')
 
 
 @app.post("/servers/{name}/wake", response_class=HTMLResponse)
@@ -331,8 +360,10 @@ async def archived_report(request: Request, report_id: str,
     if entry is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return TEMPLATES.TemplateResponse(request, "report.html", {
-        "title": entry.get("title") or entry.get("job", "Report"),
-        "subtitle": "Archived run",
+        # The stored title is the English one, written when the run finished; translated on the
+        # way out so the archive follows the reader's language rather than the writer's.
+        "title": _(entry.get("title") or entry.get("job", "Report")),
+        "subtitle": _("Archived run"),
         "report": entry.get("report") or "",
         "last_run": entry.get("finished_at"),
         "summary": entry.get("summary"),
@@ -341,5 +372,5 @@ async def archived_report(request: Request, report_id: str,
         # archive: an operator comparing four update runs should not re-pick the filter between
         # each one.
         "back": f"/reports?job={entry.get('job', '')}",
-        "back_label": "reports",
+        "back_label": _("reports"),
     })

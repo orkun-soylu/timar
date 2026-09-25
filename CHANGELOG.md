@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **The web interface speaks seven languages:** English, Türkçe, Deutsch, Français, Русский,
+  日本語 and 中文. The browser's `Accept-Language` picks one on the first visit; the selector at
+  the bottom of every page — setup and sign-in included — overrides it and is remembered in a
+  cookie. Form errors and power messages follow the page. Reports, job summaries and Telegram
+  messages stay in English: they are written by background jobs, for whoever reads them later.
+
 ## [0.1.4] — 2026-09-25
 
 ### Fixed

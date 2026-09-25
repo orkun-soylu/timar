@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from .i18n import gettext as _, ngettext
+
 DAILY = "daily"
 WEEKLY = "weekly"
 INTERVAL = "interval"
@@ -55,14 +57,14 @@ class Schedule:
         return entry
 
     def describe(self) -> str:
+        # Shown only on the dashboard, so it speaks the reader's language; see `i18n`.
         if not self.enabled:
-            return "not scheduled"
+            return _("not scheduled")
         if self.kind == INTERVAL:
-            hours = self.every_hours
-            return f"every {hours} hours" if hours != 1 else "every hour"
+            return ngettext("every hour", "every {n} hours", self.every_hours)
         if self.kind == WEEKLY:
-            return f"every {self.day.capitalize()} at {self.at}"
-        return f"daily at {self.at}"
+            return _("every {day} at {at}", day=_(self.day.capitalize()), at=self.at)
+        return _("daily at {at}", at=self.at)
 
 
 def _time_of_day(at: str) -> tuple[int, int]:
@@ -70,9 +72,9 @@ def _time_of_day(at: str) -> tuple[int, int]:
         hour_text, minute_text = at.split(":")
         hour, minute = int(hour_text), int(minute_text)
     except (ValueError, AttributeError) as e:
-        raise ScheduleError(f"time must look like 07:00, got {at!r}") from e
+        raise ScheduleError(_("time must look like 07:00, got {at!r}", at=at)) from e
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        raise ScheduleError(f"time out of range: {at!r}")
+        raise ScheduleError(_("time out of range: {at!r}", at=at))
     return hour, minute
 
 

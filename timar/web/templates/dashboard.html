@@ -3,11 +3,11 @@
 <header>
   <h1>Timar</h1>
   <span class="spacer"></span>
-  <a href="/reports" class="muted">reports</a>
-  <a href="/settings" class="muted">settings</a>
+  <a href="/reports" class="muted">{{ _("reports") }}</a>
+  <a href="/settings" class="muted">{{ _("settings") }}</a>
   <span class="muted">{{ operator }}</span>
   <form method="post" action="/logout" style="margin:0">
-    <button type="submit" class="linkish">sign out</button>
+    <button type="submit" class="linkish">{{ _("sign out") }}</button>
   </form>
 </header>
 
@@ -23,14 +23,11 @@
 <div id="power-result" class="result" style="margin-top:0.75rem"></div>
 
 <p class="muted" style="margin-top:0.75rem; margin-bottom:2rem">
-  Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is
-  expected; <em>down</em> means it should be reachable and is not. Power is offered only for
-  on-demand machines — an always-on host has no wake path, so shutting it down from here would
-  strand it.
+  {{ _("Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.") }}
 </p>
 
 <section class="panel">
-  <h2>Scheduled work</h2>
+  <h2>{{ _("Scheduled work") }}</h2>
   <div id="jobs-panel"
        hx-get="/fragments/jobs"
        hx-trigger="every 15s"
@@ -40,8 +37,6 @@
 </section>
 
 <p class="muted">
-  If <em>last run</em> stops advancing, the schedule has stopped even though everything else
-  looks healthy — that is the failure this panel exists to show. Edit schedules in
-  <a href="/settings">settings</a>.
+  {{ _("If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.") }}
 </p>
 {% endblock %}

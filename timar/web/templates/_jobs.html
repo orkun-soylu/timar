@@ -1,7 +1,7 @@
 {# Polled standalone, so no `extends`. #}
 <table>
   <thead>
-    <tr><th>Job</th><th>Schedule</th><th>Last run</th><th>Next run</th><th></th></tr>
+    <tr><th>{{ _("Job") }}</th><th>{{ _("Schedule") }}</th><th>{{ _("Last run") }}</th><th>{{ _("Next run") }}</th><th></th></tr>
   </thead>
   <tbody>
   {% for job in jobs %}
@@ -17,13 +17,13 @@
       <td class="muted">{{ job.schedule }}</td>
       <td>
         {% if job.running %}
-          <span class="muted">running…</span>
+          <span class="muted">{{ _("running…") }}</span>
         {% elif job.last_run %}
           {# The load-bearing field. A job that stops being scheduled writes no error
              anywhere; a stale timestamp here is the only thing that reveals it. #}
           <span class="{{ 'ok' if job.status == 'ok' else 'error' }}">{{ job.last_run | replace("T", " ") }}</span>
         {% else %}
-          <span class="muted">never</span>
+          <span class="muted">{{ _("never") }}</span>
         {% endif %}
       </td>
       <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
@@ -31,19 +31,19 @@
         {% if job.has_report %}
           {# A full page, not an expander: this panel re-renders every 15s and would close it. #}
           <a href="/jobs/{{ job.name }}/report" class="muted"
-             style="font-size:0.875rem; margin-right:0.6rem">report</a>
+             style="font-size:0.875rem; margin-right:0.6rem">{{ _("report") }}</a>
         {% endif %}
         {% if job.archived %}
           <a href="/reports?job={{ job.name }}" class="muted"
-             style="font-size:0.875rem; margin-right:0.6rem">history</a>
+             style="font-size:0.875rem; margin-right:0.6rem">{{ _("history") }}</a>
         {% endif %}
         <button type="button" class="linkish"
                 hx-post="/jobs/{{ job.name }}/run"
                 hx-target="#jobs-panel" hx-swap="innerHTML"
                 {% if job.running %}disabled{% endif %}
                 {% if job.name == "update" %}
-                hx-confirm="Run updates now? Machines that are asleep will be woken, updated, and shut down again."
-                {% endif %}>run now</button>
+                hx-confirm="{{ _("Run updates now? Machines that are asleep will be woken, updated, and shut down again.") }}"
+                {% endif %}>{{ _("run now") }}</button>
       </td>
     </tr>
   {% endfor %}
@@ -52,6 +52,6 @@
 {% set stale = jobs | rejectattr("heartbeat") | list %}
 {% if stale %}
   <p class="hint" style="padding:0 1rem 1rem; margin:0">
-    Waiting for the scheduler's first tick.
+    {{ _("Waiting for the scheduler's first tick.") }}
   </p>
 {% endif %}

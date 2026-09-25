@@ -6,7 +6,7 @@
 {% if fleet %}
 <table>
   <thead>
-    <tr><th>Server</th><th>Address</th><th>Platform</th><th>State</th><th>Power</th></tr>
+    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Power") }}</th></tr>
   </thead>
   <tbody>
   {% for host in fleet %}
@@ -16,9 +16,9 @@
       <td class="muted">{{ host.platform }}</td>
       <td>
         <span class="dot"></span>
-        {%- if host.state == "up" %}up
-        {%- elif host.state == "asleep" %}asleep <span class="muted">(on-demand)</span>
-        {%- else %}down
+        {%- if host.state == "up" %}{{ _("up") }}
+        {%- elif host.state == "asleep" %}{{ _("asleep") }} <span class="muted">({{ _("on-demand") }})</span>
+        {%- else %}{{ _("down") }}
         {%- endif %}
       </td>
       {# Left-aligned like every other column, and the button's own padding is zero, so its
@@ -27,20 +27,20 @@
         {%- if not host.on_demand %}
           {# Always on: there is nothing to wake it with, so Timar will not put it to sleep
              either. Offering the button and refusing the click would be worse. #}
-          <span class="muted">n/a</span>
+          <span class="muted">{{ _("n/a") }}</span>
         {%- elif host.state == "up" %}
           <button type="button" class="linkish"
                   hx-post="/servers/{{ host.name }}/shutdown"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
-                  hx-confirm="Shut down {{ host.name }}? It stays off until something wakes it."
-                  >shutdown</button>
+                  hx-confirm="{{ _("Shut down {name}? It stays off until something wakes it.", name=host.name) }}"
+                  >{{ _("shutdown") }}</button>
         {%- else %}
           <button type="button" class="linkish"
                   hx-post="/servers/{{ host.name }}/wake"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
-                  >wake up</button>
+                  >{{ _("wake up") }}</button>
         {%- endif %}
       </td>
     </tr>
@@ -48,5 +48,5 @@
   </tbody>
 </table>
 {% else %}
-<p class="empty">No servers configured yet.</p>
+<p class="empty">{{ _("No servers configured yet.") }}</p>
 {% endif %}

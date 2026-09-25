@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Reports — Timar{% endblock %}
+{% block title %}{{ _("Reports") }} — Timar{% endblock %}
 {% block body %}
 <header>
-  <h1>Reports</h1>
+  <h1>{{ _("Reports") }}</h1>
   <span class="spacer"></span>
-  <a href="/" class="muted">← dashboard</a>
+  <a href="/" class="muted">← {{ _("dashboard") }}</a>
 </header>
 
 <section class="panel">
@@ -17,7 +17,7 @@
   <form class="stack" method="get" action="/reports">
     <div class="row" style="align-items:flex-end">
       <label style="flex:0 1 20rem">
-        <span>Show</span>
+        <span>{{ _("Show") }}</span>
         <select name="job"
                 hx-get="/reports"
                 hx-select="#report-list"
@@ -33,7 +33,7 @@
       </label>
       {# Only reachable without scripting; with HTMX the change event has already applied the
          filter, and a button that does nothing is a button an operator has to think about. #}
-      <noscript><button type="submit" class="secondary" style="margin-bottom:1rem">show</button></noscript>
+      <noscript><button type="submit" class="secondary" style="margin-bottom:1rem">{{ _("show") }}</button></noscript>
     </div>
   </form>
 
@@ -41,8 +41,6 @@
 </section>
 
 <p class="muted">
-  Every run a job finishes is kept here, whether or not it was also sent to Telegram. The
-  dashboard shows the latest one; this shows how a finding developed — a disk creeping upwards,
-  a host that has been unreachable for several sweeps, an update that fails every week.
+  {{ _("Every run a job finishes is kept here, whether or not it was also sent to Telegram. The dashboard shows the latest one; this shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.") }}
 </p>
 {% endblock %}

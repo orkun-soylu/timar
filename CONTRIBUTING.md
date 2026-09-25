@@ -104,6 +104,13 @@ before being written down. busybox and coreutils disagree in ways that fail *qui
 flag that GNU accepts and busybox rejects produced a disk check that silently passed on every
 router it was pointed at.
 
+**Interface text** goes through `_()` — in a template `{{ _("Save") }}`, in Python
+`from .i18n import gettext as _`. The English sentence is the key, and every catalog in
+`timar/locales/` needs an entry for it: `tests/test_i18n.py` finds the messages on its own and
+fails on a missing, stale or placeholder-mangled translation. If you cannot write one of the
+languages, say so in the pull request rather than pasting English into its catalog. Anything a
+background job writes — reports, summaries, Telegram — stays English; see `timar/i18n.py`.
+
 **Commit subjects:** `type: short description`, with a body explaining the why. Types used
 here: `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `style`, `revert`. If you are fixing a
 bug, describe the symptom, the root cause and how you verified the fix — this project treats

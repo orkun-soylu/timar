@@ -21,6 +21,7 @@ from dataclasses import dataclass
 import paramiko
 
 from . import config, keys
+from .i18n import gettext as _
 from .platforms import get as get_platform
 
 logger = logging.getLogger(__name__)
@@ -50,14 +51,14 @@ class Result:
     def describe(self) -> str:
         parts = []
         if self.key_already_present:
-            parts.append("key was already installed")
+            parts.append(_("key was already installed"))
         elif self.key_installed:
-            parts.append("key installed")
+            parts.append(_("key installed"))
         if self.sudo_granted:
-            parts.append("passwordless sudo granted")
+            parts.append(_("passwordless sudo granted"))
         elif self.sudo_skipped_reason:
-            parts.append(f"sudo not configured ({self.sudo_skipped_reason})")
-        return "; ".join(parts) or "nothing to do"
+            parts.append(_("sudo not configured ({reason})", reason=self.sudo_skipped_reason))
+        return "; ".join(parts) or _("nothing to do")
 
 
 def _connect(host: str, user: str, password: str, port: int = 22) -> paramiko.SSHClient:
