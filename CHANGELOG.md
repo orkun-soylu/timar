@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Long reports reach Telegram again.** A findings report is one `<pre>` block; once it grew
+  past Telegram's 4096-character limit it was split on line boundaries, the first chunk ended
+  inside an unclosed `<pre>` and the second began with a stray `</pre>`. Telegram rejected both
+  (`can't parse entities`), so the report most worth reading — the long one — was the one never
+  delivered. Each chunk now closes the tags still open at its end and the next reopens them;
+  a line cut to fit no longer ends in half an HTML entity either.
+
 ## [0.1.1] — 2026-08-09
 
 A bug-fix release, and one of the three is the reason it exists: **in 0.1.0 no scheduled run
