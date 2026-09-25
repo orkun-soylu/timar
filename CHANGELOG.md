@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-09-25
+
 ### Added
 
 - **A guest of an always-on host can be marked on-demand.** Guests inherit on-demand from their
@@ -119,7 +121,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/orkun-soylu/timar/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/orkun-soylu/timar/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/orkun-soylu/timar/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/orkun-soylu/timar/releases/tag/v0.1.0
