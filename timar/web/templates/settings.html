@@ -144,11 +144,19 @@
         <input name="vm_id" inputmode="numeric" placeholder="100"
                value="{{ values.get('vm_id', '') }}"></label>
     </div>
+    <label class="inline">
+      <input type="checkbox" name="guest_on_demand"
+             {{ "checked" if values.get('guest_on_demand') else "" }}>
+      <span>Kept off on purpose <em class="muted">— only for a guest of an always-on host</em></span>
+    </label>
     <p class="hint">
       A guest needs no MAC of its own — it is started with <code>qm</code>, not a magic packet —
       but it <strong>is</strong> on-demand whenever its hypervisor is, so being off is never
       reported as a fault. Updates reach it through its host: wake the hypervisor, start the
       guest, update, shut both back down in order.
+      A guest of an <strong>always-on</strong> host is always on too, so a crash is never
+      mistaken for sleep — tick <em>kept off on purpose</em> only for a VM you start when you
+      need it.
     </p>
 
     <p class="hint">

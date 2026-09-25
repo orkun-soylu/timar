@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **A guest of an always-on host can be marked on-demand.** Guests inherit on-demand from their
+  hypervisor, so a VM kept off on a host that never sleeps — a management VM started only when it
+  is needed — was reported down every night, and the power page refused to stop it. Tick *kept
+  off on purpose* on the guest (stored as `on_demand: true` on its `manages_vms` entry). It is
+  never a default and never inherited: without it, a guest of an always-on host is still always
+  on, so a crashed 24/7 VM is still reported as a crash.
+
 ## [0.1.2] — 2026-09-25
 
 A bug-fix release: long reports were not reaching Telegram.

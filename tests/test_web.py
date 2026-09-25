@@ -639,6 +639,60 @@ class TestSettings:
         assert "on-demand" in row and "via hv" in row
         assert "always on" not in row
 
+    def test_a_guest_of_an_always_on_host_can_be_marked_on_demand_from_the_form(self, client):
+        """Inheritance calls every guest of an always-on host always-on, which is right until the
+        guest is a VM started only when it is needed. The flag has to be settable where the link
+        is, or it exists only in hand-edited YAML."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox"},
+        ]})
+        client.post("/settings/servers", data={
+            "name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux",
+            "hypervisor": "hv", "vm_id": "100", "guest_on_demand": "on"})
+        servers = config.load()["servers"]
+        assert servers[0]["manages_vms"] == [
+            {"vm_id": 100, "server_name": "vm-01", "on_demand": True}]
+        assert config.on_demand(servers) == {"vm-01": "hv"}
+
+        page = client.get("/settings").text
+        row = page.split("<td>vm-01</td>", 1)[1].split("</tr>", 1)[0]
+        assert "on-demand" in row and "via hv" in row
+
+        field = client.get("/settings?edit=vm-01").text.split('name="guest_on_demand"', 1)[1]
+        assert field.split(">", 1)[0].strip().startswith("checked")
+
+    def test_unticking_the_flag_makes_the_guest_always_on_again(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01", "on_demand": True}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "vm-01", "name": "vm-01", "host": "10.0.0.2", "user": "deploy",
+            "platform": "linux", "hypervisor": "hv", "vm_id": "100"})
+        servers = config.load()["servers"]
+        assert servers[0]["manages_vms"] == [{"vm_id": 100, "server_name": "vm-01"}]
+        assert config.on_demand(servers) == {}
+
+    def test_editing_the_hypervisor_keeps_its_guests_flag(self, client):
+        """The hypervisor's form has no input for its guests; saving it must not drop the flag
+        any more than it may drop the guest."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-01", "on_demand": True}]},
+            {"name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux"},
+        ]})
+        client.post("/settings/servers", data={
+            "original_name": "hv", "name": "hv", "host": "10.0.0.9",
+            "user": "root", "platform": "proxmox"})
+        assert config.on_demand(config.load()["servers"]) == {"vm-01": "hv"}
+
     def test_the_update_timeout_field_shows_the_default_and_round_trips_an_override(self, client):
         """The default has to be visible in the form, or the only way to learn it is the source."""
         complete_setup(client)
