@@ -89,6 +89,12 @@ class TestExtractText:
     def test_anthropic_no_text_block_returns_empty(self):
         assert extract_text(cfg("anthropic"), {"content": [{"type": "thinking"}]}) == ""
 
+    def test_anthropic_cut_off_at_max_tokens_raises(self):
+        # Thinking can spend the whole budget; that must surface as an error, not an empty answer.
+        data = {"stop_reason": "max_tokens", "content": [{"type": "thinking", "thinking": ""}]}
+        with pytest.raises(LLMError, match="max_tokens"):
+            extract_text(cfg("anthropic"), data)
+
     def test_openai(self):
         data = {"choices": [{"message": {"content": "answer"}}]}
         assert extract_text(cfg("openai"), data) == "answer"

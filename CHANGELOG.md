@@ -9,6 +9,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **The written assessment no longer disappears when thinking uses up the budget.** Current
+  Claude models think by default, and thinking shares `max_tokens` with the answer; at the old
+  default of 4000 a long sweep could come back with no text at all, which was shown as an empty
+  assessment. The default is now 16000, and a reply cut off at `max_tokens` is reported as an
+  error naming `llm.max_tokens` instead of passing as empty. If you point `openai` at a local
+  server with a small context window, set `llm.max_tokens` lower yourself.
+
+### Changed
+
+- The analyst prompt no longer asks for a fixed number of sentences; it asks for an assessment
+  brief enough to read at a glance.
+
 ## [0.1.3] — 2026-09-25
 
 ### Added
