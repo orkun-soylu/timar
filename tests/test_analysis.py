@@ -29,7 +29,7 @@ class TestSystemPrompt:
         """
         prompt = build_system_prompt({}, notes="")
         assert "192.168." not in prompt
-        assert not any(c.isdigit() for c in prompt.replace("three to five", ""))
+        assert not any(c.isdigit() for c in prompt)
 
     def test_servers_come_from_config(self):
         prompt = build_system_prompt(CONFIG)

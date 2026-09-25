@@ -50,7 +50,7 @@ class LLMConfig:
     model: str = ""
     api_key: str = ""
     base_url: str = ""
-    max_tokens: int = 4000
+    max_tokens: int = 16000
     timeout: float = 120.0
 
     @classmethod
@@ -71,7 +71,7 @@ class LLMConfig:
             model=raw.get("model") or defaults["model"],
             api_key=raw.get("api_key", ""),
             base_url=(raw.get("base_url") or defaults["base_url"]).rstrip("/"),
-            max_tokens=int(raw.get("max_tokens", 4000)),
+            max_tokens=int(raw.get("max_tokens", 16000)),
             timeout=float(raw.get("timeout", 120.0)),
         )
 
@@ -185,6 +185,10 @@ def extract_text(cfg: LLMConfig, data: dict) -> str:
             # `content` is a list of blocks and the first one is not necessarily the answer:
             # thinking is on by default on current models, so a thinking block can precede the
             # text. Select by type rather than by position.
+            # Thinking shares `max_tokens` with the answer; a budget spent on thinking comes back
+            # as no text at all, which must not pass for an empty assessment.
+            if data.get("stop_reason") == "max_tokens":
+                raise LLMError("anthropic stopped at max_tokens before finishing; raise llm.max_tokens")
             for block in data.get("content", []):
                 if block.get("type") == "text":
                     return block.get("text", "").strip()
