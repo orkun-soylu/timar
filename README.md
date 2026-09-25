@@ -42,7 +42,7 @@ do — the first screen is the only one served before an account exists.
 
 The image is published for **amd64 and arm64** — a Raspberry Pi is a first-class host here, not
 an afterthought. `:latest` follows the most recent release; pin a version
-(`ghcr.io/orkun-soylu/timar:0.1.1`) if you would rather choose when to move.
+(`ghcr.io/orkun-soylu/timar:0.1.2`) if you would rather choose when to move.
 
 Configuration lives in the `timar-data` volume as `config.yaml`; see
 [`config.example.yaml`](config.example.yaml) for the fields. You can also edit the fleet from
