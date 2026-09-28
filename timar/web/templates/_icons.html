@@ -1,0 +1,13 @@
+{# Inline SVG, drawn here rather than taken from an icon set: five glyphs do not justify a
+   vendored font or a third-party license, and inline markup needs no extra request on a network
+   that may have no route out. They stroke in `currentColor`, so they follow the theme. #}
+{% macro icon(name) -%}
+<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{%- if name == "power" %}<path d="M12 3v9"/><path d="M6.3 7a8 8 0 1 0 11.4 0"/>
+{%- elif name == "wake" %}<path d="M3 20h18"/><path d="M7 16a5 5 0 0 1 10 0"/><path d="M12 3v6"/><path d="M9 6l3-3 3 3"/><path d="M4.5 12.5l1.5 1"/><path d="M19.5 12.5l-1.5 1"/>
+{%- elif name == "report" %}<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>
+{%- elif name == "history" %}<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>
+{%- elif name == "play" %}<path d="M7 4.5v15l12-7.5z"/>
+{%- endif %}</svg>
+{%- endmacro %}

@@ -3,10 +3,11 @@
    The power buttons report into `#power-result`, which lives on the dashboard *outside* this
    fragment on purpose: anything written in here is wiped by the next poll, and a wake that
    failed for a nameable reason would erase its own explanation within ten seconds. #}
+{% from "_icons.html" import icon %}
 {% if fleet %}
 <table>
   <thead>
-    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Power") }}</th></tr>
+    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Action") }}</th></tr>
   </thead>
   <tbody>
   {% for host in fleet %}
@@ -21,26 +22,29 @@
         {%- else %}{{ _("down") }}
         {%- endif %}
       </td>
-      {# Left-aligned like every other column, and the button's own padding is zero, so its
-         label starts on the same edge as the "Power" heading above it. #}
+      {# Left-aligned like every other column, so the button's left edge sits under the
+         "Action" heading. Icons, not words: the labels differed in length and made the column
+         ragged; the words are kept as the tooltip and the accessible name. #}
       <td style="white-space:nowrap">
         {%- if not host.on_demand %}
           {# Always on: there is nothing to wake it with, so Timar will not put it to sleep
-             either. Offering the button and refusing the click would be worse. #}
-          <span class="muted">{{ _("n/a") }}</span>
+             either. Offering the button and refusing the click would be worse — and the cell
+             stays empty rather than saying so, which read as a value in a column of controls. #}
         {%- elif host.state == "up" %}
-          <button type="button" class="linkish"
+          <button type="button" class="icon-btn"
+                  title="{{ _("shutdown") }}" aria-label="{{ _("shutdown") }}"
                   hx-post="/servers/{{ host.name }}/shutdown"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
                   hx-confirm="{{ _("Shut down {name}? It stays off until something wakes it.", name=host.name) }}"
-                  >{{ _("shutdown") }}</button>
+                  >{{ icon("power") }}</button>
         {%- else %}
-          <button type="button" class="linkish"
+          <button type="button" class="icon-btn"
+                  title="{{ _("wake up") }}" aria-label="{{ _("wake up") }}"
                   hx-post="/servers/{{ host.name }}/wake"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
-                  >{{ _("wake up") }}</button>
+                  >{{ icon("wake") }}</button>
         {%- endif %}
       </td>
     </tr>
