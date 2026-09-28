@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import html
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -188,10 +189,16 @@ async def page(request: Request, notice: str | None = None, edit: str | None = N
                add: bool = False, enroll: str | None = None):
     # The server list used to live here, opened with these parameters. They are what old
     # bookmarks and browser history point at, so they lead to where that panel lives now.
-    if enroll:
-        return RedirectResponse(f"/settings/servers/{enroll}/enroll", status_code=SEE_OTHER)
-    if edit:
-        return RedirectResponse(f"/settings/servers/{edit}/edit", status_code=SEE_OTHER)
+    # The target is built from the *stored* name, never from the query: only a server that
+    # exists is redirected to, and nothing the request carries ends up in a Location header.
+    # A link to a server that has since been removed just opens this page.
+    names = {s["name"]: s["name"] for s in config.load().get("servers", [])}
+    if enroll and enroll in names:
+        return RedirectResponse(f"/settings/servers/{quote(names[enroll])}/enroll",
+                                status_code=SEE_OTHER)
+    if edit and edit in names:
+        return RedirectResponse(f"/settings/servers/{quote(names[edit])}/edit",
+                                status_code=SEE_OTHER)
     if add:
         return RedirectResponse("/settings/servers/new", status_code=SEE_OTHER)
     return _view(request, notice=notice)

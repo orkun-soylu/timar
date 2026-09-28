@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-09-29
+
 ### Changed
 
 - **Servers are managed from the dashboard.** Each row's *Actions* now has enrol, edit and
@@ -19,6 +21,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - The scheduled work table has an *Actions* heading over its buttons.
 - On a narrow screen the tables scroll sideways instead of cutting off their last column, and
   the header wraps.
+
+### Security
+
+- An old `/settings?edit=` or `?enroll=` link redirects only to a server that exists, by its
+  stored name. The target used to be built from the query string; it could not leave the site,
+  but request input no longer reaches a `Location` header at all.
 
 ## [0.1.7] — 2026-09-28
 
@@ -177,7 +185,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.7...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/orkun-soylu/timar/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/orkun-soylu/timar/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/orkun-soylu/timar/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/orkun-soylu/timar/compare/v0.1.4...v0.1.5
