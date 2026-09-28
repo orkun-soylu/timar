@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- *Address* and *Platform* in the server table keep their columns but left-align their text,
+  like every other column.
+
 ## [0.1.10] — 2026-09-29
 
 ### Changed
