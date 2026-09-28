@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.11] — 2026-09-29
+
 ### Changed
 
 - *Address* and *Platform* in the server table keep their columns but left-align their text,
@@ -216,7 +218,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.11...HEAD
+[0.1.11]: https://github.com/orkun-soylu/timar/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/orkun-soylu/timar/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/orkun-soylu/timar/compare/v0.1.8...v0.1.9
 [0.1.8]: https://github.com/orkun-soylu/timar/compare/v0.1.7...v0.1.8
