@@ -13,7 +13,7 @@
 </header>
 
 <div class="panel"
-     hx-get="/fragments/fleet"
+     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}"
      hx-trigger="every 10s"
      hx-swap="innerHTML">
   {% include "_fleet.html" %}
@@ -44,7 +44,7 @@
 </script>
 
 <p class="muted" style="margin-top:0.75rem; margin-bottom:2rem">
-  {{ _("Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.") }}
+  {{ _("Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.") }}
 </p>
 
 <section class="panel">

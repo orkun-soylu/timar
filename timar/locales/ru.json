@@ -98,7 +98,6 @@
   "Server": "Сервер",
   "Address": "Адрес",
   "Platform": "Платформа",
-  "State": "Состояние",
   "up": "работает",
   "asleep": "спит",
   "on-demand": "по требованию",
@@ -124,7 +123,6 @@
   "No reports archived yet. Every run a job finishes is kept here — start one with <em>run now</em> on the <a href='/'>dashboard</a>.": "Архивных отчётов пока нет. Каждый завершённый запуск сохраняется здесь — начните с кнопки <em>запустить</em> на <a href='/'>панели</a>.",
   "settings": "настройки",
   "sign out": "выйти",
-  "Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Обновляется каждые 10 секунд. <em>спит</em> — машина работает по требованию, и то, что она выключена, ожидаемо; <em>недоступен</em> — машина должна отвечать, но не отвечает. Управление питанием есть только у машин по требованию — постоянно работающий хост нечем разбудить, и выключив его отсюда, вы его потеряете.",
   "Scheduled work": "Запланированные задачи",
   "If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.": "Если <em>последний запуск</em> перестал меняться, расписание остановилось, даже если всё остальное выглядит исправным — именно этот сбой и должна показывать эта панель. Расписания меняются в <a href='/settings'>настройках</a>.",
   "Sign in": "Войти",
@@ -221,5 +219,7 @@
   "OpenWrt has no default: left empty, it is swept but never updated.": "У OpenWrt нет команды по умолчанию: если оставить пустым, хост проверяется, но не обновляется.",
   "Past the limit the run is marked failed; the command keeps running and the host stays on.": "По истечении лимита запуск считается неудачным; команда продолжает работать, а хост остаётся включённым.",
   "With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.": "С MAC машина работает по требованию: выключенная она <em>спит</em>, а обновления будят её и снова выключают. В другой подсети? Выберите ретранслятор — всегда включённый и подключённый.",
-  "a VM you start only when needed": "ВМ, которую вы запускаете только при необходимости"
+  "a VM you start only when needed": "ВМ, которую вы запускаете только при необходимости",
+  "Close": "Закрыть",
+  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Обновляется каждые 10 секунд. Индикатор перед именем — его состояние, наведите курсор, чтобы увидеть слово: зелёный — <em>работает</em>, серый — <em>спит</em> (по требованию, выключен, как и ожидается), красный — <em>недоступен</em> (должен отвечать, но не отвечает). Питание доступно только для машин по требованию — всегда включённый хост нечем разбудить, и выключить его отсюда значит оставить его недоступным."
 }

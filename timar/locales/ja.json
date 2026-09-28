@@ -98,7 +98,6 @@
   "Server": "サーバー",
   "Address": "アドレス",
   "Platform": "プラットフォーム",
-  "State": "状態",
   "up": "稼働中",
   "asleep": "スリープ",
   "on-demand": "必要時のみ",
@@ -124,7 +123,6 @@
   "No reports archived yet. Every run a job finishes is kept here — start one with <em>run now</em> on the <a href='/'>dashboard</a>.": "保存済みのレポートはまだありません。ジョブが完了した実行はすべてここに保存されます — <a href='/'>ダッシュボード</a>の<em>今すぐ実行</em>で開始してください。",
   "settings": "設定",
   "sign out": "サインアウト",
-  "Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "10 秒ごとに更新されます。<em>スリープ</em>は必要時のみ稼働するマシンで、電源が切れているのは想定どおりという意味です。<em>停止</em>は到達できるはずなのにできないという意味です。電源操作は必要時のみ稼働するマシンにだけ表示されます — 常時稼働のホストには起動手段がないため、ここからシャットダウンすると戻せなくなります。",
   "Scheduled work": "スケジュールされたジョブ",
   "If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.": "<em>前回の実行</em>が進まなくなったら、ほかがすべて正常に見えてもスケジュールは止まっています — このパネルはまさにその障害を示すためのものです。スケジュールは<a href='/settings'>設定</a>で編集します。",
   "Sign in": "サインイン",
@@ -221,5 +219,7 @@
   "OpenWrt has no default: left empty, it is swept but never updated.": "OpenWrt には既定値がありません。空欄ならスキャンのみで、更新はされません。",
   "Past the limit the run is marked failed; the command keeps running and the host stays on.": "制限を超えると実行は失敗扱いになります。コマンドは動き続け、ホストは起動したままです。",
   "With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.": "MAC を設定するとオンデマンドになります。オフ時は<em>スリープ</em>と表示され、更新時に起動して再び停止します。別のサブネットなら、常時稼働で登録済みのリレーを選んでください。",
-  "a VM you start only when needed": "必要なときだけ起動する VM"
+  "a VM you start only when needed": "必要なときだけ起動する VM",
+  "Close": "閉じる",
+  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "10 秒ごとに更新されます。名前の前のランプが状態です — カーソルを重ねると表示されます。緑は<em>稼働中</em>、灰色は<em>スリープ</em>(オンデマンド、停止は想定どおり)、赤は<em>停止</em>(到達できるはずなのにできない)です。電源操作はオンデマンドのマシンにのみ表示されます — 常時稼働のホストには起動手段がなく、ここから停止すると取り残されます。"
 }

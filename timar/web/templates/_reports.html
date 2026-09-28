@@ -1,10 +1,11 @@
 {# Swapped on its own when the filter changes, so no `extends` — and the id has to live on
    this element, not on a wrapper, for the outerHTML swap to replace it. #}
+{% from "_icons.html" import icon %}
 <div id="report-list">
 {% if reports %}
   <table>
     <thead>
-      <tr><th>{{ _("Finished") }}</th><th>{{ _("Job") }}</th><th>{{ _("Outcome") }}</th><th></th></tr>
+      <tr><th>{{ _("Finished") }}</th><th>{{ _("Job") }}</th><th>{{ _("Outcome") }}</th><th style="text-align:right">{{ _("Actions") }}</th></tr>
     </thead>
     <tbody>
     {% for entry in reports %}
@@ -26,7 +27,8 @@
           {% endif %}
         </td>
         <td style="text-align:right; white-space:nowrap">
-          <a href="/reports/{{ entry.id }}" class="muted" style="font-size:0.875rem">{{ _("report") }}</a>
+          <a href="/reports/{{ entry.id }}" class="icon-btn"
+             title="{{ _("report") }}" aria-label="{{ _("report") }}">{{ icon("report") }}</a>
         </td>
       </tr>
     {% endfor %}

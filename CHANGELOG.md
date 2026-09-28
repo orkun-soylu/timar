@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **The server list sorts by *Server*, *Address* or *Platform*.** Click a heading; click it
+  again to reverse. Addresses sort numerically (`10.0.0.9` before `10.0.0.10`), names after
+  IPs. The order is in the URL, so it survives the ten-second refresh and a bookmark.
+- **The *State* column is gone; the state is a light in front of the name** — green up, grey
+  asleep, red down — with the word as the tooltip. The legend under the table says which is
+  which.
+- **Dialogs have a close button (×) at the top right.**
+- **Reports:** each run opens from an icon button, under an *Actions* heading, in every view of
+  the list.
+
 ## [0.1.8] — 2026-09-29
 
 ### Changed

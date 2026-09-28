@@ -205,6 +205,52 @@ class TestActionsColumn:
         response = fleet.post("/settings/servers/web-01/delete")
         assert response.headers["location"] == "/"
 
+    def test_the_state_is_a_light_before_the_name_with_its_word_on_hover(self, fleet):
+        rows = fleet.get("/fragments/fleet").text
+        assert ">State<" not in rows                     # no column of its own any more
+        cell = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
+        assert 'title="asleep (on-demand)"' in cell and 'class="dot"' in cell
+        assert cell.rstrip().endswith("gpu-02")
+        assert 'title="up"' in rows
+
+    @staticmethod
+    def order(html):
+        import re
+        return re.findall(r'<span class="dot"[^>]*></span> ([\w-]+)</td>', html)
+
+    def test_sorts_by_address_numerically(self, fleet):
+        from timar import config
+        cfg = config.load()
+        cfg["servers"][0]["host"] = "10.0.0.10"          # web-01 now sorts after 10.0.0.9-ish
+        config.save(cfg)
+        rows = fleet.get("/fragments/fleet?sort=address").text
+        assert self.order(rows) == ["gpu-01", "gpu-02", "web-01"]
+        rows = fleet.get("/fragments/fleet?sort=address&dir=desc").text
+        assert self.order(rows) == ["web-01", "gpu-02", "gpu-01"]
+
+    def test_sorts_by_platform_then_name(self, fleet):
+        from timar import config
+        cfg = config.load()
+        cfg["servers"][1]["platform"] = "openwrt"         # gpu-01
+        config.save(cfg)
+        rows = fleet.get("/fragments/fleet?sort=platform").text
+        assert self.order(rows) == ["gpu-02", "web-01", "gpu-01"]
+
+    def test_an_unknown_sort_falls_back_to_the_name(self, fleet):
+        rows = fleet.get("/fragments/fleet?sort=nonsense&dir=sideways").text
+        assert self.order(rows) == ["gpu-01", "gpu-02", "web-01"]
+
+    def test_the_poll_keeps_the_chosen_order(self, fleet):
+        """A sort the next ten-second refresh undoes is not a sort."""
+        page = fleet.get("/?sort=address&dir=desc").text
+        assert 'hx-get="/fragments/fleet?sort=address&amp;dir=desc"' in page
+
+    def test_the_active_heading_flips_the_direction(self, fleet):
+        rows = fleet.get("/fragments/fleet?sort=address").text
+        assert 'href="/?sort=address&amp;dir=desc"' in rows
+        assert 'aria-sort="ascending"' in rows
+        assert 'href="/?sort=name&amp;dir=asc"' in rows
+
     def test_rows_are_sorted_by_name_not_config_order(self, fleet):
         rows = fleet.get("/fragments/fleet").text
         # Configured web-01, gpu-01, gpu-02 — shown alphabetically.
@@ -470,6 +516,13 @@ class TestServerForm:
         page = settings.get("/settings/servers/vm-01/edit").text
         assert re.search(r'<option value="hv-01"\s+selected', page)
         assert 'value="100"' in page
+
+    def test_the_dialog_has_a_close_control_top_right_and_a_page_does_not(self, settings):
+        bare = settings.get("/settings/servers/new", headers=self.HX).text
+        heading = bare.split("<h2", 1)[1].split("</h2>", 1)[0]
+        assert "data-close-dialog" in heading
+        page = settings.get("/settings/servers/new").text
+        assert "data-close-dialog" not in page.split("<h2", 1)[1].split("</h2>", 1)[0]
 
     def test_htmx_gets_the_bare_panel_and_a_page_gets_a_page(self, settings):
         """The dialog wants the panel alone; without scripting the same link has to be a page."""
@@ -852,6 +905,13 @@ class TestEnrolmentRoutes:
         page = client.get("/settings/servers/a/enroll").text
         assert "<html" in page and 'id="enrol"' in page and "Install it" in page
 
+    def test_the_enrol_dialog_has_a_close_control_in_its_heading(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        bare = client.get("/settings/servers/a/enroll", headers={"HX-Request": "true"}).text
+        assert "data-close-dialog" in bare.split("<h2", 1)[1].split("</h2>", 1)[0]
+
     def test_the_panel_is_bare_for_the_dialog_and_posts_back_into_it(self, client):
         complete_setup(client)
         from timar import config
@@ -1016,6 +1076,14 @@ class TestReportArchive:
         complete_setup(client)
         response = client.get("/reports?job=retired")
         assert response.status_code == 200 and "No reports archived" in response.text
+
+    def test_each_run_opens_from_an_icon_button_under_an_actions_heading(self, client):
+        complete_setup(client)
+        entry = self.archive("update", title="Update run", summary="3 updated")
+        body = client.get("/reports?job=update").text
+        assert ">Actions</th>" in body
+        link = body.split(f'href="/reports/{entry}"', 1)[1].split("</a>", 1)[0]
+        assert 'class="icon-btn"' in link and 'title="report"' in link and "<svg" in link
 
     def test_an_archived_report_is_shown_in_full(self, client):
         complete_setup(client)

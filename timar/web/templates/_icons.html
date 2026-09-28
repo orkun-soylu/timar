@@ -11,7 +11,15 @@
 {%- elif name == "enrol" %}<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M16 7l3 3"/><path d="M18.5 4.5l2 2"/>
 {%- elif name == "edit" %}<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>
 {%- elif name == "remove" %}<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/>
+{%- elif name == "close" %}<path d="M6 6l12 12"/><path d="M18 6L6 18"/>
 {%- elif name == "add" %}<path d="M12 5v14"/><path d="M5 12h14"/>
 {%- elif name == "play" %}<path d="M7 4.5v15l12-7.5z"/>
 {%- endif %}</svg>
+{%- endmacro %}
+
+{# The dialog's own close control, top right of a panel's heading. Only inside the dialog — a
+   page of its own has the dashboard link in its header instead. #}
+{% macro close_dialog() -%}
+<button type="button" class="icon-btn" data-close-dialog title="{{ _("Close") }}"
+        aria-label="{{ _("Close") }}">{{ icon("close") }}</button>
 {%- endmacro %}

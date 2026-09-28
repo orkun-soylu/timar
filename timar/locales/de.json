@@ -98,7 +98,6 @@
   "Server": "Server",
   "Address": "Adresse",
   "Platform": "Plattform",
-  "State": "Zustand",
   "up": "an",
   "asleep": "schlafend",
   "on-demand": "bei Bedarf",
@@ -124,7 +123,6 @@
   "No reports archived yet. Every run a job finishes is kept here — start one with <em>run now</em> on the <a href='/'>dashboard</a>.": "Noch keine Berichte archiviert. Jeder abgeschlossene Lauf einer Aufgabe wird hier aufbewahrt — starten Sie einen mit <em>jetzt ausführen</em> in der <a href='/'>Übersicht</a>.",
   "settings": "Einstellungen",
   "sign out": "abmelden",
-  "Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Aktualisiert sich alle 10 Sekunden. <em>schlafend</em> heißt, die Maschine läuft bei Bedarf und ist erwartungsgemäß aus; <em>ausgefallen</em> heißt, sie sollte erreichbar sein und ist es nicht. Strom wird nur für Bedarfsmaschinen angeboten — ein dauerhaft laufender Host hat keinen Weckweg, ihn von hier herunterzufahren würde ihn stranden lassen.",
   "Scheduled work": "Geplante Aufgaben",
   "If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.": "Rückt <em>Letzter Lauf</em> nicht mehr vor, steht der Zeitplan still, auch wenn alles andere gesund aussieht — genau diesen Fehler soll dieses Feld zeigen. Zeitpläne bearbeiten Sie in den <a href='/settings'>Einstellungen</a>.",
   "Sign in": "Anmelden",
@@ -221,5 +219,7 @@
   "OpenWrt has no default: left empty, it is swept but never updated.": "OpenWrt hat keinen Standard: Leer gelassen wird es geprüft, aber nie aktualisiert.",
   "Past the limit the run is marked failed; the command keeps running and the host stays on.": "Nach Ablauf gilt der Lauf als fehlgeschlagen; der Befehl läuft weiter und der Host bleibt an.",
   "With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.": "Mit MAC ist die Maschine bei Bedarf: Aus heißt <em>schlafend</em>, und Updates wecken sie und fahren sie wieder herunter. In einem anderen Subnetz? Ein Relay wählen — immer an und eingebunden.",
-  "a VM you start only when needed": "eine VM, die nur bei Bedarf gestartet wird"
+  "a VM you start only when needed": "eine VM, die nur bei Bedarf gestartet wird",
+  "Close": "Schließen",
+  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Aktualisiert alle 10 Sekunden. Das Licht vor einem Namen ist sein Zustand — für das Wort darüberfahren: grün ist <em>an</em>, grau ist <em>schlafend</em> (bei Bedarf, aus wie erwartet), rot ist <em>ausgefallen</em> (sollte erreichbar sein und ist es nicht). Strom wird nur für Maschinen bei Bedarf angeboten — ein immer laufender Host hat keinen Weckweg, ihn von hier herunterzufahren würde ihn stranden lassen."
 }

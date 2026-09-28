@@ -8,11 +8,23 @@
    Enrol, edit and add are links first — each opens a page of its own without scripting — and
    `hx-get` turns them into the dialog when htmx is there. #}
 {% from "_icons.html" import icon %}
+{# A column heading that sorts by itself. Plain links to the dashboard: the order lives in the
+   URL, so it survives the ten-second poll (which carries it along), a refresh and a bookmark.
+   Clicking the column already in use flips its direction. #}
+{% macro sortable(key, label, extra_class="") -%}
+  {%- set active = sort == key -%}
+  {%- set next_dir = "asc" if active and descending else ("desc" if active else "asc") -%}
+  <th class="sortable {{ extra_class }}"
+      {%- if active %} aria-sort="{{ 'descending' if descending else 'ascending' }}"{% endif %}>
+    <a href="/?sort={{ key }}&amp;dir={{ next_dir }}">{{ label }}
+      {%- if active %} <span aria-hidden="true">{{ "▼" if descending else "▲" }}</span>{% endif %}</a>
+  </th>
+{%- endmacro %}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th class="wide">{{ _("Platform") }}</th><th>{{ _("State") }}</th><th class="actions-head">
+    <tr>{{ sortable("name", _("Server")) }}{{ sortable("address", _("Address")) }}{{ sortable("platform", _("Platform"), "wide") }}<th class="actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
@@ -21,17 +33,18 @@
   </thead>
   <tbody>
   {% for host in fleet %}
+    {%- if host.state == "up" %}{% set state_label = _("up") %}
+    {%- elif host.state == "asleep" %}{% set state_label = _("asleep") ~ " (" ~ _("on-demand") ~ ")" %}
+    {%- else %}{% set state_label = _("down") %}
+    {%- endif %}
     <tr class="{{ host.state }}">
-      <td>{{ host.name }}</td>
+      {# The state is the light in front of the name — green up, grey asleep, red down — and
+         its word is the tooltip. The label is on the whole cell, not just the dot: an
+         eight-pixel target is one nobody manages to hover. #}
+      <td title="{{ state_label }}" style="white-space:nowrap"><span class="dot" role="img"
+          aria-label="{{ state_label }}"></span> {{ host.name }}</td>
       <td><code>{{ host.host }}</code></td>
       <td class="muted wide">{{ host.platform }}</td>
-      <td>
-        <span class="dot"></span>
-        {%- if host.state == "up" %}{{ _("up") }}
-        {%- elif host.state == "asleep" %}{{ _("asleep") }} <span class="muted">({{ _("on-demand") }})</span>
-        {%- else %}{{ _("down") }}
-        {%- endif %}
-      </td>
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so enrol, edit and remove sit in the same place on every row. #}
       <td><div class="icon-row">

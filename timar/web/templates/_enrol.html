@@ -1,7 +1,9 @@
 {# The enrolment panel, opened in the dashboard's dialog by the key button on a row, or as a page
    of its own when there is no scripting (`in_dialog` false). #}
+{% from "_icons.html" import close_dialog with context %}
 <section class="panel" id="enrol">
-  <h2>{{ _("Enrol {name}", name=enrol.server.name) }}</h2>
+  <h2 class="with-action">{{ _("Enrol {name}", name=enrol.server.name) }}
+    {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
 
   {% if enrol.result %}
     <div class="notice good" style="margin:0">{{ enrol.result }}</div>

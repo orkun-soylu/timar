@@ -38,7 +38,7 @@
     th, td { text-align: left; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
     th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
     tr:last-child td { border-bottom: none; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: 0.05em; }
     .up .dot { background: var(--up); }
     .asleep .dot { background: var(--asleep); }
     .down .dot { background: var(--down); }
@@ -71,6 +71,9 @@
     /* Holds the power button's place on a row that has none. */
     .icon-slot { display: inline-block; width: 2rem; height: 2rem; }
     th.actions-head { white-space: nowrap; }
+    th.sortable a { color: inherit; text-decoration: none; }
+    th.sortable a:hover { color: var(--text); }
+    th.sortable[aria-sort] a { color: var(--text); }
     th.actions-head span { vertical-align: middle; }
     th.actions-head .icon-btn { float: right; margin: -0.35rem 0; }
 
