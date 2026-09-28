@@ -23,6 +23,26 @@
    refresh, taking the reason a wake failed with it. #}
 <div id="power-result" class="result" style="margin-top:0.75rem"></div>
 
+{# Enrol, edit and add open here. Outside the polled panel, so the ten-second refresh cannot
+   wipe a half-typed form; closed with Esc, a click on the backdrop, or the panel's own cancel. #}
+<dialog id="server-dialog" aria-label="{{ _("Server") }}">
+  <div id="dialog-body"></div>
+</dialog>
+<script>
+  (function () {
+    var dialog = document.getElementById("server-dialog");
+    document.body.addEventListener("htmx:afterSwap", function (e) {
+      if (e.detail.target.id === "dialog-body" && !dialog.open) dialog.showModal();
+    });
+    dialog.addEventListener("click", function (e) {
+      if (e.target === dialog || e.target.closest("[data-close-dialog]")) dialog.close();
+    });
+    dialog.addEventListener("close", function () {
+      document.getElementById("dialog-body").innerHTML = "";
+    });
+  })();
+</script>
+
 <p class="muted" style="margin-top:0.75rem; margin-bottom:2rem">
   {{ _("Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.") }}
 </p>

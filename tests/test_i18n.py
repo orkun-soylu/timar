@@ -157,8 +157,9 @@ class TestPages:
              "wol_mac": "aa:bb:cc:dd:ee:01", "manages_vms": [{"vm_id": 101, "server_name": "vm"}]},
             {"name": "vm", "host": "10.0.0.3", "user": "op"},
         ]})
-        for path in ("/", "/reports", "/settings", "/settings?tab=global",
-                     "/settings?edit=vm", "/settings?enroll=vm", "/fragments/jobs"):
+        for path in ("/", "/reports", "/settings", "/settings/servers/new",
+                     "/settings/servers/vm/edit", "/settings/servers/vm/enroll",
+                     "/fragments/jobs", "/fragments/fleet"):
             response = client.get(path)
             assert response.status_code == 200, path
             assert f'<html lang="{code}">' in response.text or path.startswith("/fragments")

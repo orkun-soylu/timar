@@ -45,8 +45,8 @@ an afterthought. `:latest` follows the most recent release; pin a version
 (`ghcr.io/orkun-soylu/timar:0.1.7`) if you would rather choose when to move.
 
 Configuration lives in the `timar-data` volume as `config.yaml`; see
-[`config.example.yaml`](config.example.yaml) for the fields. You can also edit the fleet from
-the settings page — it writes the same file.
+[`config.example.yaml`](config.example.yaml) for the fields. You can also add, edit, enrol and
+remove servers from the dashboard — it writes the same file.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">

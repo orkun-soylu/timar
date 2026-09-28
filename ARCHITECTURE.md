@@ -592,13 +592,15 @@ away**; a test asserts the validation precedes the install rather than merely si
 Sudo is not offered where it cannot work — OpenWrt has none, and a root account already has it.
 Offering a button that cannot work is worse than not offering one.
 
-**It is a panel, not a page.** Enrolling is one step in setting a machine up, and leaving the
-settings page to take it — then coming back to a list that had forgotten where you were — is a
-trip an operator makes once per machine. It opens under the server list from the row's `enrol`
-link, the same place and shape as the add/edit form, and only one of the two is ever open: two
-forms for two different servers stacked under one list is a page where the wrong button is easy
-to press. The old `/settings/servers/<name>/enroll` URL redirects into the panel rather than
-404ing, because it is what bookmarks and browser history point at. The **result** of an
+**It is a dialog on the dashboard, not a page of its own.** Enrolling is one step in setting a
+machine up, and leaving the fleet list to take it is a trip an operator makes once per machine.
+The row's key button opens it in the same dialog as the add/edit form, so only one of the two is
+ever open. Every button is still a link: htmx asks for the bare panel, and without scripting the
+same URL (`/settings/servers/<name>/enroll`, `…/edit`, `/settings/servers/new`) answers with a
+page of its own. The old `/settings?enroll=`, `?edit=` and `?add=` links redirect there rather
+than 404ing, because they are what bookmarks and browser history point at. Inside the dialog a
+rejected form comes back as **200**, not 400: htmx does not swap an error response, and the
+dialog would sit showing the form as it was, with no word of what was wrong. The **result** of an
 enrolment is rendered rather than redirected to: it is the whole point of the request, and a
 redirect would have to carry it in the URL, where it would survive a refresh and a share.
 

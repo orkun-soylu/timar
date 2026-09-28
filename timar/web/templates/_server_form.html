@@ -1,0 +1,106 @@
+{# The add/edit form — one form in two modes. Opened in the dashboard's dialog, or as a page of
+   its own when there is no scripting (`in_dialog` false). #}
+<section class="panel" id="server-form">
+  <h2>{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}</h2>
+
+  {% if errors %}
+    <div class="notice bad" style="margin:0">
+      {% for message in errors %}<div>{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/settings/servers" class="stack"
+        {% if in_dialog %}hx-post="/settings/servers" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
+    {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
+
+    {# Every field renders from `values`, which is what was typed when something was rejected
+       and the stored entry otherwise. Reading from storage on the error path is how a rejected
+       form used to hand back an empty page and ask the operator to retype it. #}
+    <div class="row">
+      <label><span>{{ _("Name") }}</span>
+        <input name="name" required value="{{ values.get('name', '') }}"></label>
+      <label><span>{{ _("Address") }}</span>
+        <input name="host" required placeholder="{{ _("10.0.0.5 or host.lan") }}"
+               value="{{ values.get('host', '') }}"></label>
+    </div>
+    <div class="row">
+      <label><span>{{ _("SSH user") }}</span>
+        <input name="user" required value="{{ values.get('user', '') }}"></label>
+      <label><span>{{ _("Platform") }}</span>
+        <select name="platform">
+          {% for platform in platforms %}
+          <option value="{{ platform }}"
+            {{ "selected" if values.get('platform') == platform else "" }}>{{ platform }}</option>
+          {% endfor %}
+        </select></label>
+    </div>
+    <div class="row">
+      <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
+               value="{{ values.get('wol_mac', '') }}"></label>
+      <label><span>{{ _("Broadcast address") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="wol_broadcast" placeholder="10.0.0.255"
+               value="{{ values.get('wol_broadcast', '') }}"></label>
+    </div>
+    <label><span>{{ _("Wake through") }} <em class="muted">{{ _("optional — another server that sends the packet") }}</em></span>
+      <select name="wol_relay">
+        <option value="">— {{ _("send it from Timar itself") }} —</option>
+        {% for other in servers if other.name != editing %}
+        <option value="{{ other.name }}"
+          {{ "selected" if values.get('wol_relay') == other.name else "" }}>{{ other.name }}</option>
+        {% endfor %}
+      </select></label>
+    <p class="hint">
+      {{ _("With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.") }}
+    </p>
+
+    <div class="row">
+      <label><span>{{ _("Guest of") }} <em class="muted">{{ _("optional — a hypervisor that starts it") }}</em></span>
+        <select name="hypervisor">
+          <option value="">— {{ _("not a virtual machine") }} —</option>
+          {% for other in servers if other.platform == "proxmox" and other.name != editing %}
+          <option value="{{ other.name }}"
+            {{ "selected" if values.get('hypervisor') == other.name else "" }}>{{ other.name }}</option>
+          {% endfor %}
+        </select></label>
+      <label><span>{{ _("VM id") }} <em class="muted">{{ _("required with a hypervisor") }}</em></span>
+        <input name="vm_id" inputmode="numeric" placeholder="100"
+               value="{{ values.get('vm_id', '') }}"></label>
+    </div>
+    <label class="inline">
+      <input type="checkbox" name="guest_on_demand"
+             {{ "checked" if values.get('guest_on_demand') else "" }}>
+      <span>{{ _("Kept off on purpose") }} <em class="muted">— {{ _("a VM you start only when needed") }}</em></span>
+    </label>
+    <p class="hint">
+      {{ _("A guest needs no MAC — it is started with <code>qm</code>. It sleeps when its host sleeps; on an always-on host, tick the box above.") }}
+    </p>
+
+    <label><span>{{ _("Update command") }} <em class="muted">{{ _("optional — overrides the platform default") }}</em></span>
+      <input name="update_cmd" value="{{ values.get('update_cmd', '') }}"></label>
+    <p class="hint">
+      {{ _("OpenWrt has no default: left empty, it is swept but never updated.") }}
+    </p>
+
+    <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
+      <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
+             placeholder="{{ default_update_timeout }}"
+             value="{{ values.get('update_timeout', '') }}"></label>
+    <p class="hint">
+      {{ _("Past the limit the run is marked failed; the command keeps running and the host stays on.") }}
+    </p>
+
+    <label><span>{{ _("Context for the log analysis") }} <em class="muted">{{ _("optional") }}</em></span>
+      <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
+             value="{{ values.get('context', '') }}"></label>
+
+    <div class="actions">
+      <button type="submit">{{ _("Save changes") if editing else _("Add server") }}</button>
+      {% if in_dialog %}
+        <button type="button" class="secondary" data-close-dialog>{{ _("cancel") }}</button>
+      {% else %}
+        <a href="/" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
+      {% endif %}
+    </div>
+  </form>
+</section>

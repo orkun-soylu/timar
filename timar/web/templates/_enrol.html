@@ -1,8 +1,5 @@
-{# The enrolment panel, opened under the server list by the `enrol` link on a row.
-
-   It was a page of its own until it became this: leaving the settings page to install a key and
-   coming back to a list that had forgotten where you were is a trip an operator makes once per
-   machine, and the panel is the same shape as the add/edit form beside it. #}
+{# The enrolment panel, opened in the dashboard's dialog by the key button on a row, or as a page
+   of its own when there is no scripting (`in_dialog` false). #}
 <section class="panel" id="enrol">
   <h2>{{ _("Enrol {name}", name=enrol.server.name) }}</h2>
 
@@ -27,7 +24,9 @@
     </details>
   </div>
 
-  <form method="post" action="/settings/servers/{{ enrol.server.name }}/enroll" class="stack">
+  <form method="post" action="/settings/servers/{{ enrol.server.name }}/enroll" class="stack"
+        {% if in_dialog %}hx-post="/settings/servers/{{ enrol.server.name }}/enroll"
+        hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
     <h3>{{ _("Install it") }}</h3>
     <p class="hint" style="margin-top:0">
       {{ _("Connects once as <code>{login}</code> with the password, appends the key to <code>{path}</code>, then proves the key works on its own. <strong>The password is used for this request and nothing else</strong> — it is not stored, not logged, and not sent back to this page.", login=enrol.server.user ~ "@" ~ enrol.server.host, path=enrol.platform.authorized_keys) }}
@@ -52,7 +51,11 @@
 
     <div class="actions">
       <button type="submit">{{ _("Enrol") }}</button>
-      <a href="/settings" class="muted" style="margin-left:0.4rem">{{ _("close") }}</a>
+      {% if in_dialog %}
+        <button type="button" class="secondary" data-close-dialog>{{ _("close") }}</button>
+      {% else %}
+        <a href="/" class="muted" style="margin-left:0.4rem">{{ _("close") }}</a>
+      {% endif %}
     </div>
   </form>
 
