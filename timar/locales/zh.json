@@ -98,7 +98,6 @@
   "Server": "服务器",
   "Address": "地址",
   "Platform": "平台",
-  "State": "状态",
   "up": "在线",
   "asleep": "休眠",
   "on-demand": "按需",
@@ -124,7 +123,6 @@
   "No reports archived yet. Every run a job finishes is kept here — start one with <em>run now</em> on the <a href='/'>dashboard</a>.": "尚无归档报告。任务每次完成的运行都会保存在这里 — 可在<a href='/'>仪表板</a>上点击<em>立即运行</em>开始。",
   "settings": "设置",
   "sign out": "退出登录",
-  "Refreshes every 10 seconds. <em>asleep</em> means the machine is on-demand and being off is expected; <em>down</em> means it should be reachable and is not. Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。<em>休眠</em>表示机器为按需开机，关机属于预期状态；<em>离线</em>表示机器本应可达却无法连接。电源操作只对按需机器提供 — 常开主机没有唤醒途径，从这里关机会让它无法恢复。",
   "Scheduled work": "计划任务",
   "If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.": "如果<em>上次运行</em>不再更新，即使其他一切看起来正常，计划也已停止 — 这正是此面板要揭示的故障。请在<a href='/settings'>设置</a>中编辑计划。",
   "Sign in": "登录",
@@ -221,5 +219,7 @@
   "OpenWrt has no default: left empty, it is swept but never updated.": "OpenWrt 没有默认命令：留空则只扫描，从不更新。",
   "Past the limit the run is marked failed; the command keeps running and the host stays on.": "超过时限后本次运行记为失败；命令继续运行，主机保持开机。",
   "With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.": "填写 MAC 即为按需主机：关机时显示为<em>休眠</em>，更新时会唤醒并再次关机。在其他子网？请选择一个常开且已登记的中继。",
-  "a VM you start only when needed": "仅在需要时启动的虚拟机"
+  "a VM you start only when needed": "仅在需要时启动的虚拟机",
+  "Close": "关闭",
+  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。名称前的指示灯表示其状态 — 悬停可查看文字：绿色为<em>在线</em>，灰色为<em>休眠</em>（按需主机，关机属正常），红色为<em>离线</em>（本应可达却不可达）。电源操作仅对按需主机提供 — 常开主机无法唤醒，从这里关机会让它无法恢复。"
 }

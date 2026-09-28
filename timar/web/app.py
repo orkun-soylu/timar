@@ -197,23 +197,40 @@ def _job_view() -> list[dict]:
     return rows
 
 
+def _fleet_view(cfg: dict, sort: str | None, dir: str | None) -> dict:
+    """The fleet table, ordered by the column the operator picked.
+
+    The order is a query parameter, not something the browser keeps: the table is re-fetched
+    every ten seconds, and a sort applied in the page would be undone by the next poll. As a URL
+    it also survives a refresh and a bookmark. Anything unrecognised falls back to the name.
+    """
+    key = sort if sort in fleet_status.SORT_KEYS else "name"
+    descending = dir == "desc"
+    return {
+        "fleet": fleet_status.sort_fleet(fleet_status.fleet(cfg), key, descending),
+        "sort": key,
+        "descending": descending,
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, operator: str = Depends(current_operator)):
+async def dashboard(request: Request, sort: str | None = None, dir: str | None = None,
+                    operator: str = Depends(current_operator)):
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "operator": operator,
         "servers": cfg.get("servers", []),
-        "fleet": fleet_status.fleet(cfg),
+        **_fleet_view(cfg, sort, dir),
         "jobs": _job_view(),
     })
 
 
 @app.get("/fragments/fleet", response_class=HTMLResponse)
-async def fleet_fragment(request: Request, operator: str = Depends(current_operator)):
+async def fleet_fragment(request: Request, sort: str | None = None, dir: str | None = None,
+                         operator: str = Depends(current_operator)):
     """The status table alone — polled by HTMX so the page updates without a reload."""
-    return TEMPLATES.TemplateResponse(request, "_fleet.html", {
-        "fleet": fleet_status.fleet(config.load()),
-    })
+    return TEMPLATES.TemplateResponse(request, "_fleet.html",
+                                      _fleet_view(config.load(), sort, dir))
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)

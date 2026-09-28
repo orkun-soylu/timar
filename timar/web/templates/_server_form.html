@@ -1,7 +1,9 @@
 {# The add/edit form — one form in two modes. Opened in the dashboard's dialog, or as a page of
    its own when there is no scripting (`in_dialog` false). #}
+{% from "_icons.html" import close_dialog with context %}
 <section class="panel" id="server-form">
-  <h2>{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}</h2>
+  <h2 class="with-action">{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}
+    {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
 
   {% if errors %}
     <div class="notice bad" style="margin:0">
