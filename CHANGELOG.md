@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.12] — 2026-09-29
+
+### Changed
+
+- **The browser tab shows Timar's mark** — the same icon as [timar.tools](https://timar.tools),
+  inline on every page, so it needs no route and no extra request.
+
 ## [0.1.11] — 2026-09-29
 
 ### Changed
@@ -218,7 +225,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/orkun-soylu/timar/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/orkun-soylu/timar/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/orkun-soylu/timar/compare/v0.1.9...v0.1.10
 [0.1.9]: https://github.com/orkun-soylu/timar/compare/v0.1.8...v0.1.9

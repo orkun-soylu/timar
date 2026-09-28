@@ -46,6 +46,17 @@ class TestFirstRun:
             response = client.head("/health")
             assert response.status_code == 200 and response.content == b""
 
+    def test_every_page_carries_the_same_tab_icon_as_timar_tools(self, client):
+        """Inline, so it needs no route — and matches the project's page, byte for byte."""
+        import re
+        from pathlib import Path
+        site = (Path(__file__).parent.parent / "docs" / "index.html").read_text()
+        mark = re.search(r'<link rel="icon" href="([^"]+)"', site).group(1)
+        assert f'<link rel="icon" href="{mark}">' in client.get("/setup").text
+        complete_setup(client)
+        for path in ("/", "/settings", "/reports"):
+            assert f'<link rel="icon" href="{mark}">' in client.get(path).text, path
+
     def test_static_assets_are_served_before_setup(self, client):
         # The setup page needs its stylesheet and script, or it renders unusable.
         assert client.get("/static/htmx.min.js").status_code == 200
