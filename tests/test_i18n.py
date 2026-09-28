@@ -142,6 +142,16 @@ class TestPages:
         response = client.get("/lang", params={"code": "de", "next": target})
         assert response.headers["location"] == "/"
 
+    @pytest.mark.parametrize("code", ["de\r\nSet-Cookie: x=1", "de; Path=/", "DE", " de"])
+    def test_only_an_exact_catalog_key_is_ever_written(self, client, code):
+        response = client.get("/lang", params={"code": code, "next": "/setup"})
+        assert i18n.COOKIE not in response.cookies
+        assert "x=1" not in response.headers.get("set-cookie", "")
+
+    def test_a_supported_code_is_written_as_the_catalog_key(self, client):
+        response = client.get("/lang", params={"code": "de", "next": "/setup"})
+        assert response.cookies.get(i18n.COOKIE) == "de"
+
     def test_unknown_language_sets_nothing(self, client):
         response = client.get("/lang", params={"code": "xx", "next": "/setup"})
         assert i18n.COOKIE not in response.cookies

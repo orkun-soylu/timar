@@ -98,6 +98,11 @@ async def choose_language(request: Request, call_next):
     return await call_next(request)
 
 
+def _supported_language(code: str) -> str | None:
+    """The catalog's own key for `code`, or None — so the caller never holds the request value."""
+    return next((lang for lang in i18n.LANGUAGES if lang == code), None)
+
+
 @app.get("/lang")
 async def set_language(code: str = "", next: str = "/"):
     """Remember a language choice for this browser and go back to where it was made.
@@ -109,8 +114,11 @@ async def set_language(code: str = "", next: str = "/"):
     if not next.startswith("/") or next.startswith("//") or "\\" in next:
         next = "/"
     response = RedirectResponse(next, status_code=status.HTTP_303_SEE_OTHER)
-    if code in i18n.LANGUAGES:
-        response.set_cookie(i18n.COOKIE, code, max_age=365 * 86400, samesite="lax")
+    # The cookie is written from the catalog's own key, never from the query: a code that is
+    # not a supported language sets nothing, and nothing the request carries reaches the
+    # Set-Cookie header — not even a value that was checked first.
+    if (lang := _supported_language(code)) is not None:
+        response.set_cookie(i18n.COOKIE, lang, max_age=365 * 86400, samesite="lax")
     return response
 
 

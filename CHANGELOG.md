@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.13] — 2026-09-29
+
+### Security
+
+- The language cookie is written from the catalog's own key, never from the request. The value
+  was already checked against the supported languages first, but request input no longer
+  reaches a `Set-Cookie` header at all.
+
 ## [0.1.12] — 2026-09-29
 
 ### Changed
@@ -225,7 +233,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.13...HEAD
+[0.1.13]: https://github.com/orkun-soylu/timar/compare/v0.1.12...v0.1.13
 [0.1.12]: https://github.com/orkun-soylu/timar/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/orkun-soylu/timar/compare/v0.1.10...v0.1.11
 [0.1.10]: https://github.com/orkun-soylu/timar/compare/v0.1.9...v0.1.10
