@@ -402,6 +402,15 @@ class TestSettingsPage:
         response = settings.get(f"/settings?{query}")
         assert response.status_code == 303 and response.headers["location"] == location
 
+    @pytest.mark.parametrize("query", [
+        "edit=gone-01", "enroll=gone-01", "edit=//evil.example", "enroll=/../../x%0d%0aSet-Cookie:a=b",
+    ])
+    def test_an_old_link_to_no_such_server_opens_the_page_and_redirects_nowhere(self, settings,
+                                                                                query):
+        """Only a stored name is ever put in a Location header — never what the query carried."""
+        response = settings.get(f"/settings?{query}")
+        assert response.status_code == 200 and "location" not in response.headers
+
     def test_saving_a_global_form_comes_back_with_a_notice(self, settings):
         for path, data in [
             ("/settings/log-check", {"journal_hours": "6", "disk_threshold": "85"}),
