@@ -16,7 +16,7 @@
 <meta property="og:image" content="https://timar.tools/images/og-cover.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Timar's dashboard: six machines, two up, three asleep and one down, each row offering the power action that fits its state." />
+<meta property="og:image:alt" content="Timar's landing page: the headline 'Off is the right default. Unpatched isn't.' above a short description and two buttons, Run it and Source on GitHub." />
 <meta name="twitter:card" content="summary_large_image" />
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314161a'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23e0a458'/%3E%3C/svg%3E" />
@@ -138,6 +138,10 @@
     border: 1px solid var(--line); box-shadow: var(--shadow);
   }
   figure.shot figcaption { margin-top: 0.8rem; font-size: 0.85rem; color: var(--muted); }
+  /* A tall capture — the edit dialog — at its own width rather than stretched across the page. */
+  figure.shot.narrow { display: grid; grid-template-columns: minmax(0, 520px) 1fr; gap: 1.6rem; align-items: start; }
+  figure.shot.narrow figcaption { margin-top: 0; font-size: 0.93rem; }
+  @media (max-width: 720px) { figure.shot.narrow { grid-template-columns: 1fr; } }
   :root[data-theme="light"] .shot-dark, :root:not([data-theme="light"]) .shot-light { display: none; }
 
   /* ---- sections ---- */
@@ -213,9 +217,9 @@
   <h1>Off is the right default. Unpatched isn't.</h1>
   <p class="lede">
     Timar wakes the machines in your homelab, updates them, reads their logs, and
-    <strong>puts them back the way it found them</strong>. Nothing is installed on the machines
-    it manages — it needs SSH, and Wake-on-LAN for the ones that sleep. Between runs they stay
-    dark, which is the point, and the reason most of them are off in the first place.
+    <strong>puts them back the way it found them</strong>. Nothing is installed on them — it
+    needs SSH, and Wake-on-LAN for the ones that sleep. Between runs they stay dark, which is
+    why most of them are off in the first place.
   </p>
 
   <div class="cta">
@@ -223,17 +227,18 @@
     <a class="btn secondary" href="https://github.com/orkun-soylu/timar">Source on GitHub</a>
   </div>
   <p class="badges">
-    <span>v0.1.1</span><span>amd64 + arm64</span><span>Linux · OpenWrt · Proxmox</span><span>MIT licensed</span>
+    <span>amd64 + arm64</span><span>Linux · OpenWrt · Proxmox</span><span>MIT licensed</span>
   </p>
 
   <figure class="shot">
-    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1720"
-         alt="Timar's dashboard listing six machines. Two are up, three are asleep and marked on-demand, one is down. Each on-demand row offers a wake or shutdown action; always-on rows show n/a. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." />
-    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1720"
+    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1862"
+         alt="Timar's dashboard listing six machines, each with a coloured light before its name: two green (up), three grey (asleep, on-demand), one red (down). Each row's actions are icon buttons — wake for the sleeping ones, then enrol, edit and remove. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." />
+    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1862"
          alt="The same dashboard in a light theme." />
     <figcaption>
-      Three states, not two: <em>asleep</em> is a machine that is meant to be off, and it is not
-      painted like a fault. A status page that shows both in red teaches you to ignore red.
+      Three states, not two: grey <em>asleep</em> is a machine that is meant to be off, and it
+      is not painted like a fault. A status page that shows both in red teaches you to ignore
+      red. Servers are added, edited, enrolled and removed from the same page.
     </figcaption>
   </figure>
 </div>
@@ -243,11 +248,10 @@
     <p class="eyebrow">The problem</p>
     <h2>A sleeping machine cannot phone home.</h2>
     <p class="muted">
-      Homelab machines are mostly <em>off</em>. The GPU box runs when you need it, the hypervisor
-      wakes for a job, the build server sits dark for a week. Every tool built for always-on
-      fleets assumes an agent that reports in — which is the one thing a machine that is powered
-      down cannot do. So the machines that go longest without a security update are exactly the
-      ones nothing is watching.
+      Homelab machines are mostly <em>off</em>. The GPU box runs when you need it, the build
+      server sits dark for a week. Tools built for always-on fleets assume an agent that reports
+      in — the one thing a powered-down machine cannot do. So the machines that go longest
+      without a security update are the ones nothing is watching.
     </p>
     <p class="muted">
       Timar inverts it. <strong style="color:var(--ink)">Waking the host is step one of the
@@ -263,14 +267,13 @@
     <h2>Wake, work, and put it back.</h2>
     <ol class="flow">
       <li><strong>Wake what is asleep</strong>
-        <span>A magic packet, or `qm start` on the hypervisor for a guest — a VM has no wake
-        address of its own. From a different subnet, a relay sends the packet from a machine
-        already on that segment.</span></li>
+        <span>A magic packet, or <code>qm start</code> on the hypervisor for a guest — a VM has
+        no wake address of its own. For another subnet, a relay on that segment sends the
+        packet.</span></li>
       <li><strong>Update it with the command its platform actually has</strong>
-        <span>Debian's apt, Proxmox's dist-upgrade, your own command if you have one. OpenWrt is
-        skipped by default on purpose: an unattended <code>apk upgrade</code> can fill the
-        overlay or land a kernel-module mismatch, and the machine that breaks is the one
-        carrying the session you would repair it from.</span></li>
+        <span>apt on Debian, dist-upgrade on Proxmox, or your own command. OpenWrt is skipped by
+        default: an unattended <code>apk upgrade</code> can fill the overlay or break a kernel
+        module on the machine carrying the session you would repair it from.</span></li>
       <li><strong>Sweep the logs while it is up</strong>
         <span>System log errors, disks past a threshold, stopped containers — and scheduled jobs
         on that machine that did not run today. Watching for <em>absence</em> is the point.</span></li>
@@ -280,36 +283,33 @@
     </ol>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/report-update-dark.png" width="2560" height="758"
+      <img class="shot-dark" src="images/report-update-dark.png" width="2560" height="798"
            alt="An archived update run, summarised as five updated, none failed, one skipped. Three machines are annotated 'woken, updated, shut down again'; two that were already on carry no annotation; the OpenWrt router is marked skipped because no update command is configured for it." />
-      <img class="shot-light" src="images/report-update-light.png" width="2560" height="758"
+      <img class="shot-light" src="images/report-update-light.png" width="2560" height="798"
            alt="The same update run in a light theme." />
       <figcaption>
-        A run says what it <em>did</em> to each machine, not just that it succeeded. The three
-        annotated lines were asleep when the run started and are asleep again now; the router
-        was skipped rather than quietly left out.
+        A run says what it <em>did</em> to each machine. The three annotated lines were asleep
+        before the run and are asleep again; the router was skipped, not quietly left out.
       </figcaption>
     </figure>
 
     <div class="callout">
       <p>
-        <strong>The reports outlive the notification.</strong> Every finished run is archived and
-        readable in the UI, so a disk creeping upward or an update failing every Friday shows up
-        as a series rather than a single snapshot. Telegram delivery is a copy, not the only
-        place the findings exist.
+        <strong>The reports outlive the notification.</strong> Every finished run is archived, so
+        a disk creeping upward or an update failing every Friday shows up as a series. Telegram
+        delivery is a copy, not the only place the findings exist.
       </p>
     </div>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/report-sweep-dark.png" width="2560" height="1180"
+      <img class="shot-dark" src="images/report-sweep-dark.png" width="2560" height="1220"
            alt="An archived log sweep: one machine with findings, none unreachable, three asleep. A written assessment at the top singles out a disk at 91 percent and a drive reporting a pending sector, and says which of the two is the more urgent. Below it, the raw per-host findings — the two smartd lines and the disk, then 'clean' for two hosts and 'offline, not checked' for the three that were asleep." />
-      <img class="shot-light" src="images/report-sweep-light.png" width="2560" height="1180"
+      <img class="shot-light" src="images/report-sweep-light.png" width="2560" height="1220"
            alt="The same log sweep in a light theme." />
       <figcaption>
-        The written assessment sits above the findings it was written from, never instead of
-        them. A machine that was asleep is recorded as <em>not checked</em> rather than clean —
-        a sweep does not wake the fleet, and reporting an unchecked host as healthy is the one
-        thing a status page must not do.
+        The written assessment sits above the findings it came from, never instead of them. A
+        machine that was asleep is <em>not checked</em>, not clean — a sweep does not wake the
+        fleet, and calling an unchecked host healthy is the one thing a status page must not do.
       </figcaption>
     </figure>
   </div>
@@ -320,10 +320,9 @@
     <p class="eyebrow">Measured, not assumed</p>
     <h2>The failures here are the quiet kind.</h2>
     <p class="muted">
-      A magic packet that never leaves the host. A disk check that exits non-zero and reports
-      all-clear. A schedule that stops firing and writes no error anywhere. None of these
-      announce themselves, so the decisions behind them were measured rather than reasoned about
-      — and the measurements are written down in
+      A magic packet that never leaves the host. A disk check that fails and reports all-clear.
+      A schedule that stops firing and logs nothing. None of these announce themselves, so the
+      decisions behind them were measured, not reasoned about — the measurements are in
       <a href="https://github.com/orkun-soylu/timar/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a>.
     </p>
     <div class="grid g3">
@@ -356,11 +355,9 @@
     <p class="eyebrow">Platforms</p>
     <h2>Commands that exist on the machine you pointed at.</h2>
     <p class="muted">
-      A check that cannot run on a platform says so, instead of quietly reporting all-clear.
-      Every command was run against a real host of that platform before it was written down:
-      busybox and coreutils disagree in ways that fail silently — one <code>df</code> flag GNU
-      accepts and busybox rejects turned into a disk check that passed on every router it was
-      pointed at.
+      A check that cannot run on a platform says so, instead of reporting all-clear. Every
+      command was tried on a real host of that platform first: one <code>df</code> flag GNU
+      accepts and busybox rejects once made a disk check that passed on every router.
     </p>
     <div class="scroll-x">
       <table class="plat">
@@ -384,31 +381,35 @@
     <pre class="cmd"><span class="p">$</span> curl -O https://raw.githubusercontent.com/orkun-soylu/timar/main/docker-compose.yml
 <span class="p">$</span> docker compose up -d</pre>
     <p class="muted">
-      Then open <code>http://&lt;host&gt;:8080</code> and create the operator account. Nothing else
-      answers until you do — the first screen is the only one served before an account exists.
-      Everything an installation <em>is</em> lives in one directory (<code>/data</code>): config,
-      credentials, state, reports and the SSH key. Backup and migration are <code>cp -a</code>.
+      Open <code>http://&lt;host&gt;:8080</code> and create the operator account — nothing else
+      answers until you do. Everything an installation <em>is</em> — config, credentials, state,
+      reports, the SSH key — lives in <code>/data</code>, so backup and migration are
+      <code>cp -a</code>.
     </p>
 
-    <figure class="shot">
-      <img class="shot-dark" src="images/settings-dark.png" width="2560" height="1388"
-           alt="Timar's settings page, servers tab: six machines with their SSH login, platform and wake column. Two are always on, two are on-demand, and a Proxmox guest reads 'on-demand via hv-01'. Each row offers enrol, edit and remove. A second tab holds the settings that belong to the whole fleet." />
-      <img class="shot-light" src="images/settings-light.png" width="2560" height="1388"
-           alt="The same settings page in a light theme." />
+    <figure class="shot narrow">
+      <div>
+        <img class="shot-dark" src="images/server-dialog-dark.png" width="1408" height="2006"
+             alt="The edit dialog for vm-01: name, address, SSH user and platform; Wake-on-LAN MAC and relay; 'Guest of hv-01' with VM id 101; update command, update timeout, and context for the log analysis." />
+        <img class="shot-light" src="images/server-dialog-light.png" width="1408" height="2006"
+             alt="The same dialog in a light theme." />
+      </div>
       <figcaption>
-        The fleet is edited here, not in a YAML file you hand-write — though it is still just
-        <code>config.yaml</code> underneath. A guest reads <em>on-demand via hv-01</em> because it
-        inherits that from its hypervisor: a VM has no wake address of its own, and calling it
-        always-on would turn every night it spends off into an outage report.
+        <strong style="color:var(--ink)">Servers are managed from the dashboard.</strong> Add,
+        edit and enrol open in a dialog like this one; underneath it is still just
+        <code>config.yaml</code>, which you can edit by hand.
+        <br><br>
+        A VM has no wake address of its own, so it names the hypervisor that starts it and
+        inherits <em>on-demand</em> from it — otherwise every night it spends off would be
+        reported as an outage.
       </figcaption>
     </figure>
 
     <div class="callout">
       <p>
         <strong>Do not expose this to the internet.</strong> Timar holds an SSH key that reaches
-        every machine it manages and can grant itself <code>sudo</code> on them. The login page
-        is the only thing in front of your fleet. Keep it on a private network, or behind a
-        reverse proxy you control.
+        every machine it manages and can grant itself <code>sudo</code> on them. Keep it on a
+        private network, or behind a reverse proxy you control.
       </p>
     </div>
     <div class="grid g2">
@@ -420,8 +421,8 @@
       <div class="card">
         <h3>Optional, not required</h3>
         <p>A model to summarise sweeps (Anthropic, any OpenAI-compatible endpoint, or Ollama) and
-        Telegram for delivery. Without either, waking, updating and the sweep all still work —
-        you get the raw findings instead of a written assessment.</p>
+        Telegram for delivery. Without them everything still works — you get the raw findings
+        instead of a written assessment.</p>
       </div>
     </div>
   </div>

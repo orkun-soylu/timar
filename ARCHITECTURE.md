@@ -282,10 +282,10 @@ continuous traffic to every machine in the rack.
 
 ## Power from the row that reports the state
 
-The dashboard's last column is the action that fits the state: `wake up` for a machine that is
-asleep, `shutdown` for one that is up, `n/a` for a machine that is always on. Noticing a machine
-is asleep and having to go somewhere else to wake it is the trip an operator makes all day, and
-the state and the button belong to the same row.
+The first button in a row's *Actions* is the power action that fits the state: wake for a
+machine that is asleep, shutdown for one that is up, and nothing — an empty slot — for a machine
+that is always on. Noticing a machine is asleep and having to go somewhere else to wake it is
+the trip an operator makes all day, and the state and the button belong to the same row.
 
 Three decisions hold this together:
 
