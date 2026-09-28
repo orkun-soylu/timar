@@ -99,7 +99,7 @@
   "Address": "Adres",
   "Platform": "Platform",
   "State": "Durum",
-  "Power": "Güç",
+  "Action": "İşlem",
   "up": "açık",
   "asleep": "uykuda",
   "on-demand": "isteğe bağlı",

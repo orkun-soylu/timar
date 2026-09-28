@@ -70,7 +70,9 @@ def fleet(cfg: dict) -> list[HostStatus]:
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
 
-    return [
+    # By name, not config order: the order hosts were enrolled in means nothing to the reader,
+    # and a host is found faster in an alphabetical list.
+    hosts = [
         HostStatus(
             name=s["name"],
             host=s["host"],
@@ -80,3 +82,4 @@ def fleet(cfg: dict) -> list[HostStatus]:
         )
         for s, up in zip(servers, results)
     ]
+    return sorted(hosts, key=lambda h: h.name.casefold())

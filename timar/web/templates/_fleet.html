@@ -7,7 +7,7 @@
 {% if fleet %}
 <table>
   <thead>
-    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Power") }}</th></tr>
+    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Action") }}</th></tr>
   </thead>
   <tbody>
   {% for host in fleet %}
@@ -23,7 +23,7 @@
         {%- endif %}
       </td>
       {# Left-aligned like every other column, so the button's left edge sits under the
-         "Power" heading. Icons, not words: the labels differed in length and made the column
+         "Action" heading. Icons, not words: the labels differed in length and made the column
          ragged; the words are kept as the tooltip and the accessible name. #}
       <td style="white-space:nowrap">
         {%- if not host.on_demand %}

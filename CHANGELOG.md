@@ -14,7 +14,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Row actions are icon buttons of one size.** On the dashboard, *wake up* and *shutdown* in
   the server list and *report*, *history* and *run now* under scheduled work are square icon
   buttons; the word is still there as the tooltip and the accessible name. An always-on
-  machine's power cell is now empty instead of saying *n/a*.
+  machine's cell is now empty instead of saying *n/a*, and the column is headed *Action*
+  rather than *Power*.
+- **The server list is sorted by name**, not by the order the hosts were added in.
 
 ## [0.1.6] — 2026-09-26
 
