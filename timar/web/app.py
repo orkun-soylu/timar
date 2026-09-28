@@ -114,7 +114,9 @@ async def set_language(code: str = "", next: str = "/"):
     return response
 
 
-@app.get("/health")
+# HEAD as well as GET: uptime monitors (homepage's siteMonitor among them) probe with HEAD
+# first, and a 405 there is logged on every check and costs a second request to recover from.
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     """Unauthenticated on purpose: it reveals liveness and nothing about the fleet."""
     return {"status": "ok", "configured": config.is_configured()}

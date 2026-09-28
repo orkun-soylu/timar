@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **The server table's layout:** *Server* hugs the left edge and *Actions* the right, each as
+  wide as its content; *Address* and *Platform* share the space between them, centred.
+
+### Fixed
+
+- **`/health` answers `HEAD`.** Uptime monitors (homepage's `siteMonitor` among them) probe with
+  `HEAD` first; it got a 405 on every check and had to retry with `GET`.
+
 ## [0.1.9] — 2026-09-29
 
 ### Changed

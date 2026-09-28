@@ -20,11 +20,13 @@
       {%- if active %} <span aria-hidden="true">{{ "▼" if descending else "▲" }}</span>{% endif %}</a>
   </th>
 {%- endmacro %}
+{# Server hugs the left wall and Actions the right, each only as wide as its content; Address
+   and Platform share what is left between them, centred in it. #}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("name", _("Server")) }}{{ sortable("address", _("Address")) }}{{ sortable("platform", _("Platform"), "wide") }}<th class="actions-head">
+    <tr>{{ sortable("name", _("Server"), "col-edge") }}{{ sortable("address", _("Address"), "col-mid") }}{{ sortable("platform", _("Platform"), "col-mid wide") }}<th class="col-edge actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
@@ -41,13 +43,13 @@
       {# The state is the light in front of the name — green up, grey asleep, red down — and
          its word is the tooltip. The label is on the whole cell, not just the dot: an
          eight-pixel target is one nobody manages to hover. #}
-      <td title="{{ state_label }}" style="white-space:nowrap"><span class="dot" role="img"
+      <td class="col-edge" title="{{ state_label }}"><span class="dot" role="img"
           aria-label="{{ state_label }}"></span> {{ host.name }}</td>
-      <td><code>{{ host.host }}</code></td>
-      <td class="muted wide">{{ host.platform }}</td>
+      <td class="col-mid"><code>{{ host.host }}</code></td>
+      <td class="col-mid muted wide">{{ host.platform }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so enrol, edit and remove sit in the same place on every row. #}
-      <td><div class="icon-row">
+      <td class="col-edge"><div class="icon-row">
         {%- if not host.on_demand %}
           {# Always on: there is nothing to wake it with, so Timar will not put it to sleep
              either. Offering the button and refusing the click would be worse. #}

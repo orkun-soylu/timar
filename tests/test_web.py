@@ -38,6 +38,14 @@ class TestFirstRun:
         body = client.get("/health").json()
         assert body == {"status": "ok", "configured": False}
 
+    def test_health_answers_a_head_probe(self, client):
+        """Uptime monitors probe with HEAD first; a 405 there costs every check a retry."""
+        for configured in (False, True):
+            if configured:
+                complete_setup(client)
+            response = client.head("/health")
+            assert response.status_code == 200 and response.content == b""
+
     def test_static_assets_are_served_before_setup(self, client):
         # The setup page needs its stylesheet and script, or it renders unusable.
         assert client.get("/static/htmx.min.js").status_code == 200
