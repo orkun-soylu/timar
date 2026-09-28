@@ -72,9 +72,9 @@
     .icon-slot { display: inline-block; width: 2rem; height: 2rem; }
     th.actions-head { white-space: nowrap; }
     /* The server table's layout: the edge columns shrink to their content, the middle ones
-       split the rest evenly. `width: 1%` is what makes a table cell shrink-to-fit. */
+       split the rest evenly and keep their text on the left like every other column. `width: 1%` is what makes a table cell shrink-to-fit. */
     th.col-edge, td.col-edge { width: 1%; white-space: nowrap; }
-    th.col-mid, td.col-mid { width: 50%; text-align: center; }
+    th.col-mid, td.col-mid { width: 50%; }
     th.sortable a { color: inherit; text-decoration: none; }
     th.sortable a:hover { color: var(--text); }
     th.sortable[aria-sort] a { color: var(--text); }
