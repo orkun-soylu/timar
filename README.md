@@ -3,32 +3,23 @@
 [![tests](https://github.com/orkun-soylu/timar/actions/workflows/tests.yml/badge.svg)](https://github.com/orkun-soylu/timar/actions/workflows/tests.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Agentless fleet care for homelabs — wake machines that are asleep, update them, read their
-logs, and put them back the way they were found.
+Agentless fleet care for homelabs: wake machines that are asleep, update them, read their logs,
+and put them back the way they were found.
 
-Nothing is installed on the machines you manage. Timar needs SSH and, for hosts that sleep,
-Wake-on-LAN. It ships as a single container with a single data volume, so the whole
-installation moves by copying a directory.
+Nothing is installed on the machines you manage — Timar needs SSH, and Wake-on-LAN for the ones
+that sleep. It is one container with one data volume, so moving it is copying a directory.
+There is a one-page tour at **[timar.tools](https://timar.tools)**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
-  <img alt="Timar's dashboard listing six machines. Two are up, three are asleep and marked on-demand, one is down. Each on-demand row offers a wake or shutdown action; always-on rows show n/a. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." src="docs/images/dashboard-light.png">
+  <img alt="Timar's dashboard listing six machines, each with a coloured light before its name: two green (up), three grey (asleep, on-demand), one red (down). Each row's actions are icon buttons — wake for the sleeping ones, then enrol, edit and remove. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." src="docs/images/dashboard-light.png">
 </picture>
 
-Three states, not two: *asleep* is a machine that is **meant** to be off, and it is not painted
-like a fault — a status page that shows both in red teaches you to ignore red. There is a
-one-page tour at **[timar.tools](https://timar.tools)**.
+Three states, not two. *Asleep* (grey) is a machine that is **meant** to be off, and it is not
+painted like a fault — a status page that shows both in red teaches you to ignore red.
 
-> **Status: early.** The engine (wake / update / log sweep / platform command sets), the
-> scheduler, settings and key enrolment work and are tested. See
-> [ARCHITECTURE.md](ARCHITECTURE.md).
-
-> ⚠️ **Running 0.1.0? Upgrade to 0.1.1 — your schedules are not firing.** In 0.1.0 a daily or
-> weekly schedule never ran once: the loop asked for the next run time again at the moment a job
-> came due, and got tomorrow. Manual *run now* worked, which is why it looked fine — the
-> dashboard kept counting down to a run that never happened. Check your archive afterwards; if
-> every report in it is at an odd time, none of them were scheduled. See
-> [CHANGELOG.md](CHANGELOG.md).
+> **Status: early.** Wake, update, log sweep, the scheduler and key enrolment work and are
+> tested. Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 
 ## Run it
 
@@ -37,84 +28,73 @@ curl -O https://raw.githubusercontent.com/orkun-soylu/timar/main/docker-compose.
 docker compose up -d
 ```
 
-Then open `http://<host>:8080` and create the operator account. Nothing else answers until you
-do — the first screen is the only one served before an account exists.
+Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
-The image is published for **amd64 and arm64** — a Raspberry Pi is a first-class host here, not
-an afterthought. `:latest` follows the most recent release; pin a version
-(`ghcr.io/orkun-soylu/timar:0.1.11`) if you would rather choose when to move.
+The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.11`) to choose when
+you move.
 
-Configuration lives in the `timar-data` volume as `config.yaml`; see
-[`config.example.yaml`](config.example.yaml) for the fields. You can also add, edit, enrol and
-remove servers from the dashboard — it writes the same file.
+Add, edit, enrol and remove servers from the dashboard. It all lands in `config.yaml` in the
+`timar-data` volume, which you can also edit by hand — see
+[`config.example.yaml`](config.example.yaml).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-dark.png">
-  <img alt="Timar's settings page, servers tab: six machines with their SSH login, platform and wake column. Two are always on, two are on-demand, and a Proxmox guest reads 'on-demand via hv-01'. Each row offers enrol, edit and remove." src="docs/images/settings-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/server-dialog-dark.png">
+  <img width="560" alt="The edit dialog for vm-01: name, address, SSH user and platform; Wake-on-LAN MAC and relay; 'Guest of hv-01' with VM id 101; update command, update timeout, and context for the log analysis." src="docs/images/server-dialog-light.png">
 </picture>
 
-A guest reads *on-demand via hv-01* because it inherits that from its hypervisor: a VM has no
-wake address of its own, and calling it always-on would turn every night it correctly spends
-powered off into an outage report.
+A VM has no wake address of its own, so it names the hypervisor that starts it and inherits
+*on-demand* from it — otherwise every night it spends off would be reported as an outage.
 
 > ⚠️ **Do not expose this to the internet.** Timar holds an SSH key that reaches every machine
-> it manages and can grant itself `sudo` on them. The login page is the only thing in front of
-> your fleet. Keep it on a private network, or behind a reverse proxy you control.
+> it manages and can grant itself `sudo` on them. Keep it on a private network, or behind a
+> reverse proxy you control.
 
-### Running on a bridge network
+### Bridge networks and other subnets
 
-The default compose file uses `network_mode: host` because **Wake-on-LAN does not work from a
-bridge network** — a magic packet is a broadcast, and from a bridge the send succeeds with no
-error while the packet never reaches the LAN. Measured with `tcpdump` on the LAN interface:
-bridge network 0 packets, host network 1 packet.
+The compose file uses `network_mode: host` because **Wake-on-LAN does not work from a bridge
+network**: the send succeeds, no error, and the packet never reaches the LAN (measured with
+`tcpdump`: bridge 0 packets, host 1).
 
-Everything else works fine on a bridge. If you do not need to wake machines, replace the
-`network_mode: host` line with:
+If you do not need to wake machines, a bridge is fine — replace `network_mode: host` with:
 
 ```yaml
     ports:
       - "8080:8080"
 ```
 
-To wake machines from a bridge deployment, set a **wake relay** on those servers: another
-configured host, already enrolled and always on, that sends the packet on Timar's behalf over
-SSH. It needs `python3` or `wakeonlan`.
-
-A relay is also the only way to wake a machine in a **different subnet** — a second site over a
-tunnel, an office network. Host networking cannot help there, because the packet has to
-originate on the target's own segment.
+To wake from a bridge — or to wake a machine in a **different subnet**, which host networking
+cannot do either — give that server a **wake relay**: another enrolled, always-on host that
+sends the packet over SSH. It needs `python3` or `wakeonlan`.
 
 ## Why
 
-Homelab machines are mostly *off*. The tools built for always-on fleets assume an agent that can
-phone home, which is the one thing a sleeping machine cannot do. Timar inverts it: waking the
-host is step one of the job, and shutting it back down is the last.
+Homelab machines are mostly *off*. Tools built for always-on fleets assume an agent that phones
+home — the one thing a sleeping machine cannot do. Timar inverts it: waking the host is the
+first step of the job, and shutting it back down is the last.
 
 ## What it does
 
 - **Update** — wake if asleep, run the platform's update command, shut down again if it started
-  off. Proxmox hosts orchestrate their guests: start, update, shut down, in order.
-- **Power, from the dashboard** — each on-demand machine's row offers the action that fits its
-  state: wake one that is asleep, shut down one that is up. Guests are started and stopped
-  through their hypervisor with `qm`, since a VM has no wake address of its own. Always-on
-  machines are offered nothing: Timar will not shut down a machine it cannot wake again.
+  off. Proxmox hosts bring their guests along, in order.
+- **Power** — wake an on-demand machine or shut it down from its row. Guests go through their
+  hypervisor with `qm`. Always-on machines get no power button: Timar will not shut down what it
+  cannot wake again.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
-  them. A check that cannot run says so instead of quietly reporting all-clear.
-- **Report archive** — every run a job finishes is kept and browsable under `/reports`, filtered
-  by job. Telegram delivery is a copy of that, not the only place the findings exist; a disk
-  creeping upwards or an update that fails every week is visible as a series, not one snapshot.
+  them. A check that cannot run says so instead of reporting all-clear.
+- **Report archive** — every finished run is kept under `/reports`, so a disk creeping upward or
+  an update failing every week shows as a series. Telegram delivery is a copy, not the only one.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/report-sweep-dark.png">
   <img alt="An archived log sweep: one machine with findings, none unreachable, three asleep. A written assessment at the top singles out a disk at 91 percent and a drive reporting a pending sector, and says which of the two is more urgent. Below it, the raw per-host findings, then 'clean' for two hosts and 'offline, not checked' for the three that were asleep." src="docs/images/report-sweep-light.png">
 </picture>
 
-The written assessment sits above the findings it was written from, never instead of them. A
-machine that was asleep is recorded as *not checked* rather than clean — a sweep does not wake
-the fleet, and reporting an unchecked host as healthy is the one thing a status page must not
-do.
+The written assessment sits above the findings it came from, never instead of them. A machine
+that was asleep is *not checked*, not clean — a sweep does not wake the fleet, and calling an
+unchecked host healthy is the one thing a status page must not do.
 
 ## Supported platforms
 
@@ -122,11 +102,11 @@ do.
 |---|---|---|---|---|
 | Linux (systemd) | `journalctl` | ✅ | Docker | ✅ |
 | Proxmox VE | `journalctl` | ✅ | — (guests via `qm`) | ✅ |
-| OpenWrt | `logread` | ✅ | — | off by default — see below |
+| OpenWrt | `logread` | ✅ | — | off by default |
 
-OpenWrt has no default update command on purpose. An unattended `apk upgrade` on a router can
-fill the overlay partition or land a kernel-module mismatch, and the machine that breaks is the
-one carrying the SSH session you would repair it from. Set `update_cmd` yourself if you want it.
+OpenWrt has no default update command on purpose: an unattended `apk upgrade` can fill the
+overlay or land a kernel-module mismatch on the machine carrying the SSH session you would
+repair it from. Set `update_cmd` yourself if you want it.
 
 ## Development
 
@@ -135,8 +115,8 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/python -m pytest
 ```
 
-Run it against a throwaway installation rather than your real one — `TIMAR_DATA` is the whole
-installation, so pointing it somewhere disposable means you cannot damage a live fleet:
+`TIMAR_DATA` is the whole installation, so point it somewhere disposable to run against a
+throwaway copy instead of your real fleet:
 
 ```bash
 TIMAR_DATA=/tmp/timar-dev TIMAR_PORT=8099 .venv/bin/python -m timar.web
@@ -144,20 +124,15 @@ TIMAR_DATA=/tmp/timar-dev TIMAR_PORT=8099 .venv/bin/python -m timar.web
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). It covers one habit worth
-knowing about up front: **for anything that touches a machine, a network or a page, verify it by
-running it and put the measurement in the pull request.** Timar's failures are the quiet kind —
-a magic packet that never leaves the host, a disk check that exits non-zero and reports
-all-clear — and a passing test does not always mean the thing works.
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). One habit up front: **for
+anything that touches a machine, a network or a page, run it and put the measurement in the pull
+request.** Timar's failures are quiet — a magic packet that never leaves the host, a disk check
+that fails and reports all-clear — and a passing test does not always mean it works.
 
-Commits must be signed off under the [DCO](DCO) (`git commit -s`). There is no CLA.
-
-Notable changes are recorded in [CHANGELOG.md](CHANGELOG.md); the design decisions and the
-pitfalls behind them are in [ARCHITECTURE.md](ARCHITECTURE.md).
+Commits are signed off under the [DCO](DCO) (`git commit -s`); there is no CLA. Design
+decisions and their pitfalls are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 Orkun Soylu
-
-Third-party components, including the vendored copy of htmx, are listed in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[MIT](LICENSE) © 2026 Orkun Soylu. Third-party components, including the vendored htmx, are
+listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
