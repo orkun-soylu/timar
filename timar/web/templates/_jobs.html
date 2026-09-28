@@ -1,8 +1,9 @@
 {# Polled standalone, so no `extends`. #}
 {% from "_icons.html" import icon %}
+<div class="table-scroll">
 <table>
   <thead>
-    <tr><th>{{ _("Job") }}</th><th>{{ _("Schedule") }}</th><th>{{ _("Last run") }}</th><th>{{ _("Next run") }}</th><th></th></tr>
+    <tr><th>{{ _("Job") }}</th><th>{{ _("Schedule") }}</th><th>{{ _("Last run") }}</th><th>{{ _("Next run") }}</th><th style="text-align:right">{{ _("Actions") }}</th></tr>
   </thead>
   <tbody>
   {% for job in jobs %}
@@ -53,6 +54,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% set stale = jobs | rejectattr("heartbeat") | list %}
 {% if stale %}
   <p class="hint" style="padding:0 1rem 1rem; margin:0">

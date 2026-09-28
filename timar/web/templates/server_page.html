@@ -1,0 +1,13 @@
+{# The dialog's content as a page of its own: what the dashboard's buttons lead to when there
+   is no scripting, and what a bookmark to an edit or an enrolment opens. #}
+{% extends "base.html" %}
+{% block title %}{{ page_title }} — Timar{% endblock %}
+{% block body %}
+<header>
+  <h1>Timar</h1>
+  <span class="spacer"></span>
+  <a href="/" class="muted">← {{ _("dashboard") }}</a>
+  {% include "_lang.html" %}
+</header>
+{% include body_template %}
+{% endblock %}

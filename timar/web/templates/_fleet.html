@@ -2,19 +2,29 @@
 
    The power buttons report into `#power-result`, which lives on the dashboard *outside* this
    fragment on purpose: anything written in here is wiped by the next poll, and a wake that
-   failed for a nameable reason would erase its own explanation within ten seconds. #}
+   failed for a nameable reason would erase its own explanation within ten seconds. The dialog
+   that enrol, edit and add open into lives outside it for the same reason.
+
+   Enrol, edit and add are links first — each opens a page of its own without scripting — and
+   `hx-get` turns them into the dialog when htmx is there. #}
 {% from "_icons.html" import icon %}
 {% if fleet %}
+<div class="table-scroll">
 <table>
   <thead>
-    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th>{{ _("Platform") }}</th><th>{{ _("State") }}</th><th>{{ _("Action") }}</th></tr>
+    <tr><th>{{ _("Server") }}</th><th>{{ _("Address") }}</th><th class="wide">{{ _("Platform") }}</th><th>{{ _("State") }}</th><th class="actions-head">
+      <span>{{ _("Actions") }}</span>
+      <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
+         aria-label="{{ _("Add a server") }}"
+         hx-get="/settings/servers/new" hx-target="#dialog-body" hx-swap="innerHTML">{{ icon("add") }}</a>
+    </th></tr>
   </thead>
   <tbody>
   {% for host in fleet %}
     <tr class="{{ host.state }}">
       <td>{{ host.name }}</td>
       <td><code>{{ host.host }}</code></td>
-      <td class="muted">{{ host.platform }}</td>
+      <td class="muted wide">{{ host.platform }}</td>
       <td>
         <span class="dot"></span>
         {%- if host.state == "up" %}{{ _("up") }}
@@ -22,14 +32,13 @@
         {%- else %}{{ _("down") }}
         {%- endif %}
       </td>
-      {# Left-aligned like every other column, so the button's left edge sits under the
-         "Action" heading. Icons, not words: the labels differed in length and made the column
-         ragged; the words are kept as the tooltip and the accessible name. #}
-      <td style="white-space:nowrap">
+      {# Power first, then the row's own management. The power slot is kept even when it is
+         empty, so enrol, edit and remove sit in the same place on every row. #}
+      <td><div class="icon-row">
         {%- if not host.on_demand %}
           {# Always on: there is nothing to wake it with, so Timar will not put it to sleep
-             either. Offering the button and refusing the click would be worse — and the cell
-             stays empty rather than saying so, which read as a value in a column of controls. #}
+             either. Offering the button and refusing the click would be worse. #}
+          <span class="icon-slot"></span>
         {%- elif host.state == "up" %}
           <button type="button" class="icon-btn"
                   title="{{ _("shutdown") }}" aria-label="{{ _("shutdown") }}"
@@ -46,11 +55,32 @@
                   hx-indicator="#power-result" hx-disabled-elt="this"
                   >{{ icon("wake") }}</button>
         {%- endif %}
+        <a href="/settings/servers/{{ host.name }}/enroll" class="icon-btn"
+           title="{{ _("enrol") }}" aria-label="{{ _("enrol") }}"
+           hx-get="/settings/servers/{{ host.name }}/enroll" hx-target="#dialog-body"
+           hx-swap="innerHTML">{{ icon("enrol") }}</a>
+        <a href="/settings/servers/{{ host.name }}/edit" class="icon-btn"
+           title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
+           hx-get="/settings/servers/{{ host.name }}/edit" hx-target="#dialog-body"
+           hx-swap="innerHTML">{{ icon("edit") }}</a>
+        <form method="post" action="/settings/servers/{{ host.name }}/delete" style="display:contents"
+              {# tojson, not a quoted string: a translation with an apostrophe in it would
+                 otherwise close the JavaScript string early. #}
+              onsubmit='return confirm({{ _("Remove {name} from Timar? The machine is not touched.", name=host.name) | tojson }})'>
+          <button type="submit" class="icon-btn danger"
+                  title="{{ _("remove") }}" aria-label="{{ _("remove") }}">{{ icon("remove") }}</button>
+        </form>
+      </div>
       </td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
-<p class="empty">{{ _("No servers configured yet.") }}</p>
+<p class="empty">
+  {{ _("No servers configured yet.") }}<br>
+  <a href="/settings/servers/new" hx-get="/settings/servers/new" hx-target="#dialog-body"
+     hx-swap="innerHTML">{{ _("Add a server") }}</a>
+</p>
 {% endif %}

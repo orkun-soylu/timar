@@ -1,5 +1,10 @@
 """Settings: servers, log sweep defaults, the model connection, and notifications.
 
+The settings page itself carries only the fleet-wide settings. Servers are managed from the
+dashboard: its buttons open the add/edit form and the enrolment panel in a dialog, filled from
+the routes here — which answer with the bare panel to htmx and with a whole page otherwise, so
+every button is still a working link without scripting.
+
 Every route here rewrites `config.yaml` through `config.save()`, which replaces the file
 atomically — the scheduler may be reading it at the same moment.
 
@@ -32,18 +37,6 @@ TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 i18n.install(TEMPLATES.env)
 
 SEE_OTHER = 303
-
-
-SERVERS_TAB = "servers"
-GLOBAL_TAB = "global"
-
-# Which tab is showing is a *URL*, not a CSS state. Every form here saves with a POST and a
-# redirect, and a tab remembered only in the page would reset on the way back — dropping the
-# operator on the server list to read a "Saved." about the notifier they were editing. It also
-# means a tab survives a refresh, a bookmark and the back button, which no CSS-only version does.
-def _tab(raw: str | None) -> str:
-    """Anything unrecognised falls back rather than 404s — a stale bookmark should still open."""
-    return GLOBAL_TAB if raw == GLOBAL_TAB else SERVERS_TAB
 
 
 def _escape(text: str) -> str:
@@ -99,56 +92,82 @@ def _enrol_context(server: dict | None, error: str | None, result: str | None) -
     }
 
 
-def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None = None,
-          notice: str | None = None, edit: str | None = None, add: bool = False,
-          submitted: dict | None = None, enroll: str | None = None,
-          enroll_error: str | None = None, enroll_result: str | None = None,
-          status_code: int = 200):
-    cfg = config.load()
-    llm_cfg = cfg.get("llm") or {}
-    telegram_cfg = cfg.get("telegram") or {}
-    servers = cfg.get("servers", [])
-    guest_of = {
+def _htmx(request: Request) -> bool:
+    return request.headers.get("HX-Request") == "true"
+
+
+def _panel(request: Request, template: str, context: dict, *, title: str,
+           status_code: int = 200):
+    """The panel alone for the dashboard's dialog, or wrapped in a page without scripting.
+
+    Inside the dialog a rejected form comes back as **200**: htmx does not swap an error
+    response, so a 400 would leave the dialog showing the form as it was before the save, with
+    no word of what was wrong. The page keeps its honest status.
+    """
+    if _htmx(request):
+        return TEMPLATES.TemplateResponse(request, template, {**context, "in_dialog": True})
+    return TEMPLATES.TemplateResponse(request, "server_page.html", {
+        **context, "in_dialog": False, "body_template": template, "page_title": title,
+    }, status_code=status_code)
+
+
+def _done(request: Request):
+    """Back to the dashboard after a save or a removal, whichever way the request came."""
+    if _htmx(request):
+        # A full reload rather than closing the dialog in place: the fleet list behind it has
+        # to show the change, and it is the only thing on the page that would.
+        return HTMLResponse("", headers={"HX-Redirect": "/"})
+    return RedirectResponse("/", status_code=SEE_OTHER)
+
+
+def _guest_of(servers: list[dict]) -> dict:
+    return {
         guest["server_name"]: {"hypervisor": host["name"], "vm_id": guest["vm_id"],
                                "guest_on_demand": bool(guest.get("on_demand"))}
         for host in servers
         for guest in host.get("manages_vms", [])
     }
 
+
+def _server_form(request: Request, *, edit: str | None = None, submitted: dict | None = None,
+                 errors: list[str] | None = None, status_code: int = 200):
+    servers = config.load().get("servers", [])
+    guest_of = _guest_of(servers)
     # The name being edited comes from the submitted form first: a rejected rename still has to
     # re-open as an edit of the *original* entry, or saving again would add a second server.
     editing = (submitted or {}).get("original_name") or edit
     if editing and not any(s["name"] == editing for s in servers):
-        editing = None  # a stale link to a server that has since been removed
-
-    # One panel below the list at a time. Enrolling wins because it is the only one that can be
-    # reached while another is open, and two forms for two different servers stacked under one
-    # list is a page where the wrong button is easy to press.
-    enrolling = next((s for s in servers if s["name"] == enroll), None) if enroll else None
-    if enrolling is not None:
-        editing, add = None, False
-
-    return TEMPLATES.TemplateResponse(request, "settings.html", {
-        "tab": tab,
+        editing = None  # the server has been removed since the form was opened
+    return _panel(request, "_server_form.html", {
         "servers": servers,
-        "on_demand": config.on_demand(servers),
-        "guest_of": guest_of,
         "editing": editing,
         "values": _server_values(servers, guest_of, editing, submitted),
-        "enrol": _enrol_context(enrolling, enroll_error, enroll_result),
-        # Open on request, while editing, whenever something was rejected — and always when
-        # there is no fleet yet, because a first-run page whose only panel says "no servers"
-        # and offers nothing to press is a dead end.
-        "form_open": bool(enrolling is None and (add or editing or errors or not servers)),
+        "platforms": list(PLATFORMS),
+        "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
+        "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
+        "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
+        "errors": errors or [],
+    }, title=_("Edit {name}", name=editing) if editing else _("Add a server"),
+       status_code=status_code)
+
+
+def _enrol_panel(request: Request, server: dict, *, error: str | None = None,
+                 result: str | None = None, status_code: int = 200):
+    return _panel(request, "_enrol.html", {"enrol": _enrol_context(server, error, result)},
+                  title=_("Enrol {name}", name=server["name"]), status_code=status_code)
+
+
+def _view(request: Request, *, errors: list[str] | None = None, notice: str | None = None,
+          status_code: int = 200):
+    cfg = config.load()
+    llm_cfg = cfg.get("llm") or {}
+    telegram_cfg = cfg.get("telegram") or {}
+    return TEMPLATES.TemplateResponse(request, "settings.html", {
         "log_check": cfg.get("log_check", {}),
         "llm": {k: v for k, v in llm_cfg.items() if k != "api_key"},
         "llm_has_key": bool(llm_cfg.get("api_key")),
         "telegram_chat_id": telegram_cfg.get("chat_id", ""),
         "telegram_has_token": bool(telegram_cfg.get("token")),
-        "platforms": list(PLATFORMS),
-        "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
-        "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
-        "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
         "providers": llm_module.PROVIDERS,
         "schedules": cfg.get("schedules") or {},
         "jobs": [{"name": n, "title": _(jobs.TITLES[n])} for n in jobs.JOBS],
@@ -159,19 +178,34 @@ def _view(request: Request, *, tab: str = SERVERS_TAB, errors: list[str] | None 
     }, status_code=status_code)
 
 
-def _redirect(notice: str | None = None, tab: str = SERVERS_TAB):
-    """Back to the tab the operator was on, or the notice lands where they cannot see it."""
-    params = [f"tab={tab}"] if tab != SERVERS_TAB else []
-    if notice:
-        params.append(f"notice={notice}")
-    return RedirectResponse("/settings" + ("?" + "&".join(params) if params else ""),
+def _redirect(notice: str | None = None):
+    return RedirectResponse("/settings" + (f"?notice={notice}" if notice else ""),
                             status_code=SEE_OTHER)
 
 
 @router.get("", response_class=HTMLResponse)
-async def page(request: Request, tab: str | None = None, notice: str | None = None,
-               edit: str | None = None, add: bool = False, enroll: str | None = None):
-    return _view(request, tab=_tab(tab), notice=notice, edit=edit, add=add, enroll=enroll)
+async def page(request: Request, notice: str | None = None, edit: str | None = None,
+               add: bool = False, enroll: str | None = None):
+    # The server list used to live here, opened with these parameters. They are what old
+    # bookmarks and browser history point at, so they lead to where that panel lives now.
+    if enroll:
+        return RedirectResponse(f"/settings/servers/{enroll}/enroll", status_code=SEE_OTHER)
+    if edit:
+        return RedirectResponse(f"/settings/servers/{edit}/edit", status_code=SEE_OTHER)
+    if add:
+        return RedirectResponse("/settings/servers/new", status_code=SEE_OTHER)
+    return _view(request, notice=notice)
+
+
+@router.get("/servers/new", response_class=HTMLResponse)
+async def new_server(request: Request):
+    return _server_form(request)
+
+
+@router.get("/servers/{name}/edit", response_class=HTMLResponse)
+async def edit_server(request: Request, name: str):
+    _find_server(name)
+    return _server_form(request, edit=name)
 
 
 def _rename_references(servers: list[dict], old: str, new: str) -> None:
@@ -253,7 +287,7 @@ async def save_server(request: Request):
     except validate.ValidationError as e:
         # `submitted` carries the typed values back into the form; `original` alone would
         # re-render it from storage and quietly discard the edit being reported on.
-        return _view(request, errors=e.errors, submitted=form, status_code=400)
+        return _server_form(request, errors=e.errors, submitted=form, status_code=400)
 
     if original:
         previous = next((s for s in servers if s["name"] == original), None)
@@ -270,11 +304,11 @@ async def save_server(request: Request):
     cfg["servers"] = servers
     config.save(cfg)
     fleet_status.invalidate()  # the dashboard must not show a stale probe for a changed address
-    return _redirect("saved")
+    return _done(request)
 
 
 @router.post("/servers/{name}/delete")
-async def delete_server(name: str):
+async def delete_server(request: Request, name: str):
     cfg = config.load()
     servers = cfg.get("servers", [])
 
@@ -291,7 +325,7 @@ async def delete_server(name: str):
 
     config.save(cfg)
     fleet_status.invalidate()
-    return _redirect("deleted")
+    return _done(request)
 
 
 @router.post("/log-check")
@@ -301,9 +335,9 @@ async def save_log_check(request: Request):
     try:
         cfg["log_check"] = validate.log_check(form)
     except validate.ValidationError as e:
-        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
+        return _view(request, errors=e.errors, status_code=400)
     config.save(cfg)
-    return _redirect("saved", tab=GLOBAL_TAB)
+    return _redirect("saved")
 
 
 @router.post("/llm")
@@ -313,14 +347,14 @@ async def save_llm(request: Request):
     try:
         entry = validate.llm(form, cfg.get("llm"))
     except validate.ValidationError as e:
-        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
+        return _view(request, errors=e.errors, status_code=400)
 
     if entry is None:
         cfg.pop("llm", None)
     else:
         cfg["llm"] = entry
     config.save(cfg)
-    return _redirect("saved", tab=GLOBAL_TAB)
+    return _redirect("saved")
 
 
 @router.post("/llm/test", response_class=HTMLResponse)
@@ -376,14 +410,14 @@ async def save_telegram(request: Request):
     try:
         entry = validate.telegram(form, cfg.get("telegram"))
     except validate.ValidationError as e:
-        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
+        return _view(request, errors=e.errors, status_code=400)
 
     if entry is None:
         cfg.pop("telegram", None)
     else:
         cfg["telegram"] = entry
     config.save(cfg)
-    return _redirect("saved", tab=GLOBAL_TAB)
+    return _redirect("saved")
 
 
 @router.post("/telegram/test", response_class=HTMLResponse)
@@ -404,26 +438,19 @@ async def save_schedules(request: Request):
     try:
         cfg["schedules"] = validate.schedules(form, jobs.JOBS)
     except validate.ValidationError as e:
-        return _view(request, tab=GLOBAL_TAB, errors=e.errors, status_code=400)
+        return _view(request, errors=e.errors, status_code=400)
     config.save(cfg)
     # The running loops re-read config on their next tick, so no restart is needed -- but the
     # stored next_run is now wrong until that happens, and a dashboard showing a next run that
     # no longer matches the schedule is exactly the kind of thing that erodes trust in it.
     for name in jobs.JOBS:
         state.set_next_run(name, None)
-    return _redirect("saved", tab=GLOBAL_TAB)
+    return _redirect("saved")
 
 
-@router.get("/servers/{name}/enroll")
-async def enroll_form(name: str):
-    """Enrolment used to be a page of its own; it is a panel under the server list now.
-
-    Kept as a redirect rather than deleted: this URL is what any bookmark, browser history entry
-    or note-to-self points at, and `_find_server` still answers 404 for a machine that is gone
-    rather than opening the settings page with nothing on it.
-    """
-    _find_server(name)
-    return RedirectResponse(f"/settings?enroll={name}#enrol", status_code=SEE_OTHER)
+@router.get("/servers/{name}/enroll", response_class=HTMLResponse)
+async def enroll_form(request: Request, name: str):
+    return _enrol_panel(request, _find_server(name))
 
 
 @router.post("/servers/{name}/enroll", response_class=HTMLResponse)
@@ -458,8 +485,8 @@ async def enroll_submit(request: Request, name: str):
 
     # Rendered rather than redirected: the outcome is the whole point of the request and a
     # redirect would have to carry it in the URL, where it would survive a refresh and a share.
-    return _view(request, enroll=name, enroll_error=error, enroll_result=result,
-                 status_code=400 if error else 200)
+    return _enrol_panel(request, server, error=error, result=result,
+                        status_code=400 if error else 200)
 
 
 @router.post("/servers/{name}/verify", response_class=HTMLResponse)

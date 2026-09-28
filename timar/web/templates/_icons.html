@@ -1,4 +1,4 @@
-{# Inline SVG, drawn here rather than taken from an icon set: five glyphs do not justify a
+{# Inline SVG, drawn here rather than taken from an icon set: a handful of glyphs do not justify a
    vendored font or a third-party license, and inline markup needs no extra request on a network
    that may have no route out. They stroke in `currentColor`, so they follow the theme. #}
 {% macro icon(name) -%}
@@ -8,6 +8,10 @@
 {%- elif name == "wake" %}<path d="M3 20h18"/><path d="M7 16a5 5 0 0 1 10 0"/><path d="M12 3v6"/><path d="M9 6l3-3 3 3"/><path d="M4.5 12.5l1.5 1"/><path d="M19.5 12.5l-1.5 1"/>
 {%- elif name == "report" %}<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>
 {%- elif name == "history" %}<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>
+{%- elif name == "enrol" %}<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M16 7l3 3"/><path d="M18.5 4.5l2 2"/>
+{%- elif name == "edit" %}<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>
+{%- elif name == "remove" %}<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6"/><path d="M14 11v6"/>
+{%- elif name == "add" %}<path d="M12 5v14"/><path d="M5 12h14"/>
 {%- elif name == "play" %}<path d="M7 4.5v15l12-7.5z"/>
 {%- endif %}</svg>
 {%- endmacro %}

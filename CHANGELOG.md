@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Servers are managed from the dashboard.** Each row's *Actions* now has enrol, edit and
+  remove beside the power button, and *+* on the heading row adds a server. Enrol, add and edit
+  open in a dialog; remove asks first. The settings page keeps only the fleet-wide settings.
+  Old `/settings?edit=`, `?enroll=` and `?add=` links still lead to the right place.
+- **The server form's hints are shorter.**
+- The scheduled work table has an *Actions* heading over its buttons.
+- On a narrow screen the tables scroll sideways instead of cutting off their last column, and
+  the header wraps.
+
 ## [0.1.7] — 2026-09-28
 
 ### Changed
