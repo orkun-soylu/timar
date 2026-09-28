@@ -183,7 +183,7 @@ class TestPowerColumn:
         assert "/servers/gpu-02/wake" in rows          # asleep
         # An always-on machine has no wake path, so it is offered no way down.
         assert "/servers/web-01/shutdown" not in rows
-        assert "n/a" in rows
+        assert "/servers/web-01/wake" not in rows
 
     def test_the_shutdown_is_confirmed_first(self, fleet):
         assert "hx-confirm" in fleet.get("/fragments/fleet").text

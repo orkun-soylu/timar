@@ -1,4 +1,5 @@
 {# Polled standalone, so no `extends`. #}
+{% from "_icons.html" import icon %}
 <table>
   <thead>
     <tr><th>{{ _("Job") }}</th><th>{{ _("Schedule") }}</th><th>{{ _("Last run") }}</th><th>{{ _("Next run") }}</th><th></th></tr>
@@ -28,22 +29,25 @@
       </td>
       <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
       <td style="text-align:right; white-space:nowrap">
+        <div class="icon-row">
         {% if job.has_report %}
           {# A full page, not an expander: this panel re-renders every 15s and would close it. #}
-          <a href="/jobs/{{ job.name }}/report" class="muted"
-             style="font-size:0.875rem; margin-right:0.6rem">{{ _("report") }}</a>
+          <a href="/jobs/{{ job.name }}/report" class="icon-btn"
+             title="{{ _("report") }}" aria-label="{{ _("report") }}">{{ icon("report") }}</a>
         {% endif %}
         {% if job.archived %}
-          <a href="/reports?job={{ job.name }}" class="muted"
-             style="font-size:0.875rem; margin-right:0.6rem">{{ _("history") }}</a>
+          <a href="/reports?job={{ job.name }}" class="icon-btn"
+             title="{{ _("history") }}" aria-label="{{ _("history") }}">{{ icon("history") }}</a>
         {% endif %}
-        <button type="button" class="linkish"
+        <button type="button" class="icon-btn"
+                title="{{ _("run now") }}" aria-label="{{ _("run now") }}"
                 hx-post="/jobs/{{ job.name }}/run"
                 hx-target="#jobs-panel" hx-swap="innerHTML"
                 {% if job.running %}disabled{% endif %}
                 {% if job.name == "update" %}
                 hx-confirm="{{ _("Run updates now? Machines that are asleep will be woken, updated, and shut down again.") }}"
-                {% endif %}>{{ _("run now") }}</button>
+                {% endif %}>{{ icon("play") }}</button>
+        </div>
       </td>
     </tr>
   {% endfor %}

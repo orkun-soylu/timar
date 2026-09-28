@@ -104,7 +104,6 @@
   "asleep": "uykuda",
   "on-demand": "isteğe bağlı",
   "down": "erişilemiyor",
-  "n/a": "yok",
   "Shut down {name}? It stays off until something wakes it.": "{name} kapatılsın mı? Bir şey uyandırana kadar kapalı kalır.",
   "shutdown": "kapat",
   "wake up": "uyandır",

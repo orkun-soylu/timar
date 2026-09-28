@@ -104,7 +104,6 @@
   "asleep": "休眠",
   "on-demand": "按需",
   "down": "离线",
-  "n/a": "—",
   "Shut down {name}? It stays off until something wakes it.": "关闭 {name}？在被唤醒之前它将一直保持关机。",
   "shutdown": "关机",
   "wake up": "唤醒",

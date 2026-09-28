@@ -104,7 +104,6 @@
   "asleep": "en veille",
   "on-demand": "à la demande",
   "down": "injoignable",
-  "n/a": "n/d",
   "Shut down {name}? It stays off until something wakes it.": "Éteindre {name} ? Elle restera éteinte jusqu’à ce que quelque chose la réveille.",
   "shutdown": "éteindre",
   "wake up": "réveiller",

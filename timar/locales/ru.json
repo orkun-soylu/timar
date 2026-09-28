@@ -104,7 +104,6 @@
   "asleep": "спит",
   "on-demand": "по требованию",
   "down": "недоступен",
-  "n/a": "—",
   "Shut down {name}? It stays off until something wakes it.": "Выключить {name}? Машина останется выключенной, пока что-нибудь её не разбудит.",
   "shutdown": "выключить",
   "wake up": "разбудить",

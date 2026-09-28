@@ -104,7 +104,6 @@
   "asleep": "スリープ",
   "on-demand": "必要時のみ",
   "down": "停止",
-  "n/a": "—",
   "Shut down {name}? It stays off until something wakes it.": "{name} をシャットダウンしますか？ 起動されるまで電源は切れたままになります。",
   "shutdown": "シャットダウン",
   "wake up": "起動",

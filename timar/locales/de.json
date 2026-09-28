@@ -104,7 +104,6 @@
   "asleep": "schlafend",
   "on-demand": "bei Bedarf",
   "down": "ausgefallen",
-  "n/a": "–",
   "Shut down {name}? It stays off until something wakes it.": "{name} herunterfahren? Sie bleibt aus, bis etwas sie aufweckt.",
   "shutdown": "herunterfahren",
   "wake up": "aufwecken",
