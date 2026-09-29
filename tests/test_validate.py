@@ -27,7 +27,9 @@ class TestServer:
                           "wol_relay": "other-01", "update_cmd": "true", "context": "a note",
                           "update_timeout": "3600"},
                          {"other-01"})
-        assert set(maximal) == SERVER_FIELDS
+        # `on_demand` is the one field a MAC excludes, so it cannot be in the same entry.
+        assert set(maximal) == SERVER_FIELDS - {"on_demand"}
+        assert server({**MINIMAL, "on_demand": "on"}, set())["on_demand"] is True
 
     def test_all_missing_fields_reported_at_once(self):
         """A form that reveals one problem at a time is a form people learn to dread."""

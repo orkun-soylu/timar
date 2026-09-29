@@ -5,7 +5,7 @@ was previously written out once per consumer. The third copy dropped the guest c
 Kali VM was always on while the other two said it was asleep. These tests cover the rule itself,
 and `test_web` covers each consumer agreeing with it.
 """
-from timar.config import on_demand
+from timar.config import MANUAL, can_wake, on_demand
 
 
 def test_plain_server_is_always_on():
@@ -96,3 +96,28 @@ def test_the_flag_does_not_override_the_guests_own_mac():
         {"name": "vm-01", "wol_mac": "aa:bb:cc:dd:ee:02"},
     ]
     assert on_demand(servers)["vm-01"] == "wol"
+
+
+def test_a_machine_switched_on_by_hand_is_on_demand():
+    """No MAC, no hypervisor — a Wi-Fi board, a laptop. Off on purpose all the same."""
+    assert on_demand([{"name": "printer", "on_demand": True}]) == {"printer": MANUAL}
+
+
+def test_the_flag_does_not_outrank_a_wake_address():
+    assert on_demand([{"name": "gpu-01", "on_demand": True,
+                       "wol_mac": "aa:bb:cc:dd:ee:ff"}]) == {"gpu-01": "wol"}
+
+
+def test_on_demand_does_not_mean_wakeable():
+    """The two came apart: one describes an outage, the other decides what Timar may do."""
+    servers = [
+        {"name": "printer", "on_demand": True},
+        {"name": "gpu-01", "wol_mac": "aa:bb:cc:dd:ee:ff"},
+        {"name": "hv-01", "platform": "proxmox",
+         "manages_vms": [{"vm_id": 100, "server_name": "vm-01", "on_demand": True}]},
+        {"name": "vm-01"},
+    ]
+    assert not can_wake("printer", servers)
+    assert can_wake("gpu-01", servers)
+    assert can_wake("vm-01", servers)
+    assert not can_wake("hv-01", servers)

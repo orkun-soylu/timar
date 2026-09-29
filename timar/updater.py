@@ -128,6 +128,14 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
 
     was_running = is_host_up(host)
 
+    # Off on purpose with nothing to wake it: skipped, not failed. Trying the magic packet anyway
+    # fails on the missing MAC, and a red mark every week for a machine that is exactly where it
+    # was left is how an operator learns to stop reading the report.
+    if not was_running and server_cfg.get("on_demand") and not server_cfg.get("wol_mac"):
+        logger.info("%s is off and is switched on by hand, skipping", name)
+        return [UpdateResult(server=name, success=True, skipped=True, was_running=False,
+                             error="off — switched on by hand, not woken")]
+
     if not was_running:
         if not _wake_and_wait(server_cfg, servers_map):
             return [UpdateResult(server=name, success=False, was_running=False,

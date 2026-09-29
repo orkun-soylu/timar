@@ -55,6 +55,14 @@
     <p class="hint">
       {{ _("With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.") }}
     </p>
+    <label class="inline">
+      <input type="checkbox" name="on_demand"
+             {{ "checked" if values.get('on_demand') else "" }}>
+      <span>{{ _("Kept off on purpose") }} <em class="muted">— {{ _("no Wake-on-LAN; switched on by hand") }}</em></span>
+    </label>
+    <p class="hint">
+      {{ _("Off reads as <em>asleep</em> and updates skip it until it is back; Timar gets no power buttons for it.") }}
+    </p>
 
     <div class="row">
       <label><span>{{ _("Guest of") }} <em class="muted">{{ _("optional — a hypervisor that starts it") }}</em></span>

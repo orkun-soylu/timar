@@ -19,8 +19,10 @@ GUEST = {"name": "kali-01", "host": "10.0.0.40", "user": "op", "platform": "linu
 SLEEPER = {"name": "gpu-01", "host": "10.0.0.2", "user": "op", "platform": "linux",
            "wol_mac": "aa:bb:cc:dd:ee:ff"}
 ALWAYS_ON = {"name": "web-01", "host": "10.0.0.1", "user": "op", "platform": "linux"}
+BY_HAND = {"name": "printer", "host": "10.0.0.50", "user": "op", "platform": "linux",
+           "on_demand": True}
 
-FLEET = [HYPERVISOR, GUEST, SLEEPER, ALWAYS_ON]
+FLEET = [HYPERVISOR, GUEST, SLEEPER, ALWAYS_ON, BY_HAND]
 
 
 @pytest.fixture
@@ -99,6 +101,12 @@ class TestShutdown:
         """Shutting one down works perfectly and leaves nothing to bring it back."""
         with pytest.raises(power.PowerError, match="cannot wake again"):
             power.shutdown(ALWAYS_ON, FLEET)
+        assert ssh.calls == []
+
+    def test_a_machine_switched_on_by_hand_is_refused_too(self, ssh):
+        """Off on purpose, but nothing here could bring it back."""
+        with pytest.raises(power.PowerError, match="cannot wake again"):
+            power.shutdown(BY_HAND, FLEET)
         assert ssh.calls == []
 
     def test_a_guest_goes_through_its_hypervisor(self, ssh):

@@ -34,7 +34,7 @@ class ValidationError(ValueError):
 SERVER_FIELDS = frozenset({
     "name", "host", "user", "platform",
     "wol_mac", "wol_broadcast", "wol_relay",
-    "update_cmd", "context", "update_timeout",
+    "update_cmd", "context", "update_timeout", "on_demand",
 })
 
 
@@ -86,6 +86,12 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
         # Silently keeping a broadcast address or a relay for a machine with no MAC would leave
         # a setting visible in the file that can never take effect.
         errors.append(_("Wake settings need a MAC address to go with them."))
+
+    # Only without a MAC: with one the machine is on-demand already, and the flag would be a
+    # second switch that does nothing. A guest's own box is `guest_on_demand`, kept on the
+    # hypervisor's entry — see `guest_link`.
+    if form.get("on_demand") and not entry.get("wol_mac") and not (form.get("hypervisor") or "").strip():
+        entry["on_demand"] = True
 
     for optional in ("update_cmd", "context"):
         if value := (form.get(optional) or "").strip():

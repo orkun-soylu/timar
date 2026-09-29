@@ -10,6 +10,8 @@ The reporting half comes from the same first run: a failure was reported with 50
 `docker compose` progress and no cause, because stderr was preferred and the wrapper script named
 the broken service on stdout.
 """
+import pytest
+
 from timar.updater import TAIL, DEFAULT_UPDATE_TIMEOUT, _timeout_for, failure_detail
 
 
@@ -68,3 +70,27 @@ def test_long_output_keeps_its_end_and_admits_it_was_cut():
     assert detail.startswith("stdout: ...")
     assert detail.endswith("x" * 20)
     assert len(detail) < TAIL * 2
+
+
+def test_a_machine_switched_on_by_hand_is_skipped_while_off_not_failed(monkeypatch):
+    """It is exactly where it was left. A magic packet would fail on the missing MAC and paint a
+    weekly red mark on a machine that is fine."""
+    from timar import updater
+
+    monkeypatch.setattr(updater, "is_host_up", lambda host, **kw: False)
+    monkeypatch.setattr(updater, "wake", lambda *a, **kw: pytest.fail("must not try to wake it"))
+    server = {"name": "printer", "host": "10.0.0.50", "user": "op", "platform": "linux",
+              "on_demand": True}
+    [result] = updater.update_server(server, {"printer": server})
+    assert result.success and result.skipped and not result.was_running
+    assert "by hand" in result.error
+
+
+def test_an_always_on_machine_that_is_off_still_fails(monkeypatch):
+    """The skip is for machines marked off-on-purpose only; an outage stays an outage."""
+    from timar import updater
+
+    monkeypatch.setattr(updater, "is_host_up", lambda host, **kw: False)
+    server = {"name": "web-01", "host": "10.0.0.1", "user": "op", "platform": "linux"}
+    [result] = updater.update_server(server, {"web-01": server})
+    assert not result.success and not result.skipped

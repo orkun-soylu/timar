@@ -55,6 +55,11 @@ class TestSystemPrompt:
         vm_line = next(l for l in prompt.splitlines() if l.startswith("- vm-02"))
         assert "on-demand" not in vm_line
 
+    def test_a_machine_switched_on_by_hand_is_on_demand_and_says_so(self):
+        prompt = build_system_prompt({"servers": [{"name": "printer", "on_demand": True}]})
+        line = next(l for l in prompt.splitlines() if l.startswith("- printer"))
+        assert "on-demand" in line and "by hand" in line and "started by" not in line
+
     def test_always_on_server_is_not_marked_on_demand(self):
         prompt = build_system_prompt(CONFIG)
         web_line = next(l for l in prompt.splitlines() if l.startswith("- web-01"))

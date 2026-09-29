@@ -57,6 +57,16 @@ servers:
     # enrolled, and have python3 or wakeonlan.
     # wol_relay: web-01
 
+  # A machine that is off on purpose but has no way to be woken -- a Wi-Fi board, a laptop,
+  # anything switched on by hand. `on_demand: true` makes off read as "asleep" rather than
+  # "down", and an update run skips it while it is off instead of failing on the missing MAC.
+  # Timar offers it no power buttons: it could not bring it back. Ignored next to a `wol_mac`.
+  - name: printer
+    host: 192.0.2.50
+    user: pi
+    platform: linux
+    on_demand: true
+
   # A router. OpenWrt has NO default update command, deliberately: an unattended `apk upgrade`
   # can exhaust the overlay partition or land a kernel-module mismatch, and the machine that
   # breaks is the one carrying the SSH session you would repair it from. Set `update_cmd`

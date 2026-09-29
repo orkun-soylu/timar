@@ -221,5 +221,7 @@
   "With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.": "填写 MAC 即为按需主机：关机时显示为<em>休眠</em>，更新时会唤醒并再次关机。在其他子网？请选择一个常开且已登记的中继。",
   "a VM you start only when needed": "仅在需要时启动的虚拟机",
   "Close": "关闭",
-  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。名称前的指示灯表示其状态 — 悬停可查看文字：绿色为<em>在线</em>，灰色为<em>休眠</em>（按需主机，关机属正常），红色为<em>离线</em>（本应可达却不可达）。电源操作仅对按需主机提供 — 常开主机无法唤醒，从这里关机会让它无法恢复。"
+  "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。名称前的指示灯表示其状态 — 悬停可查看文字：绿色为<em>在线</em>，灰色为<em>休眠</em>（按需主机，关机属正常），红色为<em>离线</em>（本应可达却不可达）。电源操作仅对按需主机提供 — 常开主机无法唤醒，从这里关机会让它无法恢复。",
+  "no Wake-on-LAN; switched on by hand": "没有网络唤醒；手动开机",
+  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar gets no power buttons for it.": "关机时显示为<em>休眠</em>，更新会跳过它直到它重新上线；Timar 不为它提供电源按钮。"
 }

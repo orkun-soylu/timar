@@ -109,6 +109,25 @@ def resolve_ssh_key(server: dict) -> str:
     return str(path(SSH_KEY))
 
 
+# The reason `on_demand` gives for a machine switched on by hand. Not a valid server name (see
+# `validate.NAME`), so it cannot be mistaken for the hypervisor a guest inherits from.
+MANUAL = "(manual)"
+
+
+def can_wake(name: str, servers: list[dict]) -> bool:
+    """Whether Timar has a way to power `name` on: a wake address, or a hypervisor that starts it.
+
+    Separate from `on_demand` because the two came apart once a machine could be off on purpose
+    with nothing to wake it. Being expected off decides how an outage is *described*; being
+    wakeable decides what Timar may *do* — shut it down, or try to start it for an update.
+    """
+    server = next((s for s in servers if s["name"] == name), {})
+    if server.get("wol_mac"):
+        return True
+    return any(guest.get("server_name") == name
+               for host in servers for guest in host.get("manages_vms", []))
+
+
 def on_demand(servers: list[dict]) -> dict[str, str]:
     """Which servers are expected to be off, and why. Absent from the map means always on.
 
@@ -123,6 +142,10 @@ def on_demand(servers: list[dict]) -> dict[str, str]:
     3. **The operator said so**, with `on_demand: true` on its `manages_vms` entry. The one case
        inheritance cannot answer: a guest kept off on an always-on host — a management VM
        started only when it is needed. Value: the hypervisor's name, as in 2.
+    4. **The operator said so, for a machine nothing can wake**, with `on_demand: true` on the
+       server itself: a Wi-Fi board, a laptop, anything switched on by hand. Value: `MANUAL`.
+       It is off on purpose, but Timar has no way to bring it back — `can_wake` is the other
+       half of that, and what the power buttons and the update run go by.
 
     Inherited rather than granted to every guest, because the two mistakes are not equal. Calling
     an on-demand guest always-on produces a nightly false alarm, which is merely noise; calling a
@@ -141,6 +164,9 @@ def on_demand(servers: list[dict]) -> dict[str, str]:
         for guest in host.get("manages_vms", []):
             if guest.get("on_demand"):
                 reasons.setdefault(guest["server_name"], host["name"])
+    for server in servers:
+        if server.get("on_demand"):
+            reasons.setdefault(server["name"], MANUAL)
     guests = [(host["name"], guest["server_name"])
               for host in servers for guest in host.get("manages_vms", [])]
 
