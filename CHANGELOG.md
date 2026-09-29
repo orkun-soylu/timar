@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.14] — 2026-09-29
+
 ### Added
 
 - **On-demand without Wake-on-LAN.** `on_demand: true` on a server — or *Kept off on purpose*
@@ -248,7 +250,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.13...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.14...HEAD
+[0.1.14]: https://github.com/orkun-soylu/timar/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/orkun-soylu/timar/compare/v0.1.12...v0.1.13
 [0.1.12]: https://github.com/orkun-soylu/timar/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/orkun-soylu/timar/compare/v0.1.10...v0.1.11
