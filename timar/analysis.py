@@ -48,7 +48,9 @@ def _fleet_facts(cfg: dict) -> str:
         bits = [server.get("platform", "linux")]
         if reason := sleepers.get(server["name"]):
             bits.append("on-demand — being offline is normal and is not a fault"
-                        + ("" if reason == "wol" else f"; started by {reason}"))
+                        + ("" if reason == "wol"
+                           else "; switched on by hand" if reason == config.MANUAL
+                           else f"; started by {reason}"))
         line = f"- {server['name']} ({', '.join(bits)})"
         if note := server.get("context"):
             line += f": {note}"

@@ -206,6 +206,22 @@ class TestActionsColumn:
         assert "/servers/web-01/shutdown" not in rows
         assert "/servers/web-01/wake" not in rows
 
+    def test_a_machine_switched_on_by_hand_is_asleep_and_has_no_power_buttons(
+            self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "printer-a", "host": "10.0.0.4", "user": "op", "on_demand": True},
+            {"name": "printer-b", "host": "10.0.0.5", "user": "op", "on_demand": True},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host == "10.0.0.4")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        for name in ("printer-a", "printer-b"):
+            assert f"/servers/{name}/shutdown" not in rows
+            assert f"/servers/{name}/wake" not in rows
+        assert rows.split("printer-b", 1)[0].rsplit("<tr ", 1)[1].startswith('class="asleep"')
+
     def test_every_row_offers_enrol_edit_and_remove(self, fleet):
         rows = fleet.get("/fragments/fleet").text
         for name in ("web-01", "gpu-01", "gpu-02"):
@@ -753,6 +769,36 @@ class TestSettings:
 
         field = client.get("/settings/servers/vm-01/edit").text.split('name="guest_on_demand"', 1)[1]
         assert field.split(">", 1)[0].strip().startswith("checked")
+
+    def test_a_standalone_machine_can_be_marked_switched_on_by_hand(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": []})
+        client.post("/settings/servers", data={
+            "name": "printer", "host": "10.0.0.50", "user": "pi", "platform": "linux",
+            "on_demand": "on"})
+        [server] = config.load()["servers"]
+        assert server["on_demand"] is True
+        assert config.on_demand([server]) == {"printer": config.MANUAL}
+
+        field = client.get("/settings/servers/printer/edit").text.split('name="on_demand"', 1)[1]
+        assert field.split(">", 1)[0].strip().startswith("checked")
+
+        # Unticking it clears it — the form owns the field.
+        client.post("/settings/servers", data={
+            "original_name": "printer", "name": "printer", "host": "10.0.0.50", "user": "pi",
+            "platform": "linux"})
+        assert "on_demand" not in config.load()["servers"][0]
+
+    def test_the_flag_is_not_stored_next_to_a_wake_address(self, client):
+        """With a MAC the machine is on-demand already; a second switch would do nothing."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": []})
+        client.post("/settings/servers", data={
+            "name": "gpu-01", "host": "10.0.0.2", "user": "op", "platform": "linux",
+            "wol_mac": "aa:bb:cc:dd:ee:ff", "on_demand": "on"})
+        assert "on_demand" not in config.load()["servers"][0]
 
     def test_unticking_the_flag_makes_the_guest_always_on_again(self, client):
         complete_setup(client)

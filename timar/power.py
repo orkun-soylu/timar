@@ -90,7 +90,9 @@ def wake(server: dict, servers: list[dict]) -> str:
 def shutdown(server: dict, servers: list[dict]) -> str:
     """Power `server` off, refusing any machine Timar has no way to wake again."""
     name = server["name"]
-    if name not in config.on_demand(servers):
+    # Both halves, because they no longer imply each other: a machine switched on by hand is
+    # expected to be off, and still has nothing Timar could wake it with.
+    if name not in config.on_demand(servers) or not config.can_wake(name, servers):
         raise PowerError(_(
             "{name} is always on — Timar will not shut down a machine it cannot wake again. "
             "Give it a MAC address, or a hypervisor, first.", name=name))

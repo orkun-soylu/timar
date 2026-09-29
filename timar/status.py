@@ -32,6 +32,9 @@ class HostStatus:
     up: bool
     on_demand: bool
     platform: str
+    # False for a machine switched on by hand: asleep is still the right word for it, but it
+    # gets no power buttons — there is nothing to wake it with, so nothing may put it to sleep.
+    wakeable: bool = True
 
     @property
     def state(self) -> str:
@@ -80,6 +83,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             up=up,
             on_demand=s["name"] in sleepers,
             platform=s.get("platform", "linux"),
+            wakeable=config.can_wake(s["name"], servers),
         )
         for s, up in zip(servers, results)
     ]

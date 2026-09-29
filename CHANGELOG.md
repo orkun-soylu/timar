@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **On-demand without Wake-on-LAN.** `on_demand: true` on a server — or *Kept off on purpose*
+  in its form — marks a machine that is switched on by hand: a Wi-Fi board, a laptop. Off
+  reads as *asleep*, the log analysis is told it is normal, and an update run **skips** it
+  while it is off instead of failing on the missing MAC. It gets no power buttons, because
+  Timar could not wake it again. Before, the only way to be on-demand was a `wol_mac` or a
+  hypervisor, so such a machine was reported as down and failed every update run it missed.
+
 ### Security
 
 - The language switch's `next` redirect is rebuilt as `/` plus the path, not passed through
