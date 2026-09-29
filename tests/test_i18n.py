@@ -137,10 +137,21 @@ class TestPages:
         assert response.cookies.get(i18n.COOKIE) == "ja"
         assert "Timar のセットアップ" in client.get("/setup").text
 
-    @pytest.mark.parametrize("target", ["https://evil.example/", "//evil.example/", "/\\evil"])
+    @pytest.mark.parametrize("target", ["https://evil.example/", "/\\evil", "/\t/evil.example",
+                                        "/\n/evil.example", "evil.example"])
     def test_switch_is_not_an_open_redirect(self, client, target):
         response = client.get("/lang", params={"code": "de", "next": target})
         assert response.headers["location"] == "/"
+
+    @pytest.mark.parametrize("target", ["//evil.example/", "///evil.example/"])
+    def test_a_scheme_relative_target_stays_on_this_site(self, client, target):
+        """`//host` is another site to a browser; the rebuilt location is a path here."""
+        response = client.get("/lang", params={"code": "de", "next": target})
+        assert response.headers["location"] == "/evil.example/"
+
+    def test_a_local_path_with_a_query_survives(self, client):
+        response = client.get("/lang", params={"code": "de", "next": "/reports?job=disk"})
+        assert response.headers["location"] == "/reports?job=disk"
 
     @pytest.mark.parametrize("code", ["de\r\nSet-Cookie: x=1", "de; Path=/", "DE", " de"])
     def test_only_an_exact_catalog_key_is_ever_written(self, client, code):

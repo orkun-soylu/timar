@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Security
+
+- The language switch's `next` redirect is rebuilt as `/` plus the path, not passed through
+  after a prefix check. `//host` now lands on a path of this site, and backslashes, whitespace
+  and control characters (which browsers fold into `//host`) are refused (CodeQL #24).
+
 ## [0.1.13] — 2026-09-29
 
 ### Security
