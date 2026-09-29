@@ -97,17 +97,16 @@ class TestWake:
 
 
 class TestShutdown:
-    def test_an_always_on_machine_is_refused(self, ssh):
-        """Shutting one down works perfectly and leaves nothing to bring it back."""
-        with pytest.raises(power.PowerError, match="cannot wake again"):
-            power.shutdown(ALWAYS_ON, FLEET)
-        assert ssh.calls == []
+    def test_an_always_on_machine_is_shut_down_too(self, ssh):
+        """Nothing brings it back but a person — the dashboard's confirmation says so, and the
+        decision is the operator's, not Timar's."""
+        power.shutdown(ALWAYS_ON, FLEET)
+        assert ssh.calls[0]["host"] == "10.0.0.1"
+        assert ssh.calls[0]["command"] == "sudo shutdown -h now"
 
-    def test_a_machine_switched_on_by_hand_is_refused_too(self, ssh):
-        """Off on purpose, but nothing here could bring it back."""
-        with pytest.raises(power.PowerError, match="cannot wake again"):
-            power.shutdown(BY_HAND, FLEET)
-        assert ssh.calls == []
+    def test_a_machine_switched_on_by_hand_is_shut_down_too(self, ssh):
+        power.shutdown(BY_HAND, FLEET)
+        assert ssh.calls[0]["host"] == "10.0.0.50"
 
     def test_a_guest_goes_through_its_hypervisor(self, ssh):
         message = power.shutdown(GUEST, FLEET)

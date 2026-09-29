@@ -10,7 +10,6 @@
   "magic packet sent to {name} via {relay}": "已通过 {relay} 向 {name} 发送唤醒包",
   "{name} shut down via {hypervisor}": "已通过 {hypervisor} 关闭 {name}",
   "the command failed without printing anything": "命令失败，且没有任何输出",
-  "{name} is always on — Timar will not shut down a machine it cannot wake again. Give it a MAC address, or a hypervisor, first.": "{name} 为常开机器 — Timar 不会关闭无法再次唤醒的机器。请先为其设置 MAC 地址或虚拟化主机。",
   "{name} refused the shutdown: {detail}": "{name} 拒绝关机：{detail}",
   "could not reach {name}: {error}": "无法连接 {name}：{error}",
   "daily at {at}": "每天 {at}",
@@ -223,5 +222,6 @@
   "Close": "关闭",
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。名称前的指示灯表示其状态 — 悬停可查看文字：绿色为<em>在线</em>，灰色为<em>休眠</em>（按需主机，关机属正常），红色为<em>离线</em>（本应可达却不可达）。电源操作仅对按需主机提供 — 常开主机无法唤醒，从这里关机会让它无法恢复。",
   "no Wake-on-LAN; switched on by hand": "没有网络唤醒；手动开机",
-  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar gets no power buttons for it.": "关机时显示为<em>休眠</em>，更新会跳过它直到它重新上线；Timar 不为它提供电源按钮。"
+  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "关机时显示为<em>休眠</em>，更新会跳过它直到它重新上线；Timar 可以关闭它，但无法唤醒它。",
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "关闭 {name}？Timar 无法再次唤醒它 — 它会保持关机，直到有人手动开机。"
 }

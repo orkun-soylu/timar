@@ -10,7 +10,6 @@
   "magic packet sent to {name} via {relay}": "magic packet envoyé à {name} via {relay}",
   "{name} shut down via {hypervisor}": "{name} éteint via {hypervisor}",
   "the command failed without printing anything": "la commande a échoué sans rien afficher",
-  "{name} is always on — Timar will not shut down a machine it cannot wake again. Give it a MAC address, or a hypervisor, first.": "{name} est toujours allumé — Timar n’éteint pas une machine qu’il ne peut pas réveiller. Donnez-lui d’abord une adresse MAC ou un hyperviseur.",
   "{name} refused the shutdown: {detail}": "{name} a refusé l’extinction : {detail}",
   "could not reach {name}: {error}": "impossible de joindre {name} : {error}",
   "daily at {at}": "tous les jours à {at}",
@@ -223,5 +222,6 @@
   "Close": "Fermer",
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Actualisé toutes les 10 secondes. Le voyant devant un nom est son état — survolez pour le mot : vert est <em>allumé</em>, gris est <em>en veille</em> (à la demande, éteint comme prévu), rouge est <em>injoignable</em> (devrait répondre et ne répond pas). L’alimentation n’est proposée que pour les machines à la demande — un hôte toujours allumé n’a aucun moyen d’être réveillé, l’éteindre d’ici le laisserait bloqué.",
   "no Wake-on-LAN; switched on by hand": "pas de Wake-on-LAN ; allumée à la main",
-  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar gets no power buttons for it.": "Éteinte, elle apparaît <em>en veille</em> et les mises à jour la sautent jusqu'à son retour ; Timar n'a pas de bouton d'alimentation pour elle."
+  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "Éteinte, elle apparaît <em>en veille</em> et les mises à jour la sautent jusqu'à son retour ; Timar peut l'éteindre mais pas la réveiller.",
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "Éteindre {name} ? Timar ne peut pas la réveiller — elle reste éteinte jusqu'à ce que quelqu'un la rallume à la main."
 }

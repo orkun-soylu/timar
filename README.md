@@ -31,7 +31,7 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.14`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.15`) to choose when
 you move.
 
 Add, edit, enrol and remove servers from the dashboard. It all lands in `config.yaml` in the
@@ -78,8 +78,8 @@ first step of the job, and shutting it back down is the last.
 - **Update** — wake if asleep, run the platform's update command, shut down again if it started
   off. Proxmox hosts bring their guests along, in order.
 - **Power** — wake an on-demand machine or shut it down from its row. Guests go through their
-  hypervisor with `qm`. Always-on machines get no power button: Timar will not shut down what it
-  cannot wake again.
+  hypervisor with `qm`. Any running machine can be shut down; one Timar cannot wake again —
+  always-on, or switched on by hand — gets a confirmation that says it will stay off.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on

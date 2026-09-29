@@ -32,8 +32,8 @@ class HostStatus:
     up: bool
     on_demand: bool
     platform: str
-    # False for a machine switched on by hand: asleep is still the right word for it, but it
-    # gets no power buttons — there is nothing to wake it with, so nothing may put it to sleep.
+    # False when Timar has nothing to start it with — no MAC, no hypervisor. It can still be shut
+    # down; it gets no wake button, and its shutdown warns that it will stay off.
     wakeable: bool = True
 
     @property
