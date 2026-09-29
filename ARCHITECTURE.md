@@ -264,7 +264,9 @@ error into something a search engine cannot find.
 - **The switch is open before setup and before login.** Whoever cannot read the setup page is
   the one who most needs it. It is a redirect back to where it was used, so `next` is limited to
   same-site paths — otherwise it is an open redirect on the one unauthenticated route that takes
-  a URL.
+  a URL. The location is rebuilt as a constant `/` plus the path with its leading slashes
+  stripped, and backslashes, whitespace and control characters are refused: browsers turn
+  `\` into `/` and drop tabs, so a prefix check alone can be walked around.
 
 ## Three states, not two
 

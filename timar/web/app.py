@@ -103,6 +103,22 @@ def _supported_language(code: str) -> str | None:
     return next((lang for lang in i18n.LANGUAGES if lang == code), None)
 
 
+def _local_path(target: str) -> str:
+    """`target` as a path on this site, or "/" — the redirect never starts with request text.
+
+    The location is rebuilt as a constant "/" followed by the target with its leading slashes
+    removed, so no value can make it scheme-relative (`//host`). Backslashes, whitespace and
+    control characters are refused outright: browsers read `\\` as `/` and drop tabs and
+    newlines from a URL, which is how `/\\host` or `/<TAB>/host` becomes `//host` after a
+    prefix check has already passed.
+    """
+    if not target.startswith("/") or any(
+        c == "\\" or c.isspace() or not c.isprintable() for c in target
+    ):
+        return "/"
+    return "/" + target.lstrip("/")
+
+
 @app.get("/lang")
 async def set_language(code: str = "", next: str = "/"):
     """Remember a language choice for this browser and go back to where it was made.
@@ -111,9 +127,7 @@ async def set_language(code: str = "", next: str = "/"):
     most needs the switch. `next` must be a path on this site — anything else would turn the
     route into an open redirect.
     """
-    if not next.startswith("/") or next.startswith("//") or "\\" in next:
-        next = "/"
-    response = RedirectResponse(next, status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(_local_path(next), status_code=status.HTTP_303_SEE_OTHER)
     # The cookie is written from the catalog's own key, never from the query: a code that is
     # not a supported language sets nothing, and nothing the request carries reaches the
     # Set-Cookie header — not even a value that was checked first.
