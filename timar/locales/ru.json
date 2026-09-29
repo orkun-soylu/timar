@@ -10,7 +10,6 @@
   "magic packet sent to {name} via {relay}": "magic packet отправлен на {name} через {relay}",
   "{name} shut down via {hypervisor}": "{name} выключен через {hypervisor}",
   "the command failed without printing anything": "команда завершилась с ошибкой, ничего не выведя",
-  "{name} is always on — Timar will not shut down a machine it cannot wake again. Give it a MAC address, or a hypervisor, first.": "{name} работает постоянно — Timar не выключает машину, которую не сможет снова разбудить. Сначала укажите MAC-адрес или гипервизор.",
   "{name} refused the shutdown: {detail}": "{name} отказался выключаться: {detail}",
   "could not reach {name}: {error}": "не удалось связаться с {name}: {error}",
   "daily at {at}": "ежедневно в {at}",
@@ -223,5 +222,6 @@
   "Close": "Закрыть",
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Обновляется каждые 10 секунд. Индикатор перед именем — его состояние, наведите курсор, чтобы увидеть слово: зелёный — <em>работает</em>, серый — <em>спит</em> (по требованию, выключен, как и ожидается), красный — <em>недоступен</em> (должен отвечать, но не отвечает). Питание доступно только для машин по требованию — всегда включённый хост нечем разбудить, и выключить его отсюда значит оставить его недоступным.",
   "no Wake-on-LAN; switched on by hand": "без Wake-on-LAN; включается вручную",
-  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar gets no power buttons for it.": "Выключенная машина считается <em>спящей</em>, обновления пропускают её, пока она не вернётся; кнопок питания в Timar для неё нет."
+  "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "Выключенная машина считается <em>спящей</em>, обновления пропускают её, пока она не вернётся; Timar может её выключить, но не разбудить.",
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "Выключить {name}? Timar не сможет её разбудить — она останется выключенной, пока кто-нибудь не включит её вручную."
 }

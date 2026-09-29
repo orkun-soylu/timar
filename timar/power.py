@@ -11,9 +11,10 @@ pair of operations exposed as a button, which is a different problem in two ways
   operator can act on, not as a stack trace or a silence, because the machine going dark is also
   what success looks like.
 
-`shutdown` refuses a machine Timar cannot wake again. That rule is what keeps the button from
-stranding a host: powering off an always-on machine over its own SSH connection works perfectly
-and leaves nothing to bring it back but a walk to the rack.
+`shutdown` works on every machine Timar can reach, including ones it cannot wake again — an
+always-on server, a board switched on by hand. It used to refuse those, on the grounds that
+nothing but a walk to the rack brings them back; but that is the operator's call to make, and
+the dashboard makes it with them: the confirmation for such a machine says it will stay off.
 """
 from __future__ import annotations
 
@@ -88,15 +89,8 @@ def wake(server: dict, servers: list[dict]) -> str:
 
 
 def shutdown(server: dict, servers: list[dict]) -> str:
-    """Power `server` off, refusing any machine Timar has no way to wake again."""
+    """Power `server` off — a guest through its hypervisor, anything else over its own SSH."""
     name = server["name"]
-    # Both halves, because they no longer imply each other: a machine switched on by hand is
-    # expected to be off, and still has nothing Timar could wake it with.
-    if name not in config.on_demand(servers) or not config.can_wake(name, servers):
-        raise PowerError(_(
-            "{name} is always on — Timar will not shut down a machine it cannot wake again. "
-            "Give it a MAC address, or a hypervisor, first.", name=name))
-
     link = guest_link(name, servers)
     if link:
         hypervisor, vm_id = link

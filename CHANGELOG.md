@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.15] — 2026-09-29
+
+### Changed
+
+- **Every running machine can be shut down from the dashboard**, not only the ones Timar can
+  wake again. An always-on server, a hypervisor, a router or a board switched on by hand gets
+  the button too; its confirmation says Timar cannot wake it and it stays off until someone
+  switches it on by hand. The old refusal is gone — whether a machine may be powered off is the
+  operator's decision.
+- **A guest of an always-on host gets a wake button when it is down** — `qm start` through its
+  hypervisor, as for any other guest.
+
 ## [0.1.14] — 2026-09-29
 
 ### Added
@@ -250,7 +262,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.14...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.15...HEAD
+[0.1.15]: https://github.com/orkun-soylu/timar/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/orkun-soylu/timar/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/orkun-soylu/timar/compare/v0.1.12...v0.1.13
 [0.1.12]: https://github.com/orkun-soylu/timar/compare/v0.1.11...v0.1.12

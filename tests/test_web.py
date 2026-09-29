@@ -202,11 +202,37 @@ class TestActionsColumn:
         rows = fleet.get("/fragments/fleet").text
         assert "/servers/gpu-01/shutdown" in rows      # up, and wakeable again afterwards
         assert "/servers/gpu-02/wake" in rows          # asleep
-        # An always-on machine has no wake path, so it is offered no way down.
-        assert "/servers/web-01/shutdown" not in rows
+        # Always on and up: it can be shut down, with a confirmation that says it stays off.
+        assert "/servers/web-01/shutdown" in rows
         assert "/servers/web-01/wake" not in rows
+        web = rows.split("/servers/web-01/shutdown", 1)[1].split("</button>", 1)[0]
+        assert "switches it on by hand" in web
+        gpu = rows.split("/servers/gpu-01/shutdown", 1)[1].split("</button>", 1)[0]
+        assert "until something wakes it" in gpu
 
-    def test_a_machine_switched_on_by_hand_is_asleep_and_has_no_power_buttons(
+    def test_a_guest_of_an_always_on_host_gets_both_buttons(self, client, monkeypatch):
+        """Always on, but `qm start` brings it back: a wake when it is down, and a shutdown
+        whose confirmation does not claim it will stay off."""
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 100, "server_name": "vm-a"},
+                             {"vm_id": 101, "server_name": "vm-b"}]},
+            {"name": "vm-a", "host": "10.0.0.2", "user": "op"},
+            {"name": "vm-b", "host": "10.0.0.3", "user": "op"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.3")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert "/servers/vm-b/wake" in rows
+        vm_a = rows.split("/servers/vm-a/shutdown", 1)[1].split("</button>", 1)[0]
+        assert "until something wakes it" in vm_a
+        # The hypervisor itself has no wake path: shutting it down is final.
+        hv = rows.split("/servers/hv/shutdown", 1)[1].split("</button>", 1)[0]
+        assert "switches it on by hand" in hv
+
+    def test_a_machine_switched_on_by_hand_can_be_shut_down_but_not_woken(
             self, client, monkeypatch):
         from timar import config, status as fleet_status
         complete_setup(client)
@@ -217,8 +243,9 @@ class TestActionsColumn:
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host == "10.0.0.4")
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
+        assert "/servers/printer-a/shutdown" in rows      # up
+        assert "/servers/printer-b/shutdown" not in rows  # off
         for name in ("printer-a", "printer-b"):
-            assert f"/servers/{name}/shutdown" not in rows
             assert f"/servers/{name}/wake" not in rows
         assert rows.split("printer-b", 1)[0].rsplit("<tr ", 1)[1].startswith('class="asleep"')
 

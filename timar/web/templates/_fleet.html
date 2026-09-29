@@ -50,18 +50,23 @@
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so enrol, edit and remove sit in the same place on every row. #}
       <td class="col-edge"><div class="icon-row">
-        {%- if not host.on_demand or not host.wakeable %}
-          {# Always on, or switched on by hand: there is nothing to wake it with, so Timar will
-             not put it to sleep either. Offering the button and refusing the click would be worse. #}
-          <span class="icon-slot"></span>
-        {%- elif host.state == "up" %}
+        {%- if host.state == "up" %}
+          {# Every running machine can be shut down. The confirmation is where the difference
+             between them lives: one Timar cannot wake again needs a person to bring it back. #}
+          {%- if host.wakeable %}{% set confirm = _("Shut down {name}? It stays off until something wakes it.", name=host.name) %}
+          {%- else %}{% set confirm = _("Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.", name=host.name) %}
+          {%- endif %}
           <button type="button" class="icon-btn"
                   title="{{ _("shutdown") }}" aria-label="{{ _("shutdown") }}"
                   hx-post="/servers/{{ host.name }}/shutdown"
                   hx-target="#power-result" hx-swap="innerHTML"
                   hx-indicator="#power-result" hx-disabled-elt="this"
-                  hx-confirm="{{ _("Shut down {name}? It stays off until something wakes it.", name=host.name) }}"
+                  hx-confirm="{{ confirm }}"
                   >{{ icon("power") }}</button>
+        {%- elif not host.wakeable %}
+          {# Off, and nothing to wake it with. Offering the button and refusing the click would
+             be worse than an empty slot. #}
+          <span class="icon-slot"></span>
         {%- else %}
           <button type="button" class="icon-btn"
                   title="{{ _("wake up") }}" aria-label="{{ _("wake up") }}"

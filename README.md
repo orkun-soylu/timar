@@ -78,8 +78,8 @@ first step of the job, and shutting it back down is the last.
 - **Update** — wake if asleep, run the platform's update command, shut down again if it started
   off. Proxmox hosts bring their guests along, in order.
 - **Power** — wake an on-demand machine or shut it down from its row. Guests go through their
-  hypervisor with `qm`. Always-on machines get no power button: Timar will not shut down what it
-  cannot wake again.
+  hypervisor with `qm`. Any running machine can be shut down; one Timar cannot wake again —
+  always-on, or switched on by hand — gets a confirmation that says it will stay off.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
