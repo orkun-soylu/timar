@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import NamedTuple
 
-from . import analysis, config, llm as llm_module, notify, status as fleet_status
+from . import analysis, cancel, config, llm as llm_module, notify, status as fleet_status
 from .log_checker import run_log_checks
 from .updater import run_updates
 
@@ -64,6 +64,9 @@ def run_log_sweep(cfg: dict) -> Outcome:
     with_issues = [r for r in results if r.success and not r.offline and r.has_issues]
 
     summary = f"{len(with_issues)} with findings, {len(unreachable)} unreachable, {len(offline)} asleep"
+    stopped = cancel.requested(LOG_SWEEP)
+    if stopped:
+        summary += f" — stopped by the operator after {len(results)} hosts"
 
     written = analysis.analyze(
         llm_module.LLMConfig.from_dict(cfg.get("llm")), cfg, results, config.load_notes()
@@ -95,6 +98,9 @@ def run_update(cfg: dict) -> Outcome:
     skipped = [r for r in results if r.skipped]
     updated = [r for r in results if r.success and not r.skipped]
     summary = f"{len(updated)} updated, {len(failed)} failed, {len(skipped)} skipped"
+    stopped = cancel.requested(UPDATE)
+    if stopped:
+        summary += " — stopped by the operator"
 
     rows = []
     for r in results:
@@ -111,6 +117,9 @@ def run_update(cfg: dict) -> Outcome:
             # cutting away the one that named the cause.
             rows.append(f"❌ {r.server}: {r.error.strip()}".replace("\n", "\n    "))
 
+    if stopped:
+        rows.append("⏹ Stopped by the operator: the machines after the last one listed were not "
+                    "reached and are not updated.")
     lines = [f"<b>{TITLES[UPDATE]}</b>", ""] + [notify.escape(row) for row in rows]
     _notify(cfg, "\n".join(lines))
     return Outcome(summary, "\n".join(rows))

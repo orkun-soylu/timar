@@ -89,7 +89,6 @@
   "running…": "läuft…",
   "never": "nie",
   "report": "Bericht",
-  "history": "Verlauf",
   "Run updates now? Machines that are asleep will be woken, updated, and shut down again.": "Updates jetzt ausführen? Schlafende Maschinen werden aufgeweckt, aktualisiert und wieder heruntergefahren.",
   "run now": "jetzt ausführen",
   "Waiting for the scheduler's first tick.": "Warte auf den ersten Takt des Planers.",
@@ -276,5 +275,13 @@
   "Every compose project on {host} is already registered.": "Alle Compose-Projekte auf {host} sind bereits registriert.",
   "Find": "Suchen",
   "Find on a host": "Auf einem Host suchen",
-  "Tick at least one project.": "Kreuzen Sie mindestens ein Projekt an."
+  "Tick at least one project.": "Kreuzen Sie mindestens ein Projekt an.",
+  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Anzeigen</em> beschränkt die Liste auf eine Aufgabe; die Auswahl steht in der Adresse, eine gefilterte Liste lässt sich also als Lesezeichen speichern. Rot markiert einen fehlgeschlagenen Lauf; ein Lauf mit Befunden bleibt in der normalen Farbe. Der Knopf am Zeilenende öffnet den ganzen Bericht.",
+  "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Liest jede laufende Maschine: Fehler im Systemlog, Plattenbelegung, gestoppte Container und geplante Aufgaben, die nicht liefen. Schlafende Maschinen werden nicht geweckt und als nicht geprüft gemeldet.",
+  "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Erscheint, solange eine Aufgabe läuft. Sie stoppt nach dem aktuellen Schritt — ein laufender Befehl auf einem Host endet, und eine für den Lauf geweckte Maschine wird trotzdem heruntergefahren; was noch nicht erreicht war, bleibt für den nächsten Lauf. Der Bericht vermerkt den Stopp.",
+  "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "Startet die Aufgabe außerhalb ihres Zeitplans. Der Update-Lauf fragt vorher, weil er Maschinen weckt.",
+  "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Log-Prüfung stoppen? Sie stoppt nach dem gerade geprüften Host; die Hosts danach werden diesmal nicht geprüft.",
+  "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Update-Lauf stoppen? Er stoppt nach dem laufenden Schritt: ein Befehl, der auf einem Host läuft, endet zuerst, und eine für den Lauf geweckte Maschine wird trotzdem heruntergefahren. Noch nicht erreichte Maschinen werden diesmal nicht aktualisiert.",
+  "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Weckt die schlafenden Maschinen, aktualisiert sie und ihre Compose-Projekte und fährt wieder herunter, was er geweckt hat.",
+  "stopping…": "wird gestoppt…"
 }

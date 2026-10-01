@@ -89,7 +89,6 @@
   "running…": "выполняется…",
   "never": "никогда",
   "report": "отчёт",
-  "history": "история",
   "Run updates now? Machines that are asleep will be woken, updated, and shut down again.": "Запустить обновления сейчас? Спящие машины будут разбужены, обновлены и снова выключены.",
   "run now": "запустить",
   "Waiting for the scheduler's first tick.": "Ожидание первого такта планировщика.",
@@ -276,5 +275,13 @@
   "Every compose project on {host} is already registered.": "Все проекты compose на {host} уже зарегистрированы.",
   "Find": "Найти",
   "Find on a host": "Найти на хосте",
-  "Tick at least one project.": "Отметьте хотя бы один проект."
+  "Tick at least one project.": "Отметьте хотя бы один проект.",
+  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Показать</em> сужает список до одной задачи; выбор хранится в адресе, так что отфильтрованный список можно добавить в закладки. Красным отмечен неудачный запуск; запуск, завершившийся с находками, остаётся обычного цвета. Кнопка в конце строки открывает полный отчёт.",
+  "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Читает каждую включённую машину: ошибки системного журнала, заполнение дисков, остановленные контейнеры и не выполнившиеся задания по расписанию. Спящие машины не будятся и отмечаются как непроверенные.",
+  "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Видна, пока задача выполняется. Задача останавливается после текущего шага — уже запущенная на хосте команда завершается, а машина, разбуженная для прогона, всё равно выключается; то, до чего она не дошла, остаётся на следующий прогон. Отчёт сообщает об остановке.",
+  "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "Запускает задачу вне расписания. Прогон обновлений сначала спрашивает, потому что будит машины.",
+  "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Остановить проверку логов? Она остановится после текущего хоста; следующие хосты в этот раз проверены не будут.",
+  "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Остановить прогон обновлений? Он остановится после текущего шага: уже запущенная на хосте команда сначала завершится, а машина, разбуженная для прогона, всё равно будет выключена. Машины, до которых он ещё не дошёл, в этот раз не обновятся.",
+  "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Будит спящие машины, обновляет их и их проекты compose и снова выключает то, что разбудил.",
+  "stopping…": "останавливается…"
 }

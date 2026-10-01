@@ -210,6 +210,7 @@ def _job_view() -> list[dict]:
             "title": _(jobs.TITLES[name]),
             "schedule": spec.describe(),
             "running": scheduler.is_running(name),
+            "stopping": scheduler.is_stopping(name),
             "status": record.get("status"),
             "last_run": record.get("last_run"),
             "last_summary": record.get("last_summary"),
@@ -278,6 +279,15 @@ async def run_job(request: Request, name: str, operator: str = Depends(current_o
     # Let the job mark itself as started before the panel is rendered, so the first response
     # already shows "running" rather than a stale idle state the operator has to wait out.
     await asyncio.sleep(0.05)
+    return TEMPLATES.TemplateResponse(request, "_jobs.html", {"jobs": _job_view()})
+
+
+@app.post("/jobs/{name}/stop", response_class=HTMLResponse)
+async def stop_job(request: Request, name: str, operator: str = Depends(current_operator)):
+    """Ask a running job to stop after the step it is on — see `cancel` for why not at once."""
+    if name not in jobs.JOBS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    scheduler.request_stop(name)
     return TEMPLATES.TemplateResponse(request, "_jobs.html", {"jobs": _job_view()})
 
 

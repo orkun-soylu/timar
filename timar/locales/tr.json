@@ -89,7 +89,6 @@
   "running…": "çalışıyor…",
   "never": "hiç",
   "report": "rapor",
-  "history": "geçmiş",
   "Run updates now? Machines that are asleep will be woken, updated, and shut down again.": "Güncellemeler şimdi çalıştırılsın mı? Uykudaki makineler uyandırılır, güncellenir ve yeniden kapatılır.",
   "run now": "şimdi çalıştır",
   "Waiting for the scheduler's first tick.": "Zamanlayıcının ilk turu bekleniyor.",
@@ -276,5 +275,13 @@
   "Every compose project on {host} is already registered.": "{host} üzerindeki bütün compose projeleri zaten kayıtlı.",
   "Find": "Bul",
   "Find on a host": "Host'ta bul",
-  "Tick at least one project.": "En az bir proje işaretleyin."
+  "Tick at least one project.": "En az bir proje işaretleyin.",
+  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Göster</em> listeyi tek bir işe daraltır; seçim adreste durur, böylece süzülmüş liste yer imine eklenebilir. Kırmızı, başarısız bir çalışmayı gösterir; bulgularla biten bir çalışma normal renkte kalır. Satırın sonundaki düğme raporun tamamını açar.",
+  "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Açık her makineyi okur: sistem logu hataları, disk doluluğu, duran container'lar ve çalışmamış zamanlanmış işler. Uyuyan makineler uyandırılmaz, kontrol edilmedi olarak raporlanır.",
+  "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Bir iş çalışırken görünür. İş üzerinde olduğu adımdan sonra durur — bir host'ta çalışmakta olan komut biter, tur için uyandırılan makine yine kapatılır; henüz ulaşılmayanlar bir sonraki tura kalır. Rapor durdurulduğunu yazar.",
+  "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "İşi zamanlamasının dışında başlatır. Güncelleme turu makineleri uyandırdığı için önce sorar.",
+  "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Log taraması durdurulsun mu? Kontrol edilmekte olan host'tan sonra durur; ondan sonraki host'lar bu sefer kontrol edilmez.",
+  "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Güncelleme turu durdurulsun mu? Devam eden adımdan sonra durur: bir host'ta çalışmakta olan komut önce biter, tur için uyandırılan makine yine kapatılır. Henüz ulaşılmayan makineler bu sefer güncellenmez.",
+  "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Uyuyan makineleri uyandırır, onları ve compose projelerini günceller, uyandırdıklarını yeniden kapatır.",
+  "stopping…": "durduruluyor…"
 }

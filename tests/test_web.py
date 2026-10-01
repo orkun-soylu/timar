@@ -403,12 +403,38 @@ class TestJobReport:
         assert "stopped containers: cache, queue" in body
         assert "1 with findings" in body
 
-    def test_the_link_appears_only_once_there_is_a_report(self, client):
+    def test_the_row_carries_run_only_not_report_or_history(self, client):
+        """The full list is on the same page, under the panel."""
         complete_setup(client)
-        assert "/jobs/log_sweep/report" not in client.get("/fragments/jobs").text
         from timar import state
         state.mark_finished("log_sweep", ok=True, summary="all clear", report="All clear — 1 checked.")
-        assert "/jobs/log_sweep/report" in client.get("/fragments/jobs").text
+        rows = client.get("/fragments/jobs").text
+        assert "/jobs/log_sweep/report" not in rows and "/reports?job=" not in rows
+        assert "/jobs/log_sweep/run" in rows and "/jobs/log_sweep/stop" not in rows
+
+    def test_a_running_job_offers_stop_with_a_warning_instead_of_run(self, client, monkeypatch):
+        from timar.web import app as web
+        complete_setup(client)
+        monkeypatch.setattr(web.scheduler, "_running", {"update"})
+        rows = client.get("/fragments/jobs").text
+        stop = rows.split('hx-post="/jobs/update/stop"', 1)[1].split(">", 1)[0]
+        assert "hx-confirm" in stop and "still shut down" in stop
+        assert "/jobs/update/run" not in rows and "/jobs/log_sweep/run" in rows
+
+    def test_stop_asks_the_running_job_and_the_row_says_stopping(self, client, monkeypatch):
+        from timar import cancel
+        from timar.web import app as web
+        complete_setup(client)
+        monkeypatch.setattr(web.scheduler, "_running", {"update"})
+        try:
+            rows = client.post("/jobs/update/stop").text
+            assert cancel.requested("update") and "stopping…" in rows
+            # A job that is not running is not marked.
+            client.post("/jobs/log_sweep/stop")
+            assert not cancel.requested("log_sweep")
+            assert client.post("/jobs/nope/stop").status_code == 404
+        finally:
+            cancel.clear("update")
 
     def test_a_job_that_never_ran_says_so_rather_than_erroring(self, client):
         complete_setup(client)
@@ -1332,8 +1358,11 @@ class TestReportArchive:
         complete_setup(client)
         assert 'href="/reports"' in client.get("/").text   # through the menu
 
-    def test_the_history_link_appears_only_once_something_is_archived(self, client):
+    def test_the_page_keeps_its_notes_behind_the_question_marks(self, client):
         complete_setup(client)
-        assert "/reports?job=update" not in client.get("/fragments/jobs").text
-        self.archive("update", title="Update run", summary="3 updated")
-        assert "/reports?job=update" in client.get("/fragments/jobs").text
+        page = client.get("/reports").text
+        assert 'popovertarget="help-jobs"' in page and 'popovertarget="help-reports"' in page
+        outside = page.split('id="help-jobs"', 1)[0]
+        for note in ("the schedule has stopped even though everything else looks healthy",
+                     "whether or not it was also sent to Telegram"):
+            assert note not in outside and note in page

@@ -89,7 +89,6 @@
   "running…": "运行中…",
   "never": "从未",
   "report": "报告",
-  "history": "历史",
   "Run updates now? Machines that are asleep will be woken, updated, and shut down again.": "立即运行更新？处于休眠的机器将被唤醒、更新，然后再次关机。",
   "run now": "立即运行",
   "Waiting for the scheduler's first tick.": "正在等待调度器首次运行。",
@@ -276,5 +275,13 @@
   "Every compose project on {host} is already registered.": "{host} 上的所有 compose 项目都已登记。",
   "Find": "查找",
   "Find on a host": "在主机上查找",
-  "Tick at least one project.": "请至少勾选一个项目。"
+  "Tick at least one project.": "请至少勾选一个项目。",
+  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>显示</em>可把列表限定为一个任务；选择保存在地址中，所以筛选后的列表可以加入书签。红色表示运行失败；带有发现但已完成的运行保持正常颜色。行尾按钮打开完整报告。",
+  "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "读取每台运行中的机器：系统日志错误、磁盘占用、已停止的容器以及没有运行的计划任务。休眠的机器不会被唤醒，并报告为未检查。",
+  "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "任务运行时显示。任务会在当前步骤之后停止 — 主机上已在运行的命令会执行完，为本次运行唤醒的机器仍会关机；尚未到达的部分留到下次运行。报告会注明已停止。",
+  "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "在计划之外启动任务。更新任务会唤醒机器，所以会先确认。",
+  "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "停止日志巡检？它会在正在检查的主机之后停止；之后的主机本次不再检查。",
+  "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "停止更新任务？它会在当前步骤之后停止：主机上已在运行的命令会先执行完，为本次运行唤醒的机器仍会关机。尚未到达的机器本次不会更新。",
+  "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "唤醒休眠的机器，更新它们及其 compose 项目，并把唤醒的机器重新关机。",
+  "stopping…": "正在停止…"
 }

@@ -12,6 +12,7 @@ from .network import is_host_up
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run
+from . import cancel
 from .containers import parse_ps
 
 logger = logging.getLogger(__name__)
@@ -187,6 +188,9 @@ def run_log_checks(cfg: dict) -> list[LogResult]:
 
     results = []
     for server in cfg.get("servers", []):
+        if cancel.requested("log_sweep"):
+            logger.info("log sweep stopped by the operator before %s", server["name"])
+            break
         logger.info("Checking logs on %s", server["name"])
         results.append(check_server(server, hours, threshold,
                                     frozenset(on_demand.get(server["name"], ()))))
