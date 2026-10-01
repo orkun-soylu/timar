@@ -28,7 +28,9 @@ from . import status as fleet_status
 from .platforms import get as get_platform
 from .ssh import connect, run
 
-TTL = 10.0
+# Read like the host probe (see `status`): the background task refreshes, pages read the last
+# answer, and a request asks for itself only when there is none or it is older than this.
+STALE_AFTER = 60.0
 MAX_PARALLEL = 8
 SSH_TIMEOUT = 15
 HEALTH_TIMEOUT = 4.0
@@ -166,17 +168,17 @@ def _ps(server: dict) -> HostContainers:
     return HostContainers(by_dir=parse_ps(out))
 
 
-def _host_containers(server: dict) -> HostContainers:
+def _host_containers(server: dict, fresh: bool = False) -> HostContainers:
     now = time.monotonic()
     cached = _cache.get(server["name"])
-    if cached and now - cached[0] < TTL:
+    if cached and not fresh and now - cached[0] < STALE_AFTER:
         return cached[1]
     result = _ps(server)
-    _cache[server["name"]] = (now, result)
+    _cache[server["name"]] = (time.monotonic(), result)
     return result
 
 
-def _healthy(url: str) -> bool:
+def _healthy(url: str, fresh: bool = False) -> bool:
     """Does the service answer? Anything below 500 counts — a login page is a live service.
 
     Certificates are not verified: this asks whether something answers, not whether it can be
@@ -184,7 +186,7 @@ def _healthy(url: str) -> bool:
     """
     now = time.monotonic()
     cached = _health_cache.get(url)
-    if cached and now - cached[0] < TTL:
+    if cached and not fresh and now - cached[0] < STALE_AFTER:
         return cached[1]
     context = ssl.create_default_context()
     context.check_hostname = False
@@ -196,8 +198,27 @@ def _healthy(url: str) -> bool:
         ok = e.code < 500
     except Exception:
         ok = False
-    _health_cache[url] = (now, ok)
+    _health_cache[url] = (time.monotonic(), ok)
     return ok
+
+
+def refresh(cfg: dict) -> None:
+    """Read every Docker host with registered projects, and every health address, now.
+
+    Run after `status.refresh`, so whether a host is up is already known: a host that is off is
+    not asked over SSH, and its projects' health addresses are not asked either.
+    """
+    entries = cfg.get("containers") or []
+    servers = {s["name"]: s for s in cfg.get("servers", [])}
+    hosts = [servers[n] for n in dict.fromkeys(e.get("server") for e in entries)
+             if n in servers and fleet_status._probe(servers[n]["host"])]
+    urls = list(dict.fromkeys(e["health_url"] for e in entries
+                              if e.get("health_url") and e.get("server") in {h["name"] for h in hosts}))
+    jobs = [lambda h=h: _host_containers(h, fresh=True) for h in hosts]
+    jobs += [lambda u=u: _healthy(u, fresh=True) for u in urls]
+    if jobs:
+        with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL + 8, len(jobs))) as pool:
+            list(pool.map(lambda job: job(), jobs))
 
 
 def invalidate() -> None:
@@ -220,6 +241,15 @@ def projects(cfg: dict) -> list[ProjectStatus]:
             for server, answer in zip(reachable, pool.map(_host_containers, reachable)):
                 answers[server["name"]] = answer
 
+    # Asked together rather than one after another: fourteen addresses in turn cost the sum of
+    # their round trips, in parallel the slowest one. Usually all are cached by `refresh`.
+    urls = list(dict.fromkeys(e["health_url"] for e in entries
+                              if e.get("health_url") and up.get(e.get("server"))))
+    health: dict[str, bool] = {}
+    if urls:
+        with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL + 8, len(urls))) as pool:
+            health = dict(zip(urls, pool.map(_healthy, urls)))
+
     me = self_container_id()
     out = []
     for entry in entries:
@@ -236,7 +266,7 @@ def projects(cfg: dict) -> list[ProjectStatus]:
         else:
             containers = answers[server_name].by_dir.get(path, [])
             state, detail = project_state(containers, on_demand)
-            if state == "up" and (health_url := entry.get("health_url")) and not _healthy(health_url):
+            if state == "up" and (health_url := entry.get("health_url")) and not health.get(health_url, True):
                 state, detail = "warn", "running, but the health check does not answer"
         images = tuple(dict.fromkeys(c.image for c in containers))
         out.append(ProjectStatus(
