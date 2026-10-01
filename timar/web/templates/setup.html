@@ -5,7 +5,7 @@
 <form class="card panel" method="post" action="/setup" style="padding:1.5rem">
   <h1 style="margin-bottom:0.4rem">{{ _("Set up timar") }}</h1>
   <p class="muted" style="margin-top:0">
-    {{ _("Create the operator account. Timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.") }}
+    {{ _("Create the operator account. timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.") }}
   </p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <label><span>{{ _("Username") }}</span><input name="username" autocomplete="username" required autofocus></label>

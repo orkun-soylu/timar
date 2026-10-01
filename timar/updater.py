@@ -137,7 +137,7 @@ def _update_containers(ssh, server_cfg: dict, entries: list[dict]) -> list[Updat
         found = by_dir.get(entry["path"].rstrip("/"), [])
         if me and any(c.id == me for c in found):
             results.append(UpdateResult(server=label, success=True, skipped=True,
-                                        error="Timar itself — updated by its own release, not from inside"))
+                                        error="timar itself — updated by its own release, not from inside"))
             continue
         if entry.get("update") == "skip":
             results.append(UpdateResult(server=label, success=True, skipped=True, error="update: skip"))

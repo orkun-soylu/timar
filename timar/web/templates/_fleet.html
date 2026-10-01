@@ -45,9 +45,9 @@
       <td class="col-edge"><div class="icon-row">
         {%- if host.state == "up" %}
           {# Every running machine can be shut down. The confirmation is where the difference
-             between them lives: one Timar cannot wake again needs a person to bring it back. #}
+             between them lives: one timar cannot wake again needs a person to bring it back. #}
           {%- if host.wakeable %}{% set confirm = _("Shut down {name}? It stays off until something wakes it.", name=host.name) %}
-          {%- else %}{% set confirm = _("Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.", name=host.name) %}
+          {%- else %}{% set confirm = _("Shut down {name}? timar cannot wake it again — it stays off until someone switches it on by hand.", name=host.name) %}
           {%- endif %}
           <button type="button" class="icon-btn"
                   title="{{ _("shutdown") }}" aria-label="{{ _("shutdown") }}"

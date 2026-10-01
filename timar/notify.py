@@ -129,4 +129,4 @@ def send_test(token: str, chat_id: str) -> None:
     Credentials that are only exercised by the nightly job are credentials you discover are
     wrong on the morning you needed the report.
     """
-    send(token, chat_id, "<b>Timar</b>\nTest message — notifications are working.")
+    send(token, chat_id, "<b>timar</b>\nTest message — notifications are working.")

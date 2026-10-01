@@ -31,7 +31,7 @@
       <td class="col-mid wide muted">{% for image in p.images %}<div><code>{{ image.split('@')[0] }}</code></div>{% else %}—{% endfor %}</td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
-          <span class="icon-slot" title="{{ _("Timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
+          <span class="icon-slot" title="{{ _("timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
         {%- elif p.running %}
           <button type="button" class="icon-btn" title="{{ _("stop") }}" aria-label="{{ _("stop") }}"
                   hx-post="/containers/{{ p.name }}/stop" hx-target="#toast" hx-swap="innerHTML"

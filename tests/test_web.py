@@ -261,10 +261,10 @@ class TestActionsColumn:
     def test_remove_is_in_the_edit_form_and_asks_first(self, fleet):
         dialog = fleet.get("/settings/servers/web-01/edit", headers={"HX-Request": "true"}).text
         button = dialog.split('hx-post="/settings/servers/web-01/delete"', 1)[1].split(">", 1)[0]
-        assert "Remove web-01 from Timar?" in button and "hx-confirm" in button
+        assert "Remove web-01 from timar?" in button and "hx-confirm" in button
         page = fleet.get("/settings/servers/web-01/edit").text
         button = page.split('formaction="/settings/servers/web-01/delete"', 1)[1].split(">", 1)[0]
-        assert "confirm(" in button and "Remove web-01 from Timar?" in button
+        assert "confirm(" in button and "Remove web-01 from timar?" in button
         # Not offered for a server that does not exist yet.
         assert "/delete" not in fleet.get("/settings/servers/new").text
 

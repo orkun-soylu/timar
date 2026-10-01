@@ -71,7 +71,7 @@
   {# One help per job; the schedule fields are the same in both, so both explain them. #}
   {% macro schedule_help() %}
       <dt>{{ _("How often") }}</dt>
-      <dd>{{ _("<em>daily</em> runs every day at <em>At</em>. <em>weekly</em> runs on <em>Day</em> at <em>At</em>. <em>interval</em> runs every <em>N hours</em>, counted from the last run; one that fell due while Timar was down runs as soon as it is back.") }}</dd>
+      <dd>{{ _("<em>daily</em> runs every day at <em>At</em>. <em>weekly</em> runs on <em>Day</em> at <em>At</em>. <em>interval</em> runs every <em>N hours</em>, counted from the last run; one that fell due while timar was down runs as soon as it is back.") }}</dd>
       <dd>{{ _("Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00. Without <em>Run on a schedule</em> the job runs only from <em>run now</em>.") }}</dd>
   {% endmacro %}
   {% if job.name == "log_sweep" %}
