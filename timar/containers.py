@@ -304,3 +304,69 @@ def act(entry: dict, servers: list[dict], action: str) -> str:
     if code != 0:
         raise ContainerError(f"{entry['name']}: {(out.strip() or err.strip() or 'docker compose failed')[-300:]}")
     return f"{entry['name']}: {action} done"
+
+
+_TRAEFIK_HOST = re.compile(r"traefik\.http\.routers\.[^.=,]+\.rule=Host\(`([^`]+)`\)")
+_NAME_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+@dataclass(frozen=True)
+class Found:
+    """A compose project on a host, as offered for import."""
+    name: str
+    path: str
+    status: str             # compose's own word: "running(4)", "exited(1)"
+    web_url: str | None     # from a Traefik Host() rule on one of its containers, if any
+
+
+def parse_discovery(ls_output: str, ps_output: str) -> list[Found]:
+    """`docker compose ls -a --format json` + `docker ps -a --format json` → projects to offer.
+
+    The directory is that of the project's first compose file — the working directory Docker
+    records, which is what the containers page matches on. The web address is a guess from the
+    first Traefik `Host()` rule found on the project's containers; the form shows it to be kept
+    or cleared, never applied unseen.
+    """
+    try:
+        projects = json.loads(ls_output or "[]")
+    except ValueError:
+        return []
+    hosts: dict[str, str] = {}
+    for line in ps_output.splitlines():
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        labels = row.get("Labels") or ""
+        match = re.search(re.escape(WORKING_DIR_LABEL) + r"=([^,]+)", labels)
+        host = _TRAEFIK_HOST.search(labels)
+        if match and host:
+            hosts.setdefault(match.group(1).rstrip("/"), host.group(1))
+    found = []
+    for project in projects:
+        files = (project.get("ConfigFiles") or "").split(",")
+        if not files or not files[0].startswith("/"):
+            continue
+        path = files[0].rsplit("/", 1)[0] or "/"
+        name = _NAME_UNSAFE.sub("-", project.get("Name") or path.rsplit("/", 1)[-1]).strip("-") or "project"
+        host = hosts.get(path)
+        found.append(Found(name=name, path=path, status=project.get("Status") or "",
+                           web_url=f"https://{host}" if host else None))
+    return sorted(found, key=lambda f: f.name.casefold())
+
+
+def discover(server: dict) -> list[Found]:
+    """The compose projects on one host, read over SSH. Raises ContainerError with the reason."""
+    if not get_platform(server.get("platform")).supports_docker:
+        raise ContainerError(f"{server['name']} does not run Docker")
+    command = _DOCKER + '$D compose ls -a --format json && echo "---timar---" && $D ps -a --no-trunc --format json'
+    try:
+        with connect(server["host"], server["user"], config.resolve_ssh_key(server),
+                     timeout=SSH_TIMEOUT) as ssh:
+            out, err, code = run(ssh, command, timeout=60)
+    except Exception as e:
+        raise ContainerError(f"could not reach {server['name']}: {e}") from e
+    if code != 0 or "---timar---" not in out:
+        raise ContainerError((err.strip() or out.strip() or "docker compose ls failed")[-300:])
+    ls_output, ps_output = out.split("---timar---", 1)
+    return parse_discovery(ls_output.strip(), ps_output)

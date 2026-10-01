@@ -1,0 +1,40 @@
+{# The projects found on one host, not registered yet: tick, adjust the name or the address,
+   add. Swapped into the add form's "Find on a host" section, or a page of its own without
+   scripting. A rejected list comes back as it was sent, with the reasons on top. #}
+<div id="discover-list">
+  {% if errors %}
+    <div class="notice bad">{% for message in errors %}<div>{{ message }}</div>{% endfor %}</div>
+  {% endif %}
+  {% if error %}
+    <div class="notice bad">{{ error }}</div>
+  {% elif not found %}
+    <p class="muted">{{ _("Every compose project on {host} is already registered.", host=server) }}</p>
+  {% else %}
+  <form method="post" action="/settings/containers/import"
+        {% if in_dialog %}hx-post="/settings/containers/import" hx-target="#discover-result" hx-swap="innerHTML"{% endif %}>
+    <input type="hidden" name="server" value="{{ server }}">
+    <div class="table-scroll">
+    <table class="discover">
+      <thead><tr><th></th><th>{{ _("Name") }}</th><th>{{ _("Compose directory") }}</th><th class="wide">{{ _("Web interface") }}</th></tr></thead>
+      <tbody>
+      {% for f in found %}
+        {% set i = loop.index0 %}
+        <tr>
+          <td><input type="checkbox" name="pick" value="{{ i }}" aria-label="{{ f.name }}"
+                     {{ "checked" if not picked or (i | string) in picked else "" }}></td>
+          <td><input name="name_{{ i }}" value="{{ submitted.get('name_' ~ i, f.name) }}"></td>
+          <td><code>{{ f.path }}</code> <span class="muted">{{ f.status }}</span>
+              <input type="hidden" name="path_{{ i }}" value="{{ f.path }}"></td>
+          <td class="wide"><input name="web_{{ i }}" value="{{ submitted.get('web_' ~ i, f.web_url or '') }}"
+                                   placeholder="{{ _("optional") }}"></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="actions" style="margin-top:0.8rem">
+      <button type="submit">{{ _("Add selected") }}</button>
+    </div>
+  </form>
+  {% endif %}
+</div>

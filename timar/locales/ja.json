@@ -268,5 +268,13 @@
   "custom command": "カスタムコマンド",
   "pull + up": "pull + up",
   "skip": "スキップ",
-  "with custom command": "カスタムコマンド時"
+  "with custom command": "カスタムコマンド時",
+  "A project whose containers were removed with <code>down</code> has nothing for Compose to list; add it by hand below.": "コンテナを <code>down</code> で削除したプロジェクトは Compose に一覧されません。下から手動で追加してください。",
+  "Add selected": "選択したものを追加",
+  "Add selected adds every ticked row with the defaults — update pull + up, no health check — or, if any row is wrong, none of them. Edit a project afterwards for the rest.": "「選択したものを追加」はチェックした各行を既定値(更新は pull + up、ヘルスチェックなし)で追加します。1 行でも誤りがあれば何も追加しません。その他の設定は追加後にプロジェクトを編集してください。",
+  "Asks the host for its compose projects (<code>docker compose ls</code>) and lists those not registered yet. The name and directory come from Compose; the web interface is a guess from a Traefik <code>Host()</code> rule on the project's containers — keep it, change it or clear it.": "ホストに compose プロジェクトを問い合わせ(<code>docker compose ls</code>)、未登録のものを一覧します。名前とディレクトリは Compose から、Web 管理画面はプロジェクトのコンテナにある Traefik の <code>Host()</code> ルールからの推測です — そのまま使うか、変更するか、消してください。",
+  "Every compose project on {host} is already registered.": "{host} の compose プロジェクトはすべて登録済みです。",
+  "Find": "検索",
+  "Find on a host": "ホストから探す",
+  "Tick at least one project.": "プロジェクトを 1 つ以上チェックしてください。"
 }

@@ -297,3 +297,75 @@ class TestLogSweep:
         ])
         assert stopped_containers(out, frozenset({"/srv/odata"})) == ["immich-db", "one-off"]
         assert sorted(stopped_containers(out)) == ["immich-db", "odata-1", "one-off"]
+
+
+class TestDiscovery:
+    LS = json.dumps([
+        {"Name": "immich", "Status": "running(4)", "ConfigFiles": "/srv/immich/docker-compose.yml"},
+        {"Name": "my app", "Status": "exited(1)", "ConfigFiles": "/srv/app/compose.yaml,/srv/app/override.yml"},
+        {"Name": "odd", "Status": "running(1)", "ConfigFiles": "relative/compose.yml"},
+    ])
+    PS = json.dumps({"ID": "1", "Labels": "com.docker.compose.project.working_dir=/srv/immich,"
+                     "traefik.http.routers.immich.rule=Host(`photos.lan`),"
+                     "traefik.http.routers.immich.middlewares=a@file,b@file"})
+
+    def test_parses_projects_with_a_guessed_web_address(self):
+        found = containers.parse_discovery(self.LS, self.PS)
+        assert [(f.name, f.path, f.web_url) for f in found] == [
+            ("immich", "/srv/immich", "https://photos.lan"), ("my-app", "/srv/app", None)]
+
+    def test_garbage_is_no_projects_not_a_crash(self):
+        assert containers.parse_discovery("not json", "") == []
+
+
+class TestImport:
+    @pytest.fixture
+    def page(self, client, monkeypatch):
+        from timar import config
+        complete_setup(client)
+        config.save({"servers": [{"name": "docker-01", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
+                     "containers": [{"name": "immich", "server": "docker-01", "path": "/srv/immich"}]})
+        monkeypatch.setattr(containers, "discover", lambda server: containers.parse_discovery(
+            TestDiscovery.LS, TestDiscovery.PS))
+        return client
+
+    def test_offers_only_what_is_not_registered(self, page):
+        body = page.get("/settings/containers/discover?server=docker-01",
+                        headers={"HX-Request": "true"}).text
+        assert "/srv/app" in body and "/srv/immich" not in body
+        assert 'hx-target="#discover-result"' in body
+
+    def test_the_add_form_has_the_finder_and_the_edit_form_does_not(self, page):
+        assert 'id="discover-result"' in page.get("/settings/containers/new").text
+        assert 'id="discover-result"' not in page.get("/settings/containers/immich/edit").text
+
+    def test_ticked_rows_are_added_with_their_edits(self, page):
+        from timar import config
+        response = page.post("/settings/containers/import", data={
+            "server": "docker-01", "pick": ["0"], "name_0": "my-app", "path_0": "/srv/app",
+            "web_0": "app.lan"})
+        assert response.headers["location"] == "/containers"
+        assert config.load()["containers"][-1] == {
+            "name": "my-app", "server": "docker-01", "path": "/srv/app", "web_url": "https://app.lan"}
+
+    def test_one_bad_row_adds_nothing_and_comes_back_as_sent(self, page):
+        from timar import config
+        response = page.post("/settings/containers/import", data={
+            "server": "docker-01", "pick": ["0", "1"],
+            "name_0": "immich", "path_0": "/srv/app", "web_0": "",          # name taken
+            "name_1": "fine", "path_1": "/srv/fine", "web_1": ""})
+        assert response.status_code == 400
+        assert "already exists" in response.text
+        assert [c["name"] for c in config.load()["containers"]] == ["immich"]
+
+    def test_nothing_ticked_is_said_so(self, page):
+        response = page.post("/settings/containers/import", data={"server": "docker-01"})
+        assert response.status_code == 400 and "Tick at least one" in response.text
+
+    def test_a_host_that_cannot_be_asked_says_why(self, page, monkeypatch):
+        def fail(server):
+            raise containers.ContainerError("could not reach docker-01: <timed out>")
+        monkeypatch.setattr(containers, "discover", fail)
+        body = page.get("/settings/containers/discover?server=docker-01").text
+        assert "could not reach docker-01" in body and "<timed out>" not in body
+        assert page.get("/settings/containers/discover?server=nope").status_code == 404

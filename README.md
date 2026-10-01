@@ -31,7 +31,7 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.2`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.3`) to choose when
 you move.
 
 Add, edit and remove servers and containers from their pages; a server is enrolled from its form's *SSH access*
@@ -137,7 +137,10 @@ unchecked host healthy is the one thing a status page must not do.
 
 The **containers** page lists Docker Compose projects — one row per project directory, however
 many containers it starts. Add one with **+**: a name, the server it runs on, and the absolute
-path of the directory holding its `docker-compose.yml`.
+path of the directory holding its `docker-compose.yml`. Or let **Find on a host**, at the top of
+that form, ask a server for its compose projects (`docker compose ls`): those not registered yet
+are listed with their name, directory and a web address guessed from a Traefik `Host()` rule —
+tick, adjust, **Add selected**. All ticked rows go in, or, if any is wrong, none.
 
 - **State** comes from one `docker ps -a` per host over SSH, grouped by the compose
   working-directory label, cached for ten seconds. Green is running; yellow is running but a
