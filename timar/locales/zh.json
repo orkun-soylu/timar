@@ -159,7 +159,6 @@
   "Chat ID": "聊天 ID",
   "Send test message": "发送测试消息",
   "Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.": "设置保存在 Timar 数据卷中的 <code>config.yaml</code>。在此页面保存会重写该文件，你手动添加的注释将会丢失。",
-  "Set up Timar": "设置 Timar",
   "Create the operator account. Timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.": "创建操作员账户。Timar 拥有其管理的每台机器的 SSH 访问权限，因此这个密码是保护你机群的唯一屏障 — 请设置得足够长。",
   "Password (at least 12 characters)": "密码（至少 12 个字符）",
   "Create account": "创建账户",
@@ -311,5 +310,6 @@
   "Virtual machines": "虚拟机",
   "add": "添加",
   "enrol from its card": "从卡片注册",
-  "leave out": "移出"
+  "leave out": "移出",
+  "Set up timar": "设置 timar"
 }

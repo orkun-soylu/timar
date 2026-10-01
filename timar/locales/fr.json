@@ -159,7 +159,6 @@
   "Chat ID": "Identifiant de chat",
   "Send test message": "Envoyer un message de test",
   "Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.": "Les réglages sont stockés dans <code>config.yaml</code> dans le volume de données de Timar. Enregistrer depuis cette page réécrit ce fichier, ce qui supprime les commentaires ajoutés à la main.",
-  "Set up Timar": "Configurer Timar",
   "Create the operator account. Timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.": "Créez le compte opérateur. Timar détient un accès SSH à chaque machine qu’il gère ; ce mot de passe est donc la seule chose qui protège votre flotte — faites-le long.",
   "Password (at least 12 characters)": "Mot de passe (au moins 12 caractères)",
   "Create account": "Créer le compte",
@@ -311,5 +310,6 @@
   "Virtual machines": "Machines virtuelles",
   "add": "ajouter",
   "enrol from its card": "inscrire depuis sa fiche",
-  "leave out": "retirer"
+  "leave out": "retirer",
+  "Set up timar": "Configurer timar"
 }

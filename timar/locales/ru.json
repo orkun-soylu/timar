@@ -159,7 +159,6 @@
   "Chat ID": "ID чата",
   "Send test message": "Отправить тестовое сообщение",
   "Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.": "Настройки хранятся в <code>config.yaml</code> в томе данных Timar. Сохранение на этой странице перезаписывает файл, и добавленные вручную комментарии теряются.",
-  "Set up Timar": "Настройка Timar",
   "Create the operator account. Timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.": "Создайте учётную запись оператора. У Timar есть SSH-доступ ко всем машинам, которыми он управляет, поэтому этот пароль — единственное, что защищает ваш парк. Сделайте его длинным.",
   "Password (at least 12 characters)": "Пароль (не менее 12 символов)",
   "Create account": "Создать учётную запись",
@@ -311,5 +310,6 @@
   "Virtual machines": "Виртуальные машины",
   "add": "добавить",
   "enrol from its card": "подключить из карточки",
-  "leave out": "исключить"
+  "leave out": "исключить",
+  "Set up timar": "Настройка timar"
 }
