@@ -3,9 +3,9 @@
    The power buttons report into `#power-result`, which lives on the dashboard *outside* this
    fragment on purpose: anything written in here is wiped by the next poll, and a wake that
    failed for a nameable reason would erase its own explanation within ten seconds. The dialog
-   that enrol, edit and add open into lives outside it for the same reason.
+   that edit and add open into lives outside it for the same reason.
 
-   Enrol, edit and add are links first — each opens a page of its own without scripting — and
+   Edit and add are links first — each opens a page of its own without scripting — and
    `hx-get` turns them into the dialog when htmx is there. #}
 {% from "_icons.html" import icon %}
 {# A column heading that sorts by itself. Plain links to the dashboard: the order lives in the
@@ -52,7 +52,8 @@
       <td class="col-mid"><code>{{ host.host }}</code></td>
       <td class="col-mid muted wide">{{ host.platform }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
-         empty, so enrol, edit and remove sit in the same place on every row. #}
+         empty, so edit and remove sit in the same place on every row. Enrolment is in the
+         edit form's SSH section. #}
       <td class="col-edge"><div class="icon-row">
         {%- if host.state == "up" %}
           {# Every running machine can be shut down. The confirmation is where the difference
@@ -79,10 +80,6 @@
                   hx-indicator="#power-result" hx-disabled-elt="this"
                   >{{ icon("wake") }}</button>
         {%- endif %}
-        <a href="/settings/servers/{{ host.name }}/enroll" class="icon-btn"
-           title="{{ _("enrol") }}" aria-label="{{ _("enrol") }}"
-           hx-get="/settings/servers/{{ host.name }}/enroll" hx-target="#dialog-body"
-           hx-swap="innerHTML">{{ icon("enrol") }}</a>
         <a href="/settings/servers/{{ host.name }}/edit" class="icon-btn"
            title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
            hx-get="/settings/servers/{{ host.name }}/edit" hx-target="#dialog-body"

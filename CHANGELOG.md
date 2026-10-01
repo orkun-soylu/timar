@@ -9,6 +9,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.21] — 2026-10-01
+
+### Changed
+
+- **The server form has three sections — Server info, Update, SSH access** — each under a plain
+  heading on a rule, with a **?** on the right that opens everything worth knowing about it. The
+  fields keep only their names and "optional"; the explanations moved into those popovers.
+- **Enrolment is part of the form.** The *SSH access* section takes the SSH user, a password and
+  *Also grant passwordless sudo*; **Enrol** saves the form and then installs Timar's key, proving
+  it works with the key alone. With the password left empty, Enrol checks an existing
+  enrolment instead (the old *Verify*). The password is still used for that one request only —
+  never stored, never sent back, not even to a rejected form. Enter in a field saves; it never
+  enrols. The separate enrol panel, its row button and its *Send magic packet* are gone (the
+  row's wake button does that); `/settings/servers/<name>/enroll` now opens the form at
+  *SSH access*.
+- **One *On-demand* box** for every kind of machine. On a VM it is written to the hypervisor's
+  `manages_vms` entry, as *Kept off on purpose — a VM you start only when needed* was; on a
+  machine of its own, as `on_demand`. The edit form shows the effective state — a machine with a
+  MAC, or a guest of an on-demand host, is ticked.
+- *Guest of* offers **host** for a machine of its own instead of "not a virtual machine".
+- The note under the servers table is gone; the state light's word is on hover.
+
 ## [0.1.20] — 2026-10-01
 
 ### Changed
@@ -325,7 +347,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.20...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.21...HEAD
+[0.1.21]: https://github.com/orkun-soylu/timar/compare/v0.1.20...v0.1.21
 [0.1.20]: https://github.com/orkun-soylu/timar/compare/v0.1.19...v0.1.20
 [0.1.19]: https://github.com/orkun-soylu/timar/compare/v0.1.18...v0.1.19
 [0.1.18]: https://github.com/orkun-soylu/timar/compare/v0.1.17...v0.1.18

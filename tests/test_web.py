@@ -249,10 +249,11 @@ class TestActionsColumn:
             assert f"/servers/{name}/wake" not in rows
         assert rows.split("printer-b", 1)[0].rsplit("<tr ", 1)[1].startswith('class="asleep"')
 
-    def test_every_row_offers_enrol_edit_and_remove(self, fleet):
+    def test_every_row_offers_edit_and_remove(self, fleet):
+        """Enrolment lives in the edit form's SSH section; there is no separate button."""
         rows = fleet.get("/fragments/fleet").text
+        assert "/enroll" not in rows
         for name in ("web-01", "gpu-01", "gpu-02"):
-            assert f'href="/settings/servers/{name}/enroll"' in rows
             assert f'href="/settings/servers/{name}/edit"' in rows
             assert f'action="/settings/servers/{name}/delete"' in rows
         # The add button is on the heading row, not repeated per server.
@@ -523,7 +524,7 @@ class TestSettingsPage:
 
     @pytest.mark.parametrize("query, location", [
         ("edit=web-01", "/settings/servers/web-01/edit"),
-        ("enroll=web-01", "/settings/servers/web-01/enroll"),
+        ("enroll=web-01", "/settings/servers/web-01/edit"),
         ("add=1", "/settings/servers/new"),
     ])
     def test_old_server_links_lead_to_where_the_panel_lives_now(self, settings, query, location):
@@ -853,13 +854,13 @@ class TestSettings:
         ]})
         client.post("/settings/servers", data={
             "name": "vm-01", "host": "10.0.0.2", "user": "deploy", "platform": "linux",
-            "hypervisor": "hv", "vm_id": "100", "guest_on_demand": "on"})
+            "hypervisor": "hv", "vm_id": "100", "on_demand": "on"})
         servers = config.load()["servers"]
         assert servers[0]["manages_vms"] == [
             {"vm_id": 100, "server_name": "vm-01", "on_demand": True}]
         assert config.on_demand(servers) == {"vm-01": "hv"}
 
-        field = client.get("/settings/servers/vm-01/edit").text.split('name="guest_on_demand"', 1)[1]
+        field = client.get("/settings/servers/vm-01/edit").text.split('name="on_demand"', 1)[1]
         assert field.split(">", 1)[0].strip().startswith("checked")
 
     def test_a_standalone_machine_can_be_marked_switched_on_by_hand(self, client):
@@ -1040,102 +1041,98 @@ class TestSettings:
         assert "Save a model connection first" in client.post("/settings/llm/test").text
 
 
-class TestEnrolmentRoutes:
-    def test_requires_a_session(self, client):
+class TestEnrolInTheForm:
+    """Enrolment is the server form's SSH section: Save saves, Enrol saves and then enrols."""
+
+    SERVER = {"name": "a", "host": "h", "user": "u", "platform": "linux"}
+
+    @pytest.fixture
+    def form(self, client):
         complete_setup(client)
         from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        client.cookies.clear()
-        for method, path in [("get", "/settings/servers/a/enroll"),
-                             ("post", "/settings/servers/a/enroll"),
-                             ("post", "/settings/servers/a/verify")]:
-            assert getattr(client, method)(path).headers.get("location") == "/login"
+        config.save({"servers": [dict(self.SERVER)]})
+        return client
 
-    def test_unknown_server_is_404(self, client):
-        complete_setup(client)
-        assert client.get("/settings/servers/nope/enroll").status_code == 404
+    def post(self, client, **fields):
+        data = {**self.SERVER, "original_name": "a", **fields}
+        return client.post("/settings/servers", data=data, headers={"HX-Request": "true"})
 
-    def test_the_panel_opens_as_a_page_without_scripting(self, client):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        page = client.get("/settings/servers/a/enroll").text
-        assert "<html" in page and 'id="enrol"' in page and "Install it" in page
+    def test_requires_a_session(self, form):
+        form.cookies.clear()
+        assert form.get("/settings/servers/a/enroll").headers.get("location") == "/login"
+        assert form.post("/settings/servers", data={}).headers.get("location") == "/login"
 
-    def test_the_enrol_dialog_has_a_close_control_in_its_heading(self, client):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        bare = client.get("/settings/servers/a/enroll", headers={"HX-Request": "true"}).text
-        assert "data-close-dialog" in bare.split("<h2", 1)[1].split("</h2>", 1)[0]
+    def test_an_old_enrol_link_opens_the_ssh_section(self, form):
+        response = form.get("/settings/servers/a/enroll")
+        assert response.status_code == 303
+        assert response.headers["location"] == "/settings/servers/a/edit#ssh-access"
+        assert form.get("/settings/servers/nope/enroll").status_code == 404
 
-    def test_the_panel_is_bare_for_the_dialog_and_posts_back_into_it(self, client):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        bare = client.get("/settings/servers/a/enroll", headers={"HX-Request": "true"}).text
-        assert "<html" not in bare and 'hx-target="#dialog-body"' in bare
+    def test_three_sections_each_with_its_help(self, form):
+        page = form.get("/settings/servers/a/edit").text
+        for title, help_id in [("Server info", "help-server"), ("Update", "help-update"),
+                               ("SSH access", "help-ssh")]:
+            assert f"<h3>{title}</h3>" in page
+            assert f'popovertarget="{help_id}"' in page and f'id="{help_id}" popover' in page
+        # The fields carry no explanations of their own; those are in the popovers.
+        assert 'class="hint"' not in page.split('id="help-server"', 1)[0]
 
-    def test_form_shows_the_fingerprint_but_never_a_private_key(self, client):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        page = client.get("/settings/servers/a/enroll").text
-        assert "SHA256:" in page
-        assert "ssh-ed25519 " in page
+    def test_enter_saves_rather_than_enrols(self, form):
+        """Implicit submission uses the first submit button in the form."""
+        page = form.get("/settings/servers/a/edit").text
+        form = page.split('action="/settings/servers"', 1)[1]
+        first = form.split('type="submit"', 1)[1].split(">", 1)[0]
+        assert 'value="save"' in first
+
+    def test_the_help_shows_the_fingerprint_but_never_a_private_key(self, form):
+        page = form.get("/settings/servers/a/edit").text
+        assert "SHA256:" in page and "ssh-ed25519 " in page
         assert "PRIVATE KEY" not in page
 
-    def test_sudo_option_is_hidden_where_it_cannot_work(self, client):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [
-            {"name": "router", "host": "h", "user": "root", "platform": "openwrt"},
-            {"name": "box", "host": "h", "user": "root", "platform": "linux"},
-            {"name": "web", "host": "h", "user": "deploy", "platform": "linux"},
-        ]})
-        assert 'name="grant_sudo"' not in client.get("/settings/servers/router/enroll").text
-        assert 'name="grant_sudo"' not in client.get("/settings/servers/box/enroll").text
-        assert 'name="grant_sudo"' in client.get("/settings/servers/web/enroll").text
+    def test_save_ignores_the_password(self, form, monkeypatch):
+        called = []
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll", lambda *a, **kw: called.append(1))
+        response = self.post(form, action="save", password="s3cret-passphrase")
+        assert response.headers.get("HX-Redirect") == "/" and not called
 
-    def test_the_password_is_never_echoed_back(self, client, monkeypatch):
-        """Re-rendering the form with the field refilled would put it in browser history and
-        in every proxy in between."""
-        complete_setup(client)
+    def test_enrol_saves_first_then_enrols_with_the_password(self, form, monkeypatch):
         from timar import config, enroll
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
+        seen = {}
+
+        def fake_enroll(server, password, *, grant_sudo):
+            seen.update(server=server, password=password, sudo=grant_sudo)
+            return enroll.Result(key_installed=True)
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll", fake_enroll)
+        monkeypatch.setattr("timar.web.settings.enroll_module.verify",
+                            lambda server: "connected with the key as u; passwordless sudo works")
+        page = self.post(form, action="enrol", password="pw", grant_sudo="on",
+                         context="saved before enrolling").text
+        assert config.load()["servers"][0]["context"] == "saved before enrolling"
+        assert seen["password"] == "pw" and seen["sudo"] is True
+        assert seen["server"]["context"] == "saved before enrolling"
+        # The outcome is the proof with the key alone, not just the install.
+        assert "key installed" in page and "passwordless sudo works" in page
+
+    def test_enrol_without_a_password_only_checks_the_key(self, form, monkeypatch):
+        called = []
+        monkeypatch.setattr("timar.web.settings.enroll_module.enroll", lambda *a, **kw: called.append(1))
+        monkeypatch.setattr("timar.web.settings.enroll_module.verify",
+                            lambda server: "connected with the key as u; no passwordless sudo")
+        page = self.post(form, action="enrol", password="").text
+        assert not called and "Key checked: connected with the key as u" in page
+
+    def test_the_password_is_never_echoed_back(self, form, monkeypatch):
+        """Refilled, it would sit in browser history and in every proxy in between."""
+        from timar import enroll
 
         def refuse(*a, **kw):
             raise enroll.EnrollError("the password was not accepted for that user")
         monkeypatch.setattr("timar.web.settings.enroll_module.enroll", refuse)
-
-        response = client.post("/settings/servers/a/enroll",
-                               data={"password": "s3cret-passphrase", "grant_sudo": "on"})
-        assert response.status_code == 400
-        assert "s3cret-passphrase" not in response.text
-        assert "was not accepted" in response.text
-
-    def test_missing_password_is_rejected_before_connecting(self, client, monkeypatch):
-        complete_setup(client)
-        from timar import config
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-
-        called = []
-        monkeypatch.setattr("timar.web.settings.enroll_module.enroll",
-                            lambda *a, **kw: called.append(1))
-        response = client.post("/settings/servers/a/enroll", data={"password": ""})
-        assert response.status_code == 400 and not called
-
-    def test_success_reports_the_verification_not_just_the_install(self, client, monkeypatch):
-        """The password connection succeeding says nothing about whether the key is accepted."""
-        complete_setup(client)
-        from timar import config, enroll
-        config.save({"servers": [{"name": "a", "host": "h", "user": "u", "platform": "linux"}]})
-        monkeypatch.setattr("timar.web.settings.enroll_module.enroll",
-                            lambda *a, **kw: enroll.Result(key_installed=True))
-        monkeypatch.setattr("timar.web.settings.enroll_module.verify",
-                            lambda server: "connected with the key as u; passwordless sudo works")
-        page = client.post("/settings/servers/a/enroll", data={"password": "pw"}).text
-        assert "key installed" in page and "passwordless sudo works" in page
+        page = self.post(form, action="enrol", password="s3cret-passphrase").text
+        assert "s3cret-passphrase" not in page and "was not accepted" in page
+        # Not on a rejected form either.
+        page = self.post(form, action="enrol", password="s3cret-passphrase", name="bad name").text
+        assert "s3cret-passphrase" not in page and "Name may contain only" in page
 
 
 class TestModelListing:

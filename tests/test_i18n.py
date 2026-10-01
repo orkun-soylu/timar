@@ -105,10 +105,10 @@ class TestNegotiation:
 def test_values_are_escaped_but_the_sentence_is_not():
     i18n.activate("tr")
     try:
-        out = i18n._markup("Enrol {name}", name="<b>x</b>")
+        out = i18n._markup("Edit {name}", name="<b>x</b>")
     finally:
         i18n.activate("en")
-    assert out == "&lt;b&gt;x&lt;/b&gt; kaydı"
+    assert out == "&lt;b&gt;x&lt;/b&gt; düzenle"
 
 
 @pytest.fixture
@@ -179,7 +179,7 @@ class TestPages:
             {"name": "vm", "host": "10.0.0.3", "user": "op"},
         ]})
         for path in ("/", "/reports", "/settings", "/settings/servers/new",
-                     "/settings/servers/vm/edit", "/settings/servers/vm/enroll",
+                     "/settings/servers/vm/edit",
                      "/fragments/jobs", "/fragments/fleet"):
             response = client.get(path)
             assert response.status_code == 200, path

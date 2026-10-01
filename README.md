@@ -31,10 +31,11 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.20`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.21`) to choose when
 you move.
 
-Add, edit, enrol and remove servers from the dashboard. It all lands in `config.yaml` in the
+Add, edit and remove servers from the dashboard; a server is enrolled from its form's *SSH access*
+section. It all lands in `config.yaml` in the
 `timar-data` volume, which you can also edit by hand — see
 [`config.example.yaml`](config.example.yaml).
 

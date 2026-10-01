@@ -184,6 +184,29 @@
     header.topnav nav a.current { color: var(--accent); text-decoration: none; font-weight: 600; }
     header.topnav .linkish { text-decoration: underline; font-size: inherit; }
     header.topnav .linkish:hover { color: var(--text); }
+    /* The server form's sections: a plain heading on a rule, its "?" on the right. */
+    .form-section + .form-section { margin-top: 1.5rem; }
+    .form-section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; margin-bottom: 1rem;
+    }
+    .form-section-head h3 {
+      margin: 0; font-size: 0.85rem; font-weight: 600; text-transform: none; letter-spacing: 0;
+      color: var(--text);
+    }
+    button.help {
+      width: 1.5rem; height: 1.5rem; padding: 0; border-radius: 50%;
+      border: 1px solid var(--line); background: none; color: var(--muted);
+      font-size: 0.8rem; font-weight: 600; line-height: 1;
+    }
+    button.help:hover { color: var(--text); border-color: var(--muted); }
+    .form-actions { margin-top: 1.5rem; }
+    /* Exists only to be the form's default for Enter; never seen, never tabbed to. */
+    .default-submit { position: absolute; left: -9999px; width: 1px; height: 1px; padding: 0; border: 0; }
+    .help-list dt { font-weight: 600; font-size: 0.875rem; margin-top: 0.8rem; }
+    .help-list dd { margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--muted); }
+    .help-list dd code { color: var(--text); }
+    .help-list pre.report { margin: 0.3rem 0 0; white-space: pre-wrap; word-break: break-all; }
     .field { margin-bottom: 1rem; }
     .field-label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
     .field-label .linkish { font-size: inherit; text-decoration: underline; color: var(--muted); }
