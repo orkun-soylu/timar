@@ -7,7 +7,7 @@ import logging
 import time
 from dataclasses import dataclass
 
-from . import containers as container_module
+from . import cancel, containers as container_module
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -131,6 +131,8 @@ def _update_containers(ssh, server_cfg: dict, entries: list[dict]) -> list[Updat
 
     results = []
     for entry in entries:
+        if cancel.requested("update"):
+            break
         label = f"{entry['name']} ({host_name})"
         found = by_dir.get(entry["path"].rstrip("/"), [])
         if me and any(c.id == me for c in found):
@@ -204,6 +206,8 @@ def update_server(server_cfg: dict, servers_map: dict,
 
     # handle VMs managed by this host
     for vm_entry in server_cfg.get("manages_vms", []):
+        if cancel.requested("update"):
+            break       # still falls through to shutting this host down if it was woken
         vm_id = vm_entry["vm_id"]
         vm_name = vm_entry["server_name"]
         vm_cfg = servers_map.get(vm_name)
@@ -295,6 +299,9 @@ def run_updates(cfg) -> list[UpdateResult]:
     for server in servers:
         if server["name"] in managed_vms:
             continue
+        if cancel.requested("update"):
+            logger.info("update run stopped by the operator before %s", server["name"])
+            break
         all_results.extend(update_server(server, servers_map, containers_by_server))
 
     return all_results

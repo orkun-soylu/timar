@@ -370,3 +370,42 @@ class TestImport:
         body = page.get("/settings/containers/discover?server=docker-01").text
         assert "could not reach docker-01" in body and "<timed out>" not in body
         assert page.get("/settings/containers/discover?server=nope").status_code == 404
+
+
+class TestStop:
+    def test_the_update_run_stops_between_hosts_and_says_so(self, monkeypatch):
+        from timar import cancel, jobs, updater
+        visited = []
+
+        def fake_update_server(server, servers_map, by_server):
+            visited.append(server["name"])
+            cancel.request("update")      # the operator presses stop during the first host
+            return [updater.UpdateResult(server=server["name"], success=True)]
+        monkeypatch.setattr(updater, "update_server", fake_update_server)
+        monkeypatch.setattr(jobs, "run_updates", updater.run_updates)
+        monkeypatch.setattr(jobs, "_notify", lambda cfg, text: None)
+        try:
+            outcome = jobs.run_update({"servers": [{"name": "a"}, {"name": "b"}, {"name": "c"}]})
+        finally:
+            cancel.clear("update")
+        assert visited == ["a"]
+        assert "stopped by the operator" in outcome.summary and "not reached" in outcome.report
+
+    def test_a_stop_between_projects_still_prunes_and_returns(self, monkeypatch):
+        from timar import cancel, updater
+        monkeypatch.setattr(containers, "self_container_id", lambda: None)
+        calls = []
+
+        def fake_update(ssh, cmd, timeout):
+            calls.append(cmd)
+            cancel.request("update")
+            return True, ""
+        monkeypatch.setattr(updater, "run", lambda ssh, cmd, timeout=120: calls.append(cmd) or ("", "", 0))
+        monkeypatch.setattr(updater, "_do_update", fake_update)
+        try:
+            results = updater._update_containers(object(), {"name": "h"}, [
+                {"name": "a", "path": "/a"}, {"name": "b", "path": "/b"}])
+        finally:
+            cancel.clear("update")
+        assert [r.server for r in results] == ["a (h)"]
+        assert any("image prune" in c for c in calls)

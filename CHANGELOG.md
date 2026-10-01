@@ -9,6 +9,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.6] — 2026-10-01
+
+### Added
+
+- **A running job can be stopped.** While a job runs its row shows a red **stop** instead of
+  *run now*; it asks first and says what will happen. The stop is cooperative: the job looks
+  before each host and each compose project, finishes the step it is on — a command already
+  running on a host is not cut, a machine woken for the run is still shut down — and goes no
+  further. The row reads *stopping…* until then, and the summary and the report say the run was
+  stopped and what was not reached.
+
+### Changed
+
+- **The reports page keeps its notes behind a "?".** *Scheduled work* and *Reports* each have a
+  **?** on the right of their heading, opening what used to be the paragraphs under them, plus
+  what the page's controls do.
+- **The scheduled-work row carries only run (or stop).** The *report* and *history* buttons are
+  gone; the full list is right below.
+
 ## [0.2.5] — 2026-10-01
 
 ### Changed
@@ -435,7 +454,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/orkun-soylu/timar/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/orkun-soylu/timar/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/orkun-soylu/timar/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/orkun-soylu/timar/compare/v0.2.2...v0.2.3

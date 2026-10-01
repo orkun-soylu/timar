@@ -25,7 +25,7 @@ import logging
 import traceback
 from datetime import datetime
 
-from . import config, jobs, reports, schedule as schedule_module, state
+from . import cancel, config, jobs, reports, schedule as schedule_module, state
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,17 @@ class Scheduler:
     def is_running(self, name: str) -> bool:
         return name in self._running
 
+    def request_stop(self, name: str) -> bool:
+        """Ask a running job to stop after the step it is on. False if it is not running."""
+        if name not in self._running:
+            return False
+        cancel.request(name)
+        logger.info("%s: stop requested", name)
+        return True
+
+    def is_stopping(self, name: str) -> bool:
+        return name in self._running and cancel.requested(name)
+
     @staticmethod
     def _record(name: str, *, ok: bool, summary: str = "", error: str = "",
                 report: str = "") -> None:
@@ -174,6 +185,8 @@ class Scheduler:
             return False
 
         async with lock:
+            # A stop asked for after the previous run had already finished must not cut this one.
+            cancel.clear(name)
             self._running.add(name)
             state.mark_started(name)
             logger.info("%s started", name)
@@ -192,6 +205,7 @@ class Scheduler:
                 return True
             finally:
                 self._running.discard(name)
+                cancel.clear(name)
 
 
 scheduler = Scheduler()

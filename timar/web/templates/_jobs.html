@@ -19,7 +19,7 @@
       <td class="muted">{{ job.schedule }}</td>
       <td>
         {% if job.running %}
-          <span class="muted">{{ _("running…") }}</span>
+          <span class="muted">{{ _("stopping…") if job.stopping else _("running…") }}</span>
         {% elif job.last_run %}
           {# The load-bearing field. A job that stops being scheduled writes no error
              anywhere; a stale timestamp here is the only thing that reveals it. #}
@@ -31,23 +31,26 @@
       <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
       <td style="text-align:right; white-space:nowrap">
         <div class="icon-row">
-        {% if job.has_report %}
-          {# A full page, not an expander: this panel re-renders every 15s and would close it. #}
-          <a href="/jobs/{{ job.name }}/report" class="icon-btn"
-             title="{{ _("report") }}" aria-label="{{ _("report") }}">{{ icon("report") }}</a>
-        {% endif %}
-        {% if job.archived %}
-          <a href="/reports?job={{ job.name }}" class="icon-btn"
-             title="{{ _("history") }}" aria-label="{{ _("history") }}">{{ icon("history") }}</a>
-        {% endif %}
+        {# The full history is the list below this panel, so the row carries only what changes
+           the job's state: run it now, or — while it runs — ask it to stop. #}
+        {% if job.running %}
+          {% if job.name == "update" %}{% set confirm_stop = _("Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.") %}
+          {% else %}{% set confirm_stop = _("Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.") %}{% endif %}
+          <button type="button" class="icon-btn danger"
+                  title="{{ _("stopping…") if job.stopping else _("stop") }}" aria-label="{{ _("stop") }}"
+                  hx-post="/jobs/{{ job.name }}/stop"
+                  hx-target="#jobs-panel" hx-swap="innerHTML"
+                  {% if job.stopping %}disabled{% endif %}
+                  hx-confirm="{{ confirm_stop }}">{{ icon("stop") }}</button>
+        {% else %}
         <button type="button" class="icon-btn"
                 title="{{ _("run now") }}" aria-label="{{ _("run now") }}"
                 hx-post="/jobs/{{ job.name }}/run"
                 hx-target="#jobs-panel" hx-swap="innerHTML"
-                {% if job.running %}disabled{% endif %}
                 {% if job.name == "update" %}
                 hx-confirm="{{ _("Run updates now? Machines that are asleep will be woken, updated, and shut down again.") }}"
                 {% endif %}>{{ icon("play") }}</button>
+        {% endif %}
         </div>
       </td>
     </tr>

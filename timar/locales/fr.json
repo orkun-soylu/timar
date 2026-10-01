@@ -89,7 +89,6 @@
   "running…": "en cours…",
   "never": "jamais",
   "report": "rapport",
-  "history": "historique",
   "Run updates now? Machines that are asleep will be woken, updated, and shut down again.": "Lancer les mises à jour maintenant ? Les machines en veille seront réveillées, mises à jour puis éteintes à nouveau.",
   "run now": "lancer maintenant",
   "Waiting for the scheduler's first tick.": "En attente du premier cycle du planificateur.",
@@ -276,5 +275,13 @@
   "Every compose project on {host} is already registered.": "Tous les projets compose sur {host} sont déjà enregistrés.",
   "Find": "Chercher",
   "Find on a host": "Chercher sur un hôte",
-  "Tick at least one project.": "Cochez au moins un projet."
+  "Tick at least one project.": "Cochez au moins un projet.",
+  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Afficher</em> réduit la liste à une tâche ; le choix est dans l’adresse, une liste filtrée peut donc être mise en favori. Le rouge marque une exécution en échec ; une exécution terminée avec des constats reste dans la couleur normale. Le bouton en fin de ligne ouvre le rapport complet.",
+  "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Lit chaque machine allumée : erreurs du journal système, remplissage des disques, conteneurs arrêtés et tâches planifiées qui n’ont pas tourné. Les machines en veille ne sont pas réveillées et sont signalées comme non vérifiées.",
+  "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Affiché pendant qu’une tâche tourne. La tâche s’arrête après l’étape en cours — une commande déjà lancée sur un hôte se termine, et une machine réveillée pour la tournée est quand même éteinte ; ce qui n’était pas atteint attend la prochaine tournée. Le rapport indique l’arrêt.",
+  "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "Lance la tâche hors de sa planification. La tournée de mises à jour demande d’abord, parce qu’elle réveille des machines.",
+  "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Arrêter l’inspection des journaux ? Elle s’arrête après l’hôte en cours ; les hôtes suivants ne sont pas vérifiés cette fois.",
+  "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Arrêter la tournée de mises à jour ? Elle s’arrête après l’étape en cours : une commande déjà lancée sur un hôte se termine d’abord, et une machine réveillée pour la tournée est quand même éteinte. Les machines pas encore atteintes ne sont pas mises à jour cette fois.",
+  "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Réveille les machines en veille, les met à jour avec leurs projets compose, et éteint ce qu’elle a réveillé.",
+  "stopping…": "arrêt en cours…"
 }
