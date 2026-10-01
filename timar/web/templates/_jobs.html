@@ -31,8 +31,8 @@
       <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
       <td style="text-align:right; white-space:nowrap">
         <div class="icon-row">
-        {# The full history is the list below this panel, so the row carries only what changes
-           the job's state: run it now, or — while it runs — ask it to stop. #}
+        {# The full history is the list below this panel, so the row carries what changes the
+           job: run it now (or, while it runs, ask it to stop), and edit its schedule. #}
         {% if job.running %}
           {% if job.name == "update" %}{% set confirm_stop = _("Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.") %}
           {% else %}{% set confirm_stop = _("Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.") %}{% endif %}
@@ -51,6 +51,11 @@
                 hx-confirm="{{ _("Run updates now? Machines that are asleep will be woken, updated, and shut down again.") }}"
                 {% endif %}>{{ icon("play") }}</button>
         {% endif %}
+        {# The job's schedule — and for the sweep its window and threshold — in the dialog. #}
+        <a href="/settings/jobs/{{ job.name }}/edit" class="icon-btn"
+           title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
+           hx-get="/settings/jobs/{{ job.name }}/edit" hx-target="#dialog-body"
+           hx-swap="innerHTML">{{ icon("edit") }}</a>
         </div>
       </td>
     </tr>

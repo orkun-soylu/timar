@@ -1,9 +1,9 @@
-{# The schedule of each job and the log sweep's own settings — what used to be two panels on the
-   settings page, now opened from + beside Scheduled work. One section per job, one save. #}
+{# One job's schedule — and for the log sweep its window and threshold — opened from the pencil on
+   its row in Scheduled work, filled with what is saved. #}
 {% from "_icons.html" import close_dialog with context %}
 {% from "_form.html" import section_head with context %}
 <section class="panel" id="jobs-form">
-  <h2 class="with-action">{{ _("Schedule a job") }}
+  <h2 class="with-action">{{ _("Edit {name}", name=job.title) }}
     {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
 
   {% if errors %}
@@ -12,12 +12,12 @@
     </div>
   {% endif %}
 
-  <form method="post" action="/settings/jobs" class="stack"
-        {% if in_dialog %}hx-post="/settings/jobs" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
-    {% for job in jobs %}
+  <form method="post" action="/settings/jobs/{{ job.name }}" class="stack"
+        {% if in_dialog %}hx-post="/settings/jobs/{{ job.name }}" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
+    {% for job in [job] %}
       {% set current = schedules.get(job.name, {}) %}
       <div class="form-section">
-        {{ section_head(job.title, "help-job-" ~ job.name) }}
+        {{ section_head(_("Schedule"), "help-job-" ~ job.name) }}
         <label class="inline">
           <input type="checkbox" name="{{ job.name }}_enabled" {{ "checked" if current.get("enabled") else "" }}>
           <span>{{ _("Run on a schedule") }}</span>
@@ -72,6 +72,7 @@
       <dd>{{ _("<em>daily</em> runs every day at <em>At</em>. <em>weekly</em> runs on <em>Day</em> at <em>At</em>. <em>interval</em> runs every <em>N hours</em>, counted from the last run; one that fell due while Timar was down runs as soon as it is back.") }}</dd>
       <dd>{{ _("Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00. Without <em>Run on a schedule</em> the job runs only from <em>run now</em>.") }}</dd>
   {% endmacro %}
+  {% if job.name == "log_sweep" %}
   <div id="help-job-log_sweep" popover class="popover">
     <h3>{{ _("Log sweep") }}</h3>
     <dl class="help-list">
@@ -85,6 +86,7 @@
     </dl>
     <button type="button" class="secondary" popovertarget="help-job-log_sweep" popovertargetaction="hide">{{ _("close") }}</button>
   </div>
+  {% else %}
   <div id="help-job-update" popover class="popover">
     <h3>{{ _("Update run") }}</h3>
     <dl class="help-list">
@@ -94,4 +96,5 @@
     </dl>
     <button type="button" class="secondary" popovertarget="help-job-update" popovertargetaction="hide">{{ _("close") }}</button>
   </div>
+  {% endif %}
 </section>

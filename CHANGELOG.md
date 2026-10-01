@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.12] — 2026-10-02
+
+### Changed
+
+- **Each job is edited from its own row.** The **+** on *Scheduled work* suggested more jobs
+  could be added; there are exactly two. It is gone, and the heading carries only its **?**, as
+  every other heading does. Each row has a pencil beside *run*: it opens that job's settings,
+  filled with what is saved — the log sweep's schedule with its log window and disk threshold,
+  or the update run's schedule. Saving one job leaves the other untouched.
+
 ## [0.2.11] — 2026-10-02
 
 ### Changed
@@ -510,7 +520,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.11...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.12...HEAD
+[0.2.12]: https://github.com/orkun-soylu/timar/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/orkun-soylu/timar/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/orkun-soylu/timar/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/orkun-soylu/timar/compare/v0.2.8...v0.2.9

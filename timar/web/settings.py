@@ -445,59 +445,64 @@ async def test_telegram():
     return HTMLResponse(f'<span class="ok">{_escape(_("Sent — check your chat."))}</span>')
 
 
-def _jobs_form(request: Request, *, errors: list[str] | None = None,
-               submitted: dict | None = None, status_code: int = 200):
-    """The schedules and the log sweep's settings, in the reports page's dialog.
+def _job_form(request: Request, name: str, *, errors: list[str] | None = None,
+              submitted: dict | None = None, status_code: int = 200):
+    """One job's schedule — and the log sweep's own settings — in the reports page's dialog.
 
-    A rejected save comes back with what was typed: the schedule fields are rebuilt from the
-    form so a mistake in one job does not reset the other.
+    A rejected save comes back with what was typed rather than what is stored.
     """
+    if name not in jobs.JOBS:
+        raise HTTPException(404)
     cfg = config.load()
-    schedules = cfg.get("schedules") or {}
+    schedule = (cfg.get("schedules") or {}).get(name, {})
     log_check = cfg.get("log_check", {})
     if submitted is not None:
-        schedules = {name: {
-            "enabled": submitted.get(f"{name}_enabled") in ("on", "true", "1"),
-            "kind": submitted.get(f"{name}_kind"), "at": submitted.get(f"{name}_at"),
-            "day": submitted.get(f"{name}_day"), "every_hours": submitted.get(f"{name}_every_hours"),
-        } for name in jobs.JOBS}
+        schedule = {"enabled": submitted.get(f"{name}_enabled") in ("on", "true", "1"),
+                    "kind": submitted.get(f"{name}_kind"), "at": submitted.get(f"{name}_at"),
+                    "day": submitted.get(f"{name}_day"),
+                    "every_hours": submitted.get(f"{name}_every_hours")}
         log_check = {"journal_hours": submitted.get("journal_hours"),
                      "disk_threshold": submitted.get("disk_threshold")}
-    return _panel(request, "_jobs_form.html", {
-        "schedules": schedules, "log_check": log_check,
-        "jobs": [{"name": n, "title": _(jobs.TITLES[n])} for n in jobs.JOBS],
+    job = {"name": name, "title": _(jobs.TITLES[name])}
+    return _panel(request, "_job_form.html", {
+        "job": job, "schedules": {name: schedule}, "log_check": log_check,
         "days": list(_DAYS), "kinds": list(_KINDS), "errors": errors or [],
-    }, title=_("Schedule a job"), status_code=status_code, section="reports")
+    }, title=_("Edit {name}", name=job["title"]), status_code=status_code, section="reports")
 
 
-@router.get("/jobs", response_class=HTMLResponse)
-async def jobs_form(request: Request):
-    return _jobs_form(request)
+@router.get("/jobs/{name}/edit", response_class=HTMLResponse)
+async def edit_job(request: Request, name: str):
+    return _job_form(request, name)
 
 
-@router.post("/jobs")
-async def save_jobs(request: Request):
-    """Both settings in one save, validated together so neither is written half-way."""
+@router.post("/jobs/{name}")
+async def save_job(request: Request, name: str):
+    """This job's schedule — and, for the sweep, its settings — validated together."""
+    if name not in jobs.JOBS:
+        raise HTTPException(404)
     form = dict(await request.form())
     cfg = config.load()
     errors: list[str] = []
+    log_check = None
+    if name == jobs.LOG_SWEEP:
+        try:
+            log_check = validate.log_check(form)
+        except validate.ValidationError as e:
+            errors += e.errors
     try:
-        log_check = validate.log_check(form)
-    except validate.ValidationError as e:
-        errors += e.errors
-    try:
-        schedules = validate.schedules(form, jobs.JOBS)
+        schedule = validate.schedules(form, [name])[name]
     except validate.ValidationError as e:
         errors += e.errors
     if errors:
-        return _jobs_form(request, errors=errors, submitted=form, status_code=400)
-    cfg["log_check"], cfg["schedules"] = log_check, schedules
+        return _job_form(request, name, errors=errors, submitted=form, status_code=400)
+    if log_check is not None:
+        cfg["log_check"] = log_check
+    cfg["schedules"] = {**(cfg.get("schedules") or {}), name: schedule}
     config.save(cfg)
-    # The running loops re-read config on their next tick, so no restart is needed -- but the
+    # The running loop re-reads config on its next tick, so no restart is needed -- but the
     # stored next_run is now wrong until that happens, and a dashboard showing a next run that
     # no longer matches the schedule is exactly the kind of thing that erodes trust in it.
-    for name in jobs.JOBS:
-        state.set_next_run(name, None)
+    state.set_next_run(name, None)
     return _done(request, "/reports")
 
 
