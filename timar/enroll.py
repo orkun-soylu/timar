@@ -23,6 +23,7 @@ import paramiko
 from . import config, keys
 from .i18n import gettext as _
 from .network import split_address
+from .ssh import new_client
 from .platforms import get as get_platform
 
 logger = logging.getLogger(__name__)
@@ -65,17 +66,11 @@ class Result:
 def _connect(host: str, user: str, password: str) -> paramiko.SSHClient:
     """Password connection for enrolment only, with host keys pinned on first sight.
 
-    Trust-on-first-use, persisted to `/data/ssh/known_hosts`: the first connection is taken on
-    faith, and every one after it is checked. The bare `AutoAddPolicy` this replaces accepted
-    any key every time and never wrote anything down, which is not a weaker protection — it is
-    none at all. A changed key now raises rather than connecting.
+    Trust-on-first-use, persisted to `/data/ssh/known_hosts` (see `ssh.TrustOnFirstUse`): the
+    first connection is taken on faith, and every one after it is checked. A changed key raises
+    rather than connecting.
     """
-    client = paramiko.SSHClient()
-    known_hosts = config.path("ssh/known_hosts")
-    known_hosts.parent.mkdir(parents=True, exist_ok=True)
-    known_hosts.touch(exist_ok=True)
-    client.load_host_keys(str(known_hosts))     # also tells paramiko where to persist new ones
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client = new_client()
 
     hostname, port = split_address(host)
     try:
@@ -210,12 +205,7 @@ def verify(server: dict) -> str:
     """
     platform = get_platform(server.get("platform"))
     keys.ensure()  # so "no key yet" reports as an unaccepted key, not a missing-file traceback
-    client = paramiko.SSHClient()
-    known_hosts = config.path("ssh/known_hosts")
-    known_hosts.parent.mkdir(parents=True, exist_ok=True)
-    known_hosts.touch(exist_ok=True)
-    client.load_host_keys(str(known_hosts))
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client = new_client()
     hostname, port = split_address(server["host"])
     try:
         client.connect(
