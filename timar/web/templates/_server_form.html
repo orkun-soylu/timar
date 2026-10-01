@@ -1,6 +1,17 @@
-{# The add/edit form — one form in two modes. Opened in the dashboard's dialog, or as a page of
-   its own when there is no scripting (`in_dialog` false). #}
+{# The add/edit form — one form in two modes, and the place a server is enrolled. Opened in the
+   dashboard's dialog, or as a page of its own when there is no scripting (`in_dialog` false).
+
+   Three sections, each with a plain heading and a "?" that opens everything worth knowing about
+   it. The fields carry only their name and whether they are optional; the explanations live in
+   the popovers so the form itself stays short. #}
 {% from "_icons.html" import close_dialog with context %}
+{% macro section_head(title, help_id) -%}
+  <div class="form-section-head">
+    <h3>{{ title }}</h3>
+    <button type="button" class="help" popovertarget="{{ help_id }}"
+            aria-label="{{ _("About {section}", section=title) }}">?</button>
+  </div>
+{%- endmacro %}
 <section class="panel" id="server-form">
   <h2 class="with-action">{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}
     {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
@@ -14,121 +25,107 @@
   <form method="post" action="/settings/servers" class="stack"
         {% if in_dialog %}hx-post="/settings/servers" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
     {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
+    {# Enter in any field submits with the *first* submit button in the form — which would
+       otherwise be Enrol, connecting to a machine nobody asked to connect to. #}
+    <button type="submit" name="action" value="save" class="default-submit" tabindex="-1" aria-hidden="true"></button>
 
     {# Every field renders from `values`, which is what was typed when something was rejected
-       and the stored entry otherwise. Reading from storage on the error path is how a rejected
-       form used to hand back an empty page and ask the operator to retype it. #}
-    <div class="row">
-      <label><span>{{ _("Name") }}</span>
-        <input name="name" required value="{{ values.get('name', '') }}"></label>
-      <label><span>{{ _("Address") }}</span>
-        <input name="host" required placeholder="{{ _("10.0.0.5, host.lan or host.lan:2222") }}"
-               value="{{ values.get('host', '') }}"></label>
-    </div>
-    <div class="row">
-      <label><span>{{ _("SSH user") }}</span>
-        <input name="user" required value="{{ values.get('user', '') }}"></label>
-      <label><span>{{ _("Platform") }}</span>
-        <select name="platform">
-          {% for platform in platforms %}
-          <option value="{{ platform }}"
-            {{ "selected" if values.get('platform') == platform else "" }}>{{ platform }}</option>
-          {% endfor %}
-        </select></label>
-    </div>
-    <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
-      <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
-             value="{{ values.get('wol_mac', '') }}"></label>
-    <p class="hint">
-      {{ _("With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet, or Timar on a bridge network? Set a wake relay in <code>config.yaml</code> — see the README.") }}
-    </p>
-    {# Advanced settings live only in config.yaml. Shown, not editable, so a hand-written relay
-       is not invisible from the one screen that describes this machine — and the save carries
-       it across untouched (validate.SERVER_FIELDS). #}
-    {% if values.get('wol_relay') or values.get('wol_broadcast') %}
-    <p class="hint">
-      {%- if values.get('wol_relay') %}{{ _("Woken through {relay}.", relay=values.get('wol_relay')) }} {% endif %}
-      {%- if values.get('wol_broadcast') %}{{ _("Broadcast address {address}.", address=values.get('wol_broadcast')) }} {% endif %}
-      {{- _("Set in <code>config.yaml</code>; saving this form keeps it.") }}
-    </p>
-    {% endif %}
-    <label class="inline">
-      <input type="checkbox" name="on_demand"
-             {{ "checked" if values.get('on_demand') else "" }}>
-      <span>{{ _("Kept off on purpose") }} <em class="muted">— {{ _("no Wake-on-LAN; switched on by hand") }}</em></span>
-    </label>
-    <p class="hint">
-      {{ _("Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.") }}
-    </p>
+       and the stored entry otherwise — never the password, which is not sent back at all. #}
 
-    <div class="row">
-      <label><span>{{ _("Guest of") }} <em class="muted">{{ _("optional — a hypervisor that starts it") }}</em></span>
-        <select name="hypervisor">
-          <option value="">— {{ _("not a virtual machine") }} —</option>
-          {% for other in servers if other.platform == "proxmox" and other.name != editing %}
-          <option value="{{ other.name }}"
-            {{ "selected" if values.get('hypervisor') == other.name else "" }}>{{ other.name }}</option>
-          {% endfor %}
-        </select></label>
-      <label><span>{{ _("VM id") }} <em class="muted">{{ _("required with a hypervisor") }}</em></span>
-        <input name="vm_id" inputmode="numeric" placeholder="100"
-               value="{{ values.get('vm_id', '') }}"></label>
-    </div>
-    <label class="inline">
-      <input type="checkbox" name="guest_on_demand"
-             {{ "checked" if values.get('guest_on_demand') else "" }}>
-      <span>{{ _("Kept off on purpose") }} <em class="muted">— {{ _("a VM you start only when needed") }}</em></span>
-    </label>
-    <p class="hint">
-      {{ _("A guest needs no MAC — it is started with <code>qm</code>. It sleeps when its host sleeps; on an always-on host, tick the box above.") }}
-    </p>
-
-    <label><span>{{ _("Web interface") }} <em class="muted">{{ _("optional") }}</em></span>
-      <input name="web_url" placeholder="{{ _("10.0.0.5:8006 or https://host.lan") }}"
-             value="{{ values.get('web_url', '') }}"></label>
-    <p class="hint">
-      {{ _("While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.") }}
-    </p>
-
-    {# The label is not wrapped around the input here: the popover button inside a <label>
-       would forward its click to the input instead of opening. #}
-    <div class="field">
-      <span class="field-label">{{ _("Update command") }} <em class="muted">{{ _("optional") }} —</em>
-        <button type="button" class="linkish" popovertarget="platform-defaults">{{ _("platform default") }}</button></span>
-      <input name="update_cmd" aria-label="{{ _("Update command") }}" value="{{ values.get('update_cmd', '') }}">
-    </div>
-    <p class="hint">
-      {{ _("Left empty, the platform default runs. OpenWrt has none: it is swept but never updated.") }}
-    </p>
-    {# A popover, not a second dialog: it opens above the form in the top layer, closes on Esc
-       or a click outside, and needs no script. #}
-    <div id="platform-defaults" popover class="popover">
-      <h3>{{ _("Platform defaults") }}</h3>
-      <p class="muted">{{ _("What an update run executes when the update command is empty.") }}</p>
-      {% for id, label, cmd in platform_defaults %}
-      <div class="default-cmd">
-        <strong>{{ label }}</strong> <span class="muted">({{ id }})</span>
-        {% if cmd %}<pre class="report">{{ cmd }}</pre>
-        {% else %}<p class="muted">{{ _("None — swept, never updated.") }}</p>{% endif %}
+    <div class="form-section">
+      {{ section_head(_("Server info"), "help-server") }}
+      <div class="row">
+        <label><span>{{ _("Name") }}</span>
+          <input name="name" required value="{{ values.get('name', '') }}"></label>
+        <label><span>{{ _("Address") }}</span>
+          <input name="host" required placeholder="{{ _("10.0.0.5, host.lan or host.lan:2222") }}"
+                 value="{{ values.get('host', '') }}"></label>
       </div>
-      {% endfor %}
-      <button type="button" class="secondary" popovertarget="platform-defaults" popovertargetaction="hide">{{ _("close") }}</button>
+      <div class="row">
+        <label><span>{{ _("Platform") }}</span>
+          <select name="platform">
+            {% for platform in platforms %}
+            <option value="{{ platform }}"
+              {{ "selected" if values.get('platform') == platform else "" }}>{{ platform }}</option>
+            {% endfor %}
+          </select></label>
+        <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
+          <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
+                 value="{{ values.get('wol_mac', '') }}"></label>
+      </div>
+      <label class="inline">
+        <input type="checkbox" name="on_demand" {{ "checked" if values.get('on_demand') else "" }}>
+        <span>{{ _("On-demand") }}</span>
+      </label>
+      <div class="row">
+        <label><span>{{ _("Guest of") }} <em class="muted">{{ _("optional") }}</em></span>
+          <select name="hypervisor">
+            <option value="">{{ _("host") }}</option>
+            {% for other in servers if other.platform == "proxmox" and other.name != editing %}
+            <option value="{{ other.name }}"
+              {{ "selected" if values.get('hypervisor') == other.name else "" }}>{{ other.name }}</option>
+            {% endfor %}
+          </select></label>
+        <label><span>{{ _("VM id") }} <em class="muted">{{ _("required with a hypervisor") }}</em></span>
+          <input name="vm_id" inputmode="numeric" placeholder="100"
+                 value="{{ values.get('vm_id', '') }}"></label>
+      </div>
+      <label><span>{{ _("Web interface") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="web_url" placeholder="{{ _("10.0.0.5:8006 or https://host.lan") }}"
+               value="{{ values.get('web_url', '') }}"></label>
+      {# Advanced settings live only in config.yaml. Shown, not editable, so a hand-written relay
+         is not invisible from the one screen that describes this machine — and the save carries
+         it across untouched (validate.SERVER_FIELDS). #}
+      {% if values.get('wol_relay') or values.get('wol_broadcast') %}
+      <p class="hint">
+        {%- if values.get('wol_relay') %}{{ _("Woken through {relay}.", relay=values.get('wol_relay')) }} {% endif %}
+        {%- if values.get('wol_broadcast') %}{{ _("Broadcast address {address}.", address=values.get('wol_broadcast')) }} {% endif %}
+        {{- _("Set in <code>config.yaml</code>; saving this form keeps it.") }}
+      </p>
+      {% endif %}
     </div>
 
-    <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
-      <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
-             placeholder="{{ default_update_timeout }}"
-             value="{{ values.get('update_timeout', '') }}"></label>
-    <p class="hint">
-      {{ _("Past the limit the run is marked failed; the command keeps running and the host stays on.") }}
-    </p>
+    <div class="form-section">
+      {{ section_head(_("Update"), "help-update") }}
+      {# Not wrapped in a <label>: the popover button inside one would forward its click to the
+         input instead of opening. #}
+      <div class="field">
+        <span class="field-label">{{ _("Update command") }} <em class="muted">{{ _("optional") }} —</em>
+          <button type="button" class="linkish" popovertarget="platform-defaults">{{ _("platform default") }}</button></span>
+        <input name="update_cmd" aria-label="{{ _("Update command") }}" value="{{ values.get('update_cmd', '') }}">
+      </div>
+      <div class="row">
+        <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
+          <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
+                 placeholder="{{ default_update_timeout }}"
+                 value="{{ values.get('update_timeout', '') }}"></label>
+      </div>
+      <label><span>{{ _("Context for the log analysis") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
+               value="{{ values.get('context', '') }}"></label>
+    </div>
 
-    <label><span>{{ _("Context for the log analysis") }} <em class="muted">{{ _("optional") }}</em></span>
-      <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
-             value="{{ values.get('context', '') }}"></label>
+    <div class="form-section" id="ssh-access">
+      {{ section_head(_("SSH access"), "help-ssh") }}
+      {% if enrol_result %}<div class="notice good">{{ enrol_result }}</div>
+      {% elif enrol_error %}<div class="notice bad">{{ enrol_error }}</div>{% endif %}
+      <div class="row">
+        <label><span>{{ _("SSH user") }}</span>
+          <input name="user" required value="{{ values.get('user', '') }}"></label>
+        <label><span>{{ _("Password") }} <em class="muted">{{ _("only to enrol, never stored") }}</em></span>
+          <input name="password" type="password" autocomplete="new-password"></label>
+      </div>
+      <label class="inline">
+        <input type="checkbox" name="grant_sudo">
+        <span>{{ _("Also grant passwordless sudo") }}</span>
+      </label>
+      <div class="actions">
+        <button type="submit" name="action" value="enrol" class="secondary">{{ _("Enrol") }}</button>
+      </div>
+    </div>
 
-    <div class="actions">
-      <button type="submit">{{ _("Save changes") if editing else _("Add server") }}</button>
+    <div class="actions form-actions">
+      <button type="submit" name="action" value="save">{{ _("Save changes") if editing else _("Add server") }}</button>
       {% if in_dialog %}
         <button type="button" class="secondary" data-close-dialog>{{ _("cancel") }}</button>
       {% else %}
@@ -136,4 +133,71 @@
       {% endif %}
     </div>
   </form>
+
+  {# The help, one popover per section: opens above the form in the top layer, closes on Esc or
+     a click outside, needs no script. #}
+  <div id="help-server" popover class="popover">
+    <h3>{{ _("Server info") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("Name") }}</dt>
+      <dd>{{ _("Letters, digits, dot, dash and underscore. Used in reports and logs.") }}</dd>
+      <dt>{{ _("Address") }}</dt>
+      <dd>{{ _("An IP or a hostname. SSH on another port goes after it: <code>10.0.0.5:2222</code>, or <code>[fd00::5]:2222</code> for IPv6.") }}</dd>
+      <dt>{{ _("Platform") }}</dt>
+      <dd>{{ _("Decides which commands Timar runs there — the log reader, the disk check, the update command and how it is shut down.") }}</dd>
+      <dt>{{ _("Wake-on-LAN MAC") }}</dt>
+      <dd>{{ _("With a MAC Timar can wake the machine: updates wake it and shut it down again, and the row gets a wake button. In another subnet, or Timar on a bridge network? Set a wake relay in <code>config.yaml</code> — see the README.") }}</dd>
+      <dt>{{ _("On-demand") }}</dt>
+      <dd>{{ _("Off on purpose most of the time. Off reads as <em>asleep</em> rather than <em>down</em>, and updates wake it (with a MAC or as a VM) or skip it until it is back (without either). A machine with a MAC is on-demand anyway. A VM inherits it from its hypervisor: every guest of an on-demand host is on-demand; tick it for a VM on an always-on host that you start only when needed.") }}</dd>
+      <dt>{{ _("Guest of") }}</dt>
+      <dd>{{ _("<em>host</em> for a machine of its own. For a VM, the Proxmox host that starts it with <code>qm</code> — it needs no MAC — and its VM id there.") }}</dd>
+      <dt>{{ _("Web interface") }}</dt>
+      <dd>{{ _("While the machine is up, its name on the servers page opens this address. Without a scheme it is opened as <code>https://</code>.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-server" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="help-update" popover class="popover">
+    <h3>{{ _("Update") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("Update command") }}</dt>
+      <dd>{{ _("Replaces the platform default — see <em>platform default</em>. Left empty, the default runs. OpenWrt has none: it is swept but never updated.") }}</dd>
+      <dt>{{ _("Update timeout") }}</dt>
+      <dd>{{ _("Past the limit the run is marked failed; the command keeps running and the host stays on.") }}</dd>
+      <dt>{{ _("Context for the log analysis") }}</dt>
+      <dd>{{ _("One line handed to the model that reads this machine's logs, to explain what looks alarming but is not. The cheapest way to stop a recurring false alarm.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-update" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="platform-defaults" popover class="popover">
+    <h3>{{ _("Platform defaults") }}</h3>
+    <p class="muted">{{ _("What an update run executes when the update command is empty.") }}</p>
+    {% for id, label, cmd in platform_defaults %}
+    <div class="default-cmd">
+      <strong>{{ label }}</strong> <span class="muted">({{ id }})</span>
+      {% if cmd %}<pre class="report">{{ cmd }}</pre>
+      {% else %}<p class="muted">{{ _("None — swept, never updated.") }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <button type="button" class="secondary" popovertarget="platform-defaults" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="help-ssh" popover class="popover">
+    <h3>{{ _("SSH access") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("SSH user") }}</dt>
+      <dd>{{ _("The account Timar logs in as. Not root? It needs passwordless sudo for updates and shutdowns.") }}</dd>
+      <dt>{{ _("Enrol") }}</dt>
+      <dd>{{ _("Saves the form, connects once with the password, appends Timar's key to the user's <code>authorized_keys</code>, then proves the key works on its own. <strong>The password is used for this request and nothing else</strong> — not stored, not logged, not sent back to the page.") }}</dd>
+      <dd>{{ _("With the password left empty, Enrol only checks an existing enrolment: it connects with the key and reports who it becomes and whether passwordless sudo works.") }}</dd>
+      <dt>{{ _("Also grant passwordless sudo") }}</dt>
+      <dd>{{ _("Writes <code>user ALL=(ALL) NOPASSWD:ALL</code> to <code>/etc/sudoers.d/timar</code>, validated with <code>visudo</code> first — if validation fails nothing is changed. Skipped for root and on OpenWrt, which has no sudo.") }}</dd>
+      <dt>{{ _("Timar's key") }}</dt>
+      <dd>{{ _("One keypair for the whole installation, generated on first use and kept in its data volume. You can also install it by hand — Timar only needs it accepted — and then Enrol with no password to check.") }}</dd>
+      <dd><code>{{ fingerprint }}</code></dd>
+      <dd><pre class="report">{{ public_key }}</pre></dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-ssh" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
 </section>

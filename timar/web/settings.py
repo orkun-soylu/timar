@@ -1,7 +1,7 @@
 """Settings: servers, log sweep defaults, the model connection, and notifications.
 
 The settings page itself carries only the fleet-wide settings. Servers are managed from the
-dashboard: its buttons open the add/edit form and the enrolment panel in a dialog, filled from
+dashboard: its buttons open the add/edit form — which is also where a server is enrolled — in a dialog, filled from
 the routes here — which answer with the bare panel to htmx and with a whole page otherwise, so
 every button is still a working link without scripting.
 
@@ -15,6 +15,7 @@ treating it as a deletion would wipe the credential on any unrelated edit to the
 """
 from __future__ import annotations
 
+import asyncio
 import html
 from pathlib import Path
 from urllib.parse import quote
@@ -24,7 +25,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_module, notify,
-                state, status as fleet_status, updater, validate, wol)
+                state, status as fleet_status, updater, validate)
 from ..i18n import gettext as _
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
@@ -60,37 +61,20 @@ def _server_values(servers: list[dict], guest_of: dict, edit: str | None,
     from somewhere.
     """
     if submitted is not None:
-        return dict(submitted)
+        # The password is never sent back, not even to a form that was rejected: refilled, it
+        # would sit in the browser's history and in any proxy in between.
+        return {k: v for k, v in submitted.items() if k != "password"}
     if edit:
         server = next((s for s in servers if s["name"] == edit), None)
         if server:
             link = guest_of.get(edit) or {}
+            # The box shows what Timar will *do*, not which flag was written: a machine with a
+            # MAC, or a guest of an on-demand host, is on-demand without one.
             return {**server,
                     "hypervisor": link.get("hypervisor", ""),
                     "vm_id": link.get("vm_id", ""),
-                    "guest_on_demand": link.get("guest_on_demand", False)}
+                    "on_demand": edit in config.on_demand(servers)}
     return {}
-
-
-def _enrol_context(server: dict | None, error: str | None, result: str | None) -> dict | None:
-    """Everything the enrolment panel needs, or `None` when it is not open.
-
-    The keypair is the *installation's*, not this server's — one pair, generated on first use.
-    It is shown here anyway because this is where an operator decides whether to trust it: the
-    fingerprint to compare, and the public key for anyone who would rather install it by hand.
-    """
-    if server is None:
-        return None
-    platform = get_platform(server.get("platform"))
-    return {
-        "server": server,
-        "platform": platform,
-        "fingerprint": keys.fingerprint(),
-        "public_key": keys.public_key(),
-        "can_sudo": platform.supports_sudo and server["user"] != "root",
-        "error": error,
-        "result": result,
-    }
 
 
 def _htmx(request: Request) -> bool:
@@ -131,7 +115,8 @@ def _guest_of(servers: list[dict]) -> dict:
 
 
 def _server_form(request: Request, *, edit: str | None = None, submitted: dict | None = None,
-                 errors: list[str] | None = None, status_code: int = 200):
+                 errors: list[str] | None = None, status_code: int = 200,
+                 enrol_result: str | None = None, enrol_error: str | None = None):
     servers = config.load().get("servers", [])
     guest_of = _guest_of(servers)
     # The name being edited comes from the submitted form first: a rejected rename still has to
@@ -149,14 +134,14 @@ def _server_form(request: Request, *, edit: str | None = None, submitted: dict |
         "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
         "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
         "errors": errors or [],
+        # The installation's key, for the SSH section's help: the fingerprint to compare and the
+        # public half for anyone who would rather install it by hand.
+        "fingerprint": keys.fingerprint(),
+        "public_key": keys.public_key(),
+        "enrol_result": enrol_result,
+        "enrol_error": enrol_error,
     }, title=_("Edit {name}", name=editing) if editing else _("Add a server"),
        status_code=status_code)
-
-
-def _enrol_panel(request: Request, server: dict, *, error: str | None = None,
-                 result: str | None = None, status_code: int = 200):
-    return _panel(request, "_enrol.html", {"enrol": _enrol_context(server, error, result)},
-                  title=_("Enrol {name}", name=server["name"]), status_code=status_code)
 
 
 def _view(request: Request, *, errors: list[str] | None = None, notice: str | None = None,
@@ -195,7 +180,7 @@ async def page(request: Request, notice: str | None = None, edit: str | None = N
     # A link to a server that has since been removed just opens this page.
     names = {s["name"]: s["name"] for s in config.load().get("servers", [])}
     if enroll and enroll in names:
-        return RedirectResponse(f"/settings/servers/{quote(names[enroll])}/enroll",
+        return RedirectResponse(f"/settings/servers/{quote(names[enroll])}/edit",
                                 status_code=SEE_OTHER)
     if edit and edit in names:
         return RedirectResponse(f"/settings/servers/{quote(names[edit])}/edit",
@@ -285,6 +270,9 @@ async def save_server(request: Request):
     paths drift until one of them stops validating something.
     """
     form = dict(await request.form())
+    # Taken out first, so nothing below — the error path included — can hand it back.
+    password = form.pop("password", "") or ""
+    enrolling = form.get("action") == "enrol"
     cfg = config.load()
     servers = cfg.get("servers", [])
     original = form.get("original_name") or None
@@ -307,12 +295,42 @@ async def save_server(request: Request):
     else:
         servers.append(entry)
 
-    _relink_guest(servers, entry["name"], link, on_demand=bool(form.get("guest_on_demand")))
+    # One box for both kinds of machine: on a standalone one `validate.server` wrote it as
+    # `on_demand`; on a guest it belongs to the hypervisor's `manages_vms` entry.
+    _relink_guest(servers, entry["name"], link, on_demand=bool(form.get("on_demand")))
 
     cfg["servers"] = servers
     config.save(cfg)
     fleet_status.invalidate()  # the dashboard must not show a stale probe for a changed address
-    return _done(request)
+    if not enrolling:
+        return _done(request)
+
+    result, error = await asyncio.to_thread(
+        _enrol, entry, password, form.get("grant_sudo") in ("on", "true", "1"))
+    del password
+    # Rendered rather than redirected: the outcome is the whole point of the request, and a
+    # redirect would have to carry it in the URL, where it would survive a refresh and a share.
+    return _server_form(request, edit=entry["name"], enrol_result=result, enrol_error=error,
+                        status_code=400 if error else 200)
+
+
+def _enrol(server: dict, password: str, grant_sudo: bool) -> tuple[str | None, str | None]:
+    """Install Timar's key with the password, or — with none — check the key already works.
+
+    In a thread from the handler: paramiko blocks, and a slow host would otherwise freeze the
+    scheduler and every other tab for the length of the handshake.
+    """
+    try:
+        if not password:
+            return _("Key checked: {check}", check=enroll_module.verify(server)), None
+        outcome = enroll_module.enroll(server, password, grant_sudo=grant_sudo)
+        # Proved with the key alone, not with the password connection that just succeeded: the
+        # password working says nothing about whether the key will be accepted, and the key is
+        # what every later run depends on.
+        return _("{outcome} — verified: {check}", outcome=outcome.describe(),
+                 check=enroll_module.verify(server)), None
+    except enroll_module.EnrollError as e:
+        return None, str(e)
 
 
 @router.post("/servers/{name}/delete")
@@ -456,54 +474,12 @@ async def save_schedules(request: Request):
     return _redirect("saved")
 
 
-@router.get("/servers/{name}/enroll", response_class=HTMLResponse)
-async def enroll_form(request: Request, name: str):
-    return _enrol_panel(request, _find_server(name))
-
-
-@router.post("/servers/{name}/enroll", response_class=HTMLResponse)
-async def enroll_submit(request: Request, name: str):
-    """Install Timar's key on a host, using the operator's password once.
-
-    The password lives for the length of this request: it goes to the SSH channel and nowhere
-    else. It is never written to the config, the state file, or the log, and it is never sent
-    back to the page -- including on the error path, where re-rendering the form with the field
-    refilled would put it in the browser's history and any proxy in between.
-    """
-    form = dict(await request.form())
+@router.get("/servers/{name}/enroll")
+async def enroll_form(name: str):
+    """Enrolment is the form's SSH section now; old links and bookmarks land there."""
     server = _find_server(name)
-    password = form.get("password") or ""
-    wants_sudo = form.get("grant_sudo") in ("on", "true", "1")
-
-    error = None
-    result = None
-    if not password:
-        error = _("The SSH password is required.")
-    else:
-        try:
-            outcome = enroll_module.enroll(server, password, grant_sudo=wants_sudo)
-            # Proved with the key alone, not with the password connection that just succeeded:
-            # the password working says nothing about whether the key will be accepted, and the
-            # key is what every later run depends on.
-            result = _("{outcome} — verified: {check}", outcome=outcome.describe(),
-                       check=enroll_module.verify(server))
-        except enroll_module.EnrollError as e:
-            error = str(e)
-    del password
-
-    # Rendered rather than redirected: the outcome is the whole point of the request and a
-    # redirect would have to carry it in the URL, where it would survive a refresh and a share.
-    return _enrol_panel(request, server, error=error, result=result,
-                        status_code=400 if error else 200)
-
-
-@router.post("/servers/{name}/verify", response_class=HTMLResponse)
-async def verify_server(name: str):
-    server = _find_server(name)
-    try:
-        return HTMLResponse(f'<span class="ok">{_escape(enroll_module.verify(server))}</span>')
-    except enroll_module.EnrollError as e:
-        return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
+    return RedirectResponse(f"/settings/servers/{quote(server['name'])}/edit#ssh-access",
+                            status_code=SEE_OTHER)
 
 
 def _find_server(name: str) -> dict:
@@ -511,26 +487,3 @@ def _find_server(name: str) -> dict:
     if server is None:
         raise HTTPException(404)
     return server
-
-
-@router.post("/servers/{name}/wake", response_class=HTMLResponse)
-async def wake_server(name: str):
-    """Send a magic packet now.
-
-    Waking is the one Timar operation with no feedback of its own — the packet is fire and
-    forget, and a machine that stays dark could mean a wrong MAC, a packet that never left the
-    host, or Wake-on-LAN simply disabled in its firmware. Being able to press the button and
-    watch the dashboard is how an operator tells those apart.
-    """
-    cfg = config.load()
-    server = _find_server(name)
-    try:
-        wol.wake(server, {s["name"]: s for s in cfg.get("servers", [])})
-    except wol.WolError as e:
-        return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
-    fleet_status.invalidate()  # the machine is about to change state; a cached probe would lie
-    if relay := server.get("wol_relay"):
-        message = _("Magic packet sent via {relay} — watch the dashboard.", relay=relay)
-    else:
-        message = _("Magic packet sent — watch the dashboard.")
-    return HTMLResponse(f'<span class="ok">{_escape(message)}</span>')
