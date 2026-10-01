@@ -15,12 +15,17 @@
       --bg: #14161a; --panel: #1c1f26; --line: #2c313b;
       --text: #e6e8ec; --muted: #8b93a3;
       --up: #4ade80; --asleep: #64748b; --down: #f87171;
+      /* The mark's amber, as on timar.tools: the name and the page you are on. */
+      --accent: #e0a458;
     }
     @media (prefers-color-scheme: light) {
       :root {
         --bg: #f6f7f9; --panel: #ffffff; --line: #e2e5ea;
         --text: #1a1d23; --muted: #6b7280;
         --up: #16a34a; --asleep: #94a3b8; --down: #dc2626;
+        /* The mark's amber is too faint on white to read as text; timar.tools uses this
+           darker step of it in its light theme. */
+        --accent: #9a5f0d;
       }
     }
     * { box-sizing: border-box; }
@@ -168,6 +173,17 @@
     .notice.bad { border-left: 3px solid var(--down); color: var(--down); }
     section.panel table { margin-bottom: 0; }
     a { color: inherit; }
+    header.topnav { align-items: center; }
+    header.topnav .brand {
+      color: var(--accent); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    header.topnav nav { display: flex; gap: 1rem; }
+    header.topnav nav a { color: var(--muted); }
+    header.topnav nav a:hover { color: var(--text); }
+    header.topnav nav a.current { color: var(--accent); text-decoration: none; font-weight: 600; }
+    header.topnav .linkish { text-decoration: underline; font-size: inherit; }
+    header.topnav .linkish:hover { color: var(--text); }
     form.lang { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
     form.lang select { width: auto; padding: 0.25rem 0.45rem; font-size: 0.8rem; color: var(--muted); }
   </style>

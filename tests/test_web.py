@@ -1162,6 +1162,42 @@ class TestModelListing:
         assert 'list="model-options"' in client.get("/settings").text
 
 
+class TestTopNav:
+    """One header on every signed-in page; only the highlight moves."""
+
+    @staticmethod
+    def header(body):
+        return body[body.index('<header class="topnav">'):body.index("</header>")]
+
+    @pytest.mark.parametrize("path, current", [
+        ("/", "servers"), ("/reports", "reports"), ("/settings", "settings"),
+        ("/settings/servers/new", "servers"), ("/jobs/update/report", "reports"),
+    ])
+    def test_every_page_carries_it_with_its_own_place_highlighted(self, client, path, current):
+        complete_setup(client)
+        header = self.header(client.get(path).text)
+        assert f'class="current" aria-current="page">{current}<' in header
+        assert header.count('aria-current="page"') == 1
+        import re
+        order = re.findall(r'<a href="([^"]+)"', header)
+        assert order == ["/", "/", "/reports", "/settings"]          # brand, then the three
+        assert header.index('action="/lang"') < header.index('action="/logout"')
+
+    def test_the_name_is_lowercase_and_nothing_else_names_the_operator(self, client):
+        complete_setup(client)
+        header = self.header(client.get("/").text)
+        assert '<a href="/" class="brand">timar</a>' in header
+        assert "operator" not in header and ">op<" not in header
+        assert "🌐" not in header
+        assert "dashboard" not in client.get("/settings").text
+
+    def test_scheduled_work_lives_on_the_reports_page(self, client):
+        complete_setup(client)
+        assert "jobs-panel" not in client.get("/").text
+        reports_page = client.get("/reports").text
+        assert reports_page.index('id="jobs-panel"') < reports_page.index('id="report-list"')
+
+
 class TestReportArchive:
     """The series, not the snapshot.
 
@@ -1218,11 +1254,12 @@ class TestReportArchive:
                                  report="web-01:\n  disk 91% on /")
         assert "disk 91% on /" in client.get(f"/reports/{report_id}").text
 
-    def test_an_archived_report_links_back_to_its_own_filter(self, client):
-        """Comparing four update runs must not mean re-picking the filter between each one."""
+    def test_an_archived_report_sits_under_reports_in_the_menu(self, client):
         complete_setup(client)
         report_id = self.archive("update", title="Update run", report="ok")
-        assert 'href="/reports?job=update"' in client.get(f"/reports/{report_id}").text
+        body = client.get(f"/reports/{report_id}").text
+        assert 'class="current" aria-current="page">reports<' in body
+        assert "Update run · Archived run" in body
 
     def test_an_archived_report_is_escaped_rather_than_rendered(self, client):
         """Findings carry remote log lines. A host that logs `<script>` must not run it here."""
@@ -1246,7 +1283,7 @@ class TestReportArchive:
 
     def test_the_dashboard_links_to_the_archive(self, client):
         complete_setup(client)
-        assert 'href="/reports"' in client.get("/").text
+        assert 'href="/reports"' in client.get("/").text   # through the menu
 
     def test_the_history_link_appears_only_once_something_is_archived(self, client):
         complete_setup(client)

@@ -242,10 +242,8 @@ async def dashboard(request: Request, sort: str | None = None, dir: str | None =
                     operator: str = Depends(current_operator)):
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
-        "operator": operator,
         "servers": cfg.get("servers", []),
         **_fleet_view(cfg, sort, dir),
-        "jobs": _job_view(),
     })
 
 
@@ -303,8 +301,6 @@ async def job_report(request: Request, name: str, operator: str = Depends(curren
         "last_run": record.get("last_run"),
         "summary": record.get("last_summary"),
         "error": record.get("last_error"),
-        "back": "/",
-        "back_label": _("dashboard"),
     })
 
 
@@ -340,7 +336,10 @@ async def report_archive(request: Request, job: str = "",
     An unknown job filters to nothing rather than 404s — the value comes from a dropdown, and a
     stale bookmark naming a job that no longer exists should show an empty list, not an error.
     """
+    # Scheduled work sits at the top of this page: the latest run of each job, then every run
+    # before it.
     return TEMPLATES.TemplateResponse(request, "reports.html", {
+        "jobs": _job_view(),
         "job": job,
         "filters": _filters(job),
         "reports": reports.listing(job or None),
@@ -409,9 +408,4 @@ async def archived_report(request: Request, report_id: str,
         "last_run": entry.get("finished_at"),
         "summary": entry.get("summary"),
         "error": entry.get("error"),
-        # Back to the filtered list this was almost certainly reached from, not to the whole
-        # archive: an operator comparing four update runs should not re-pick the filter between
-        # each one.
-        "back": f"/reports?job={entry.get('job', '')}",
-        "back_label": _("reports"),
     })

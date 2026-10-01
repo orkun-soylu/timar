@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.18] — 2026-10-01
+
+### Changed
+
+- **One menu on every page.** The header reads *timar* — lowercase, in the mark's amber — then
+  **servers · reports · settings**, the language and *sign out*. The page you are on is
+  highlighted in amber; the others are plain links. It replaces the per-page titles and the
+  "← dashboard" links. The globe before the language picker and the operator's name are gone.
+- **Scheduled work moved to the reports page**, above the archive: the latest run of each job,
+  then every run before it. The servers page is the fleet table alone.
+- The servers page note no longer claims that only on-demand machines can be powered off
+  (out of date since 0.1.15).
+
 ## [0.1.17] — 2026-10-01
 
 ### Added
@@ -282,7 +295,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.17...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.18...HEAD
+[0.1.18]: https://github.com/orkun-soylu/timar/compare/v0.1.17...v0.1.18
 [0.1.17]: https://github.com/orkun-soylu/timar/compare/v0.1.16...v0.1.17
 [0.1.16]: https://github.com/orkun-soylu/timar/compare/v0.1.15...v0.1.16
 [0.1.15]: https://github.com/orkun-soylu/timar/compare/v0.1.14...v0.1.15
