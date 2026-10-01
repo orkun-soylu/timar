@@ -1,0 +1,20 @@
+{# The page's one dialog, which add, edit and the schedule forms open into. Outside any polled
+   panel, so a refresh cannot wipe a half-typed form; closed with Esc, a click on the backdrop,
+   or the panel's own cancel or close. `label` names it for assistive technology. #}
+<dialog id="server-dialog" aria-label="{{ label }}">
+  <div id="dialog-body"></div>
+</dialog>
+<script>
+  (function () {
+    var dialog = document.getElementById("server-dialog");
+    document.body.addEventListener("htmx:afterSwap", function (e) {
+      if (e.detail.target.id === "dialog-body" && !dialog.open) dialog.showModal();
+    });
+    dialog.addEventListener("click", function (e) {
+      if (e.target === dialog || e.target.closest("[data-close-dialog]")) dialog.close();
+    });
+    dialog.addEventListener("close", function () {
+      document.getElementById("dialog-body").innerHTML = "";
+    });
+  })();
+</script>

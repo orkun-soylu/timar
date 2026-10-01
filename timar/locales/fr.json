@@ -140,7 +140,6 @@
   "System log window (hours)": "Fenêtre des journaux système (heures)",
   "Disk threshold (percent full)": "Seuil disque (pourcentage d’occupation)",
   "Save": "Enregistrer",
-  "Schedules": "Planifications",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "Une planification appartient à une <em>tâche</em>, pas à une machine : une analyse et une mise à jour parcourent toute la flotte. Les heures sont l’heure locale du conteneur — définissez <code>TZ</code> sur le conteneur si un rapport prévu à 07:00 arrive à 04:00.",
   "Run on a schedule": "Exécuter selon une planification",
   "How often": "Fréquence",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "Jour (hebdomadaire)",
   "Every N hours (for interval)": "Toutes les N heures (intervalle)",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "Une mise à jour réveille les machines en veille, les met à jour et les éteint à nouveau. Les hôtes OpenWrt sont ignorés, sauf si vous leur avez donné leur propre commande de mise à jour.",
-  "Save schedules": "Enregistrer les planifications",
   "Model": "Modèle",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "Sert à résumer les analyses de journaux. Facultatif — sans lui, le réveil, les mises à jour et l’analyse fonctionnent toujours ; vous obtenez simplement les constats bruts au lieu d’une évaluation rédigée.",
   "Provider": "Fournisseur",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Arrêter l’inspection des journaux ? Elle s’arrête après l’hôte en cours ; les hôtes suivants ne sont pas vérifiés cette fois.",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Arrêter la tournée de mises à jour ? Elle s’arrête après l’étape en cours : une commande déjà lancée sur un hôte se termine d’abord, et une machine réveillée pour la tournée est quand même éteinte. Les machines pas encore atteintes ne sont pas mises à jour cette fois.",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Réveille les machines en veille, les met à jour avec leurs projets compose, et éteint ce qu’elle a réveillé.",
-  "stopping…": "arrêt en cours…"
+  "stopping…": "arrêt en cours…",
+  "Schedule a job": "Planifier une tâche"
 }

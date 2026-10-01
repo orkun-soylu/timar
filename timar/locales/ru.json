@@ -140,7 +140,6 @@
   "System log window (hours)": "Окно системного лога (часы)",
   "Disk threshold (percent full)": "Порог диска (процент заполнения)",
   "Save": "Сохранить",
-  "Schedules": "Расписания",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "Расписание принадлежит <em>задаче</em>, а не машине: одна проверка и один запуск обновлений обходят весь парк. Время — локальное время контейнера; задайте <code>TZ</code> в контейнере, если отчёт, запланированный на 07:00, приходит в 04:00.",
   "Run on a schedule": "Запускать по расписанию",
   "How often": "Как часто",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "День (для еженедельного)",
   "Every N hours (for interval)": "Каждые N часов (для интервала)",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "Запуск обновлений будит спящие машины, обновляет их и снова выключает. Хосты OpenWrt пропускаются, если вы не задали им собственную команду обновления.",
-  "Save schedules": "Сохранить расписания",
   "Model": "Модель",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "Используется для сводки по проверкам логов. Необязательно — без неё пробуждение, обновление и проверка работают; вы просто получаете сырые находки вместо письменной оценки.",
   "Provider": "Провайдер",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Остановить проверку логов? Она остановится после текущего хоста; следующие хосты в этот раз проверены не будут.",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Остановить прогон обновлений? Он остановится после текущего шага: уже запущенная на хосте команда сначала завершится, а машина, разбуженная для прогона, всё равно будет выключена. Машины, до которых он ещё не дошёл, в этот раз не обновятся.",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Будит спящие машины, обновляет их и их проекты compose и снова выключает то, что разбудил.",
-  "stopping…": "останавливается…"
+  "stopping…": "останавливается…",
+  "Schedule a job": "Запланировать задачу"
 }

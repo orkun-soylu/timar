@@ -140,7 +140,6 @@
   "System log window (hours)": "Sistem logu penceresi (saat)",
   "Disk threshold (percent full)": "Disk eşiği (doluluk yüzdesi)",
   "Save": "Kaydet",
-  "Schedules": "Zamanlamalar",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "Zamanlama bir makineye değil bir <em>işe</em> aittir: tek bir tarama ve tek bir güncelleme turu tüm filoyu dolaşır. Saatler container'ın yerel saatidir — 07:00'ye zamanlanan bir rapor 04:00'te geliyorsa container'da <code>TZ</code> ayarlayın.",
   "Run on a schedule": "Zamanlanmış çalıştır",
   "How often": "Sıklık",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "Gün (haftalık için)",
   "Every N hours (for interval)": "Her N saatte bir (aralık için)",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "Bir güncelleme turu uykudaki makineleri uyandırır, günceller ve yeniden kapatır. OpenWrt makineleri, onlara kendi güncelleme komutunu vermediyseniz atlanır.",
-  "Save schedules": "Zamanlamaları kaydet",
   "Model": "Model",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "Log taramalarını özetlemek için kullanılır. İsteğe bağlı — olmadan da uyandırma, güncelleme ve tarama çalışır; yalnızca yazılı değerlendirme yerine ham bulguları alırsınız.",
   "Provider": "Sağlayıcı",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Log taraması durdurulsun mu? Kontrol edilmekte olan host'tan sonra durur; ondan sonraki host'lar bu sefer kontrol edilmez.",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Güncelleme turu durdurulsun mu? Devam eden adımdan sonra durur: bir host'ta çalışmakta olan komut önce biter, tur için uyandırılan makine yine kapatılır. Henüz ulaşılmayan makineler bu sefer güncellenmez.",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Uyuyan makineleri uyandırır, onları ve compose projelerini günceller, uyandırdıklarını yeniden kapatır.",
-  "stopping…": "durduruluyor…"
+  "stopping…": "durduruluyor…",
+  "Schedule a job": "İş zamanla"
 }

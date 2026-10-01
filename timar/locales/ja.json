@@ -140,7 +140,6 @@
   "System log window (hours)": "システムログの対象期間（時間）",
   "Disk threshold (percent full)": "ディスクのしきい値（使用率 %）",
   "Save": "保存",
-  "Schedules": "スケジュール",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "スケジュールはマシンではなく<em>ジョブ</em>に属します: 1 回の走査と 1 回の更新でフリート全体を回ります。時刻はコンテナのローカル時刻です — 07:00 に予定したレポートが 04:00 に届く場合は、コンテナに <code>TZ</code> を設定してください。",
   "Run on a schedule": "スケジュールで実行",
   "How often": "頻度",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "曜日（毎週）",
   "Every N hours (for interval)": "N 時間ごと（間隔）",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "更新の実行では、スリープ中のマシンを起動して更新し、再びシャットダウンします。OpenWrt のホストは、専用の更新コマンドを設定していない限りスキップされます。",
-  "Save schedules": "スケジュールを保存",
   "Model": "モデル",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "ログ走査の要約に使います。任意です — なくても起動、更新、走査はすべて動作し、文章による評価の代わりに生の検出結果が得られます。",
   "Provider": "プロバイダー",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "ログスキャンを停止しますか? 確認中のホストの後で止まり、それ以降のホストは今回は確認されません。",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "更新ジョブを停止しますか? 実行中のステップの後で止まります: ホストで実行中のコマンドは先に終わり、ジョブのために起動したマシンは停止されます。まだ到達していないマシンは今回は更新されません。",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "スリープ中のマシンを起動し、マシンとその compose プロジェクトを更新し、起動したものを再び停止します。",
-  "stopping…": "停止中…"
+  "stopping…": "停止中…",
+  "Schedule a job": "ジョブをスケジュール"
 }

@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.7] — 2026-10-02
+
+### Changed
+
+- **Schedules live with the jobs they drive.** *Scheduled work* on the reports page has a **+**
+  beside its **?**, like the servers table. It opens a dialog with one section per job — *Log
+  sweep* (its schedule, plus the log window and the disk threshold) and *Update run* (its
+  schedule) — saved together, validated together, and back to the reports page. A mistake
+  writes nothing and keeps what was typed. The two panels left the settings page, which now
+  holds the model connection and notifications.
+- The add/edit dialog is one shared partial for the servers, containers and reports pages.
+
 ## [0.2.6] — 2026-10-01
 
 ### Added
@@ -454,7 +466,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/orkun-soylu/timar/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/orkun-soylu/timar/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/orkun-soylu/timar/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/orkun-soylu/timar/compare/v0.2.3...v0.2.4

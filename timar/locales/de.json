@@ -140,7 +140,6 @@
   "System log window (hours)": "Systemlog-Zeitfenster (Stunden)",
   "Disk threshold (percent full)": "Festplatten-Schwellwert (Prozent belegt)",
   "Save": "Speichern",
-  "Schedules": "Zeitpläne",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "Ein Zeitplan gehört zu einer <em>Aufgabe</em>, nicht zu einer Maschine: ein Durchlauf und ein Update-Lauf besuchen die ganze Flotte. Zeiten sind die Ortszeit des Containers — setzen Sie <code>TZ</code> im Container, wenn ein für 07:00 geplanter Bericht um 04:00 ankommt.",
   "Run on a schedule": "Nach Zeitplan ausführen",
   "How often": "Wie oft",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "Tag (für wöchentlich)",
   "Every N hours (for interval)": "Alle N Stunden (für Intervall)",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "Ein Update-Lauf weckt schlafende Maschinen, aktualisiert sie und fährt sie wieder herunter. OpenWrt-Hosts werden übersprungen, sofern Sie ihnen keinen eigenen Update-Befehl gegeben haben.",
-  "Save schedules": "Zeitpläne speichern",
   "Model": "Modell",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "Wird zum Zusammenfassen der Log-Durchläufe verwendet. Optional — ohne Modell funktionieren Wecken, Aktualisieren und der Durchlauf weiterhin; Sie erhalten nur die rohen Befunde statt einer schriftlichen Einschätzung.",
   "Provider": "Anbieter",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "Log-Prüfung stoppen? Sie stoppt nach dem gerade geprüften Host; die Hosts danach werden diesmal nicht geprüft.",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "Update-Lauf stoppen? Er stoppt nach dem laufenden Schritt: ein Befehl, der auf einem Host läuft, endet zuerst, und eine für den Lauf geweckte Maschine wird trotzdem heruntergefahren. Noch nicht erreichte Maschinen werden diesmal nicht aktualisiert.",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "Weckt die schlafenden Maschinen, aktualisiert sie und ihre Compose-Projekte und fährt wieder herunter, was er geweckt hat.",
-  "stopping…": "wird gestoppt…"
+  "stopping…": "wird gestoppt…",
+  "Schedule a job": "Aufgabe planen"
 }

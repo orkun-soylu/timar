@@ -11,21 +11,5 @@
 
 {# Edit and add open here. Outside the polled panel, so the ten-second refresh cannot
    wipe a half-typed form; closed with Esc, a click on the backdrop, or the panel's own cancel. #}
-<dialog id="server-dialog" aria-label="{{ _("Server") }}">
-  <div id="dialog-body"></div>
-</dialog>
-<script>
-  (function () {
-    var dialog = document.getElementById("server-dialog");
-    document.body.addEventListener("htmx:afterSwap", function (e) {
-      if (e.detail.target.id === "dialog-body" && !dialog.open) dialog.showModal();
-    });
-    dialog.addEventListener("click", function (e) {
-      if (e.target === dialog || e.target.closest("[data-close-dialog]")) dialog.close();
-    });
-    dialog.addEventListener("close", function () {
-      document.getElementById("dialog-body").innerHTML = "";
-    });
-  })();
-</script>
+{% with label = _("Server") %}{% include "_dialog.html" %}{% endwith %}
 {% endblock %}
