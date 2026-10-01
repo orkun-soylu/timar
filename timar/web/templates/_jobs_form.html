@@ -29,17 +29,17 @@
               <option value="{{ kind }}" {{ "selected" if current.get("kind", "daily") == kind else "" }}>{{ _(kind) }}</option>
               {% endfor %}
             </select></label>
-          <label><span>{{ _("At (for daily and weekly)") }}</span>
+          <label><span>{{ _("At") }}</span>
             <input name="{{ job.name }}_at" placeholder="09:00" value="{{ current.get('at', '09:00') }}"></label>
         </div>
         <div class="row">
-          <label><span>{{ _("Day (for weekly)") }}</span>
+          <label><span>{{ _("Day") }}</span>
             <select name="{{ job.name }}_day">
               {% for day in days %}
               <option value="{{ day }}" {{ "selected" if current.get("day", "monday") == day else "" }}>{{ _(day.capitalize()) }}</option>
               {% endfor %}
             </select></label>
-          <label><span>{{ _("Every N hours (for interval)") }}</span>
+          <label><span>{{ _("Every N hours") }}</span>
             <input name="{{ job.name }}_every_hours" type="number" min="1" max="168"
                    value="{{ current.get('every_hours', 6) }}"></label>
         </div>
@@ -66,11 +66,21 @@
     </div>
   </form>
 
+  {# One help per job; the schedule fields are the same in both, so both explain them. #}
+  {% macro schedule_help() %}
+      <dt>{{ _("How often") }}</dt>
+      <dd>{{ _("<em>daily</em> runs every day at <em>At</em>. <em>weekly</em> runs on <em>Day</em> at <em>At</em>. <em>interval</em> runs every <em>N hours</em>, counted from the last run; one that fell due while Timar was down runs as soon as it is back.") }}</dd>
+      <dd>{{ _("Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00. Without <em>Run on a schedule</em> the job runs only from <em>run now</em>.") }}</dd>
+  {% endmacro %}
   <div id="help-job-log_sweep" popover class="popover">
     <h3>{{ _("Log sweep") }}</h3>
     <dl class="help-list">
-      <dd>{{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.") }}</dd>
-      <dt>{{ _("System log window (hours)") }} · {{ _("Disk threshold (percent full)") }}</dt>
+      <dd>{{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet.") }}</dd>
+      {{ schedule_help() }}
+      <dt>{{ _("System log window (hours)") }}</dt>
+      <dd>{{ _("How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.") }}</dd>
+      <dt>{{ _("Disk threshold (percent full)") }}</dt>
+      <dd>{{ _("A filesystem fuller than this is a finding. RAM-backed ones are left out.") }}</dd>
       <dd>{{ _("One window and one threshold for every machine in the fleet — there is no per-server override.") }}</dd>
     </dl>
     <button type="button" class="secondary" popovertarget="help-job-log_sweep" popovertargetaction="hide">{{ _("close") }}</button>
@@ -79,7 +89,8 @@
     <h3>{{ _("Update run") }}</h3>
     <dl class="help-list">
       <dd>{{ _("An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.") }}</dd>
-      <dd>{{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.") }}</dd>
+      <dd>{{ _("Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.") }}</dd>
+      {{ schedule_help() }}
     </dl>
     <button type="button" class="secondary" popovertarget="help-job-update" popovertargetaction="hide">{{ _("close") }}</button>
   </div>

@@ -544,9 +544,13 @@ class TestSettingsPage:
     def test_it_carries_model_and_notifications_only(self, settings):
         """The log sweep and the schedules moved to the reports page's + dialog."""
         page = settings.get("/settings").text
-        for heading in ("Model", "Notifications"):
-            assert f"<h2>{heading}</h2>" in page
+        for heading, help_id in (("Model", "help-model"), ("Notifications", "help-notifications")):
+            assert f'<h2 class="with-action">{heading}' in page
+            assert f'popovertarget="{help_id}"' in page and f'id="{help_id}" popover' in page
         assert 'name="journal_hours"' not in page and "_enabled" not in page
+        # The explanations live in the popovers, not on the page.
+        outside = page.split('id="help-model"', 1)[0]
+        assert 'class="hint"' not in outside and "drops any comments" not in outside
         assert "10.0.0.1" not in page and "web-01" not in page
 
     def test_the_old_global_tab_url_still_opens(self, settings):
@@ -608,6 +612,7 @@ class TestJobsDialog:
         sweep = body.split("<h3>Log sweep</h3>", 1)[1].split("<h3>Update run</h3>", 1)[0]
         assert 'name="log_sweep_enabled"' in sweep and 'name="journal_hours"' in sweep
         assert 'name="update_enabled"' in body.split("<h3>Update run</h3>", 1)[1]
+        assert 'class="hint"' not in body and "(for daily and weekly)" not in body
 
     def test_saving_writes_both_and_goes_back_to_reports(self, client):
         from timar import config

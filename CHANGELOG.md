@@ -9,6 +9,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.8] — 2026-10-02
+
+### Changed
+
+- **Every explanation on the settings page and in the schedule dialog is behind a "?".**
+  *Model* and *Notifications* get a **?** on their headings; the paragraphs under them, the note
+  on the API buttons and the footnote about `config.yaml` move inside. The schedule dialog's
+  labels lose their parenthesised instructions (*At*, *Day*, *Every N hours*); what they meant is
+  in each job's **?**.
+- **The help says more.** Each provider's needs and default model, what an empty base URL
+  means, that switching provider drops the key, and **what the model sees** — the sweep's
+  findings and each server's context line go to the provider, so a model of your own keeps them
+  on your network. For Telegram: what is sent, that a failed delivery does not fail the job,
+  where the bot token and the chat ID come from. For schedules: how *daily*, *weekly* and
+  *interval* fire (interval counts from the last run and catches up after downtime), how long
+  the log window should be, and that RAM-backed filesystems are left out of the disk check.
+
 ## [0.2.7] — 2026-10-02
 
 ### Changed
@@ -466,7 +483,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.8...HEAD
+[0.2.8]: https://github.com/orkun-soylu/timar/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/orkun-soylu/timar/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/orkun-soylu/timar/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/orkun-soylu/timar/compare/v0.2.4...v0.2.5
