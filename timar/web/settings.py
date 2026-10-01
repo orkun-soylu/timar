@@ -157,6 +157,7 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "telegram_chat_id": telegram_cfg.get("chat_id", ""),
         "telegram_has_token": bool(telegram_cfg.get("token")),
         "providers": llm_module.PROVIDERS,
+        "anthropic_default": llm_module.DEFAULTS[llm_module.ANTHROPIC]["model"],
         "errors": errors or [],
         "notice": notice,
     }, status_code=status_code)
@@ -395,11 +396,13 @@ async def test_llm(request: Request):
 
 @router.post("/llm/models", response_class=HTMLResponse)
 async def list_llm_models(request: Request):
-    """Fill the model field's suggestion list from the provider.
+    """A picker of the provider's models that fills the model field.
 
-    Returns a `<datalist>` rather than a `<select>` on purpose: the field stays free text, so a
-    model the provider does not advertise — a local Ollama tag, one released after this list was
-    fetched — can still be typed. The list is a shortcut, not a whitelist.
+    A `<select>` beside the field rather than a `<datalist>` on it: browsers filter a datalist by
+    what the field already holds, so with a model saved the "list" showed only its near
+    namesakes — three of thirteen. The field itself stays free text, so a model the provider does
+    not advertise — a local Ollama tag, one released after this list was fetched — can still be
+    typed. The list is a shortcut, not a whitelist. The select has no name: it is never submitted.
     """
     cfg = config.load()
     llm_cfg = llm_module.LLMConfig.from_dict(cfg.get("llm"))
@@ -412,10 +415,12 @@ async def list_llm_models(request: Request):
     if not models:
         return HTMLResponse(f'<span class="error">{_escape(_("The provider listed no models."))}</span>')
 
-    options = "".join(f'<option value="{_escape(m)}">' for m in models)
+    hint = _("{n} models — pick one to put it in the model field.", n=len(models))
+    options = "".join(f'<option value="{_escape(m)}">{_escape(m)}</option>' for m in models)
     return HTMLResponse(
-        f'<datalist id="model-options">{options}</datalist>'
-        f'<span class="ok">{_escape(_("{n} models — click the model field.", n=len(models)))}</span>'
+        f'<select class="model-pick" aria-label="{_escape(_("Model"))}"'
+        ' onchange="if (this.value) this.form.model.value = this.value">'
+        f'<option value="" selected disabled>{_escape(hint)}</option>{options}</select>'
     )
 
 

@@ -9,6 +9,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.18] — 2026-10-02
+
+### Fixed
+
+- **"List models" shows every model.** The list was a suggestion list on the model field, and
+  browsers filter those by what the field already holds — with `claude-opus-5-5` saved, only its
+  near namesakes appeared, three of thirteen. It is now a picker beside the field: choosing a
+  model puts it in the field, which stays free text and is still what *Save* stores.
+- **The Model help names the default the code actually uses,** read from it rather than written
+  into the text, so the two cannot drift apart again.
+
+### Changed
+
+- **anthropic's default model is `claude-opus-5-5`** (was `claude-opus-5`). It applies only when
+  the model field is left empty; a saved model is untouched.
+
 ## [0.2.17] — 2026-10-02
 
 ### Changed
@@ -589,7 +605,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.17...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.18...HEAD
+[0.2.18]: https://github.com/orkun-soylu/timar/compare/v0.2.17...v0.2.18
 [0.2.17]: https://github.com/orkun-soylu/timar/compare/v0.2.16...v0.2.17
 [0.2.16]: https://github.com/orkun-soylu/timar/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/orkun-soylu/timar/compare/v0.2.14...v0.2.15
