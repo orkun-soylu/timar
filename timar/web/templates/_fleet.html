@@ -42,9 +42,13 @@
     <tr class="{{ host.state }}">
       {# The state is the light in front of the name — green up, grey asleep, red down — and
          its word is the tooltip. The label is on the whole cell, not just the dot: an
-         eight-pixel target is one nobody manages to hover. #}
+         eight-pixel target is one nobody manages to hover. While it is up, a machine with a
+         web interface has its name as a link to it, in a new tab — the dashboard stays put. #}
       <td class="col-edge" title="{{ state_label }}"><span class="dot" role="img"
-          aria-label="{{ state_label }}"></span> {{ host.name }}</td>
+          aria-label="{{ state_label }}"></span> {% if host.web_url and host.state == "up" -%}
+          <a href="{{ host.web_url }}" target="_blank" rel="noopener noreferrer"
+             title="{{ host.web_url }}">{{ host.name }}</a>
+        {%- else %}{{ host.name }}{% endif %}</td>
       <td class="col-mid"><code>{{ host.host }}</code></td>
       <td class="col-mid muted wide">{{ host.platform }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is

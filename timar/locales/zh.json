@@ -156,6 +156,9 @@
   "VM id": "虚拟机 ID",
   "required with a hypervisor": "指定虚拟化主机时必填",
   "Kept off on purpose": "有意保持关机",
+  "Web interface": "Web 界面",
+  "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 或 https://host.lan",
+  "While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.": "机器运行时，仪表板上的名称会打开此地址。未写协议时按 <code>https://</code> 打开。",
   "Update command": "更新命令",
   "optional — overrides the platform default": "可选 — 覆盖平台默认命令",
   "Update timeout": "更新超时",
@@ -223,5 +226,6 @@
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "每 10 秒刷新一次。名称前的指示灯表示其状态 — 悬停可查看文字：绿色为<em>在线</em>，灰色为<em>休眠</em>（按需主机，关机属正常），红色为<em>离线</em>（本应可达却不可达）。电源操作仅对按需主机提供 — 常开主机无法唤醒，从这里关机会让它无法恢复。",
   "no Wake-on-LAN; switched on by hand": "没有网络唤醒；手动开机",
   "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "关机时显示为<em>休眠</em>，更新会跳过它直到它重新上线；Timar 可以关闭它，但无法唤醒它。",
-  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "关闭 {name}？Timar 无法再次唤醒它 — 它会保持关机，直到有人手动开机。"
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "关闭 {name}？Timar 无法再次唤醒它 — 它会保持关机，直到有人手动开机。",
+  "Web interface must be an address such as 10.0.0.5:8006 or https://host.lan.": "Web 界面必须是类似 10.0.0.5:8006 或 https://host.lan 的地址。"
 }

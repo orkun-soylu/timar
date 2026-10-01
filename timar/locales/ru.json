@@ -156,6 +156,9 @@
   "VM id": "ID ВМ",
   "required with a hypervisor": "обязательно при указании гипервизора",
   "Kept off on purpose": "Намеренно выключена",
+  "Web interface": "Веб-интерфейс",
+  "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 или https://host.lan",
+  "While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.": "Пока машина включена, её имя на панели открывает этот адрес. Без схемы он открывается как <code>https://</code>.",
   "Update command": "Команда обновления",
   "optional — overrides the platform default": "необязательно — заменяет команду платформы по умолчанию",
   "Update timeout": "Тайм-аут обновления",
@@ -223,5 +226,6 @@
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Обновляется каждые 10 секунд. Индикатор перед именем — его состояние, наведите курсор, чтобы увидеть слово: зелёный — <em>работает</em>, серый — <em>спит</em> (по требованию, выключен, как и ожидается), красный — <em>недоступен</em> (должен отвечать, но не отвечает). Питание доступно только для машин по требованию — всегда включённый хост нечем разбудить, и выключить его отсюда значит оставить его недоступным.",
   "no Wake-on-LAN; switched on by hand": "без Wake-on-LAN; включается вручную",
   "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "Выключенная машина считается <em>спящей</em>, обновления пропускают её, пока она не вернётся; Timar может её выключить, но не разбудить.",
-  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "Выключить {name}? Timar не сможет её разбудить — она останется выключенной, пока кто-нибудь не включит её вручную."
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "Выключить {name}? Timar не сможет её разбудить — она останется выключенной, пока кто-нибудь не включит её вручную.",
+  "Web interface must be an address such as 10.0.0.5:8006 or https://host.lan.": "Веб-интерфейс должен быть адресом вида 10.0.0.5:8006 или https://host.lan."
 }

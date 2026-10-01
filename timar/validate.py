@@ -9,6 +9,7 @@ then the next one after you fix it, is a form people learn to dread.
 from __future__ import annotations
 
 import re
+from urllib.parse import urlsplit
 
 from .i18n import gettext as _
 from .platforms import PLATFORMS
@@ -34,7 +35,7 @@ class ValidationError(ValueError):
 SERVER_FIELDS = frozenset({
     "name", "host", "user", "platform",
     "wol_mac", "wol_broadcast", "wol_relay",
-    "update_cmd", "context", "update_timeout", "on_demand",
+    "update_cmd", "context", "update_timeout", "on_demand", "web_url",
 })
 
 
@@ -97,6 +98,12 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
         if value := (form.get(optional) or "").strip():
             entry[optional] = value
 
+    if raw_url := (form.get("web_url") or "").strip():
+        if url := web_url(raw_url):
+            entry["web_url"] = url
+        else:
+            errors.append(_("Web interface must be an address such as 10.0.0.5:8006 or https://host.lan."))
+
     if raw_timeout := (form.get("update_timeout") or "").strip():
         try:
             seconds = int(raw_timeout)
@@ -117,6 +124,25 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     if errors:
         raise ValidationError(errors)
     return entry
+
+
+def web_url(raw: str) -> str | None:
+    """The address a server's own web interface answers on, or `None` when it is not one.
+
+    A bare address gets `https://`: the panels this is for — a hypervisor, a router, anything
+    behind a reverse proxy — answer on https, and one that answers on plain http says so by
+    being typed with its scheme. Only http and https are let through, because the value ends
+    up in an `href`, where `javascript:` would run in the operator's session.
+    """
+    url = raw if "://" in raw else f"https://{raw}"
+    try:
+        parts = urlsplit(url)
+        parts.port  # raises on a port that is not a number
+    except ValueError:
+        return None
+    if parts.scheme.lower() not in ("http", "https") or not parts.hostname or any(c.isspace() for c in url):
+        return None
+    return url
 
 
 def guest_link(form: dict, servers: list[dict], name: str,

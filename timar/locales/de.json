@@ -156,6 +156,9 @@
   "VM id": "VM-ID",
   "required with a hypervisor": "mit Hypervisor erforderlich",
   "Kept off on purpose": "Absichtlich ausgeschaltet",
+  "Web interface": "Weboberfläche",
+  "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 oder https://host.lan",
+  "While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.": "Solange die Maschine läuft, öffnet ihr Name im Dashboard diese Adresse. Ohne Schema wird sie als <code>https://</code> geöffnet.",
   "Update command": "Update-Befehl",
   "optional — overrides the platform default": "optional — ersetzt den Plattform-Standard",
   "Update timeout": "Update-Timeout",
@@ -223,5 +226,6 @@
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Aktualisiert alle 10 Sekunden. Das Licht vor einem Namen ist sein Zustand — für das Wort darüberfahren: grün ist <em>an</em>, grau ist <em>schlafend</em> (bei Bedarf, aus wie erwartet), rot ist <em>ausgefallen</em> (sollte erreichbar sein und ist es nicht). Strom wird nur für Maschinen bei Bedarf angeboten — ein immer laufender Host hat keinen Weckweg, ihn von hier herunterzufahren würde ihn stranden lassen.",
   "no Wake-on-LAN; switched on by hand": "kein Wake-on-LAN; wird von Hand eingeschaltet",
   "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "Aus heißt <em>schlafend</em>, Updates überspringen ihn, bis er wieder da ist; Timar kann ihn herunterfahren, aber nicht wecken.",
-  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} herunterfahren? Timar kann ihn nicht wieder wecken — er bleibt aus, bis ihn jemand von Hand einschaltet."
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} herunterfahren? Timar kann ihn nicht wieder wecken — er bleibt aus, bis ihn jemand von Hand einschaltet.",
+  "Web interface must be an address such as 10.0.0.5:8006 or https://host.lan.": "Die Weboberfläche muss eine Adresse wie 10.0.0.5:8006 oder https://host.lan sein."
 }
