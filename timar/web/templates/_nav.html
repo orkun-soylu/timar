@@ -5,7 +5,10 @@
 {% macro nav(section) -%}
 <header class="topnav">
   <a href="/" class="brand">timar</a>
-  <span class="spacer"></span>
+  {# Where an action's outcome appears — wake, shut down, start, stop, restart — right beside the
+     name, in the header that stays on screen, and gone again after three seconds (the script
+     in base.html). It also takes the place of the spacer, pushing the menu to the right. #}
+  <div id="toast" class="toast result" role="status" aria-live="polite"></div>
   <nav aria-label="{{ _("Main") }}">
     {%- for key, href, label in [("servers", "/", _("servers")),
                                  ("containers", "/containers", _("containers")),

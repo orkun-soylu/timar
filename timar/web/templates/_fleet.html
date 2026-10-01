@@ -1,8 +1,7 @@
 {# Polled on its own by HTMX, so it must render standalone — no `extends`.
 
-   The power buttons report into `#power-result`, which lives on the dashboard *outside* this
-   fragment on purpose: anything written in here is wiped by the next poll, and a wake that
-   failed for a nameable reason would erase its own explanation within ten seconds. The dialog
+   The power buttons report into `#toast`, in the sticky header *outside* this fragment on
+   purpose: anything written in here is wiped by the next poll. The dialog
    that edit and add open into lives outside it for the same reason.
 
    Edit and add are links first — each opens a page of its own without scripting — and
@@ -64,8 +63,8 @@
           <button type="button" class="icon-btn"
                   title="{{ _("shutdown") }}" aria-label="{{ _("shutdown") }}"
                   hx-post="/servers/{{ host.name }}/shutdown"
-                  hx-target="#power-result" hx-swap="innerHTML"
-                  hx-indicator="#power-result" hx-disabled-elt="this"
+                  hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this"
                   hx-confirm="{{ confirm }}"
                   >{{ icon("power") }}</button>
         {%- elif not host.wakeable %}
@@ -76,8 +75,8 @@
           <button type="button" class="icon-btn"
                   title="{{ _("wake up") }}" aria-label="{{ _("wake up") }}"
                   hx-post="/servers/{{ host.name }}/wake"
-                  hx-target="#power-result" hx-swap="innerHTML"
-                  hx-indicator="#power-result" hx-disabled-elt="this"
+                  hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this"
                   >{{ icon("wake") }}</button>
         {%- endif %}
         <a href="/settings/servers/{{ host.name }}/edit" class="icon-btn"

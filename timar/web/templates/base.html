@@ -182,7 +182,18 @@
     .notice.bad { border-left: 3px solid var(--down); color: var(--down); }
     section.panel table { margin-bottom: 0; }
     a { color: inherit; }
-    header.topnav { align-items: center; }
+    /* The header stays on screen while the page scrolls under it, so the menu and the toast are
+       always in reach. Its own background hides what passes beneath. */
+    header.topnav {
+      align-items: center; position: sticky; top: 0; z-index: 10; background: var(--bg);
+      padding: 0.75rem 0; margin-top: -0.75rem;
+    }
+    .toast {
+      flex: 1 1 0; min-width: 0; font-size: 0.875rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .toast.shown, .toast.htmx-request { opacity: 1; }
     header.topnav .brand {
       color: var(--accent); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
       text-decoration: none;
@@ -242,5 +253,20 @@
 <body>
 <main>{% block body %}{% endblock %}
 </main>
+<script>
+  // The header toast: an action's answer shows for three seconds, then fades. A second answer
+  // inside those three seconds replaces the first and starts the clock again.
+  (function () {
+    var timer = null;
+    document.body.addEventListener("htmx:afterSwap", function (e) {
+      var toast = e.detail.target;
+      if (toast.id !== "toast") return;
+      toast.title = toast.textContent.trim();
+      toast.classList.add("shown");
+      clearTimeout(timer);
+      timer = setTimeout(function () { toast.classList.remove("shown"); }, 3000);
+    });
+  })();
+</script>
 </body>
 </html>

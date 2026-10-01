@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.4] — 2026-10-01
+
+### Changed
+
+- **The header stays on screen.** The menu bar is sticky: a long servers or containers table
+  scrolls under it.
+- **Action results appear in the header, right of the name, for three seconds.** Wake, shut
+  down, start, stop and restart used to answer below the table — on a long page, off screen. The
+  answer now shows beside *timar* and fades after three seconds; a second answer replaces the
+  first and restarts the clock. A long one is cut with an ellipsis and shown whole on hover.
+
 ## [0.2.3] — 2026-10-01
 
 ### Added
@@ -414,7 +425,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/orkun-soylu/timar/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/orkun-soylu/timar/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/orkun-soylu/timar/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/orkun-soylu/timar/compare/v0.2.0...v0.2.1
