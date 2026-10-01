@@ -257,5 +257,16 @@
   "stop": "остановить",
   "stopped": "остановлен",
   "{field} must be an address such as 10.0.0.5:8080 or https://host.lan.": "{field} должен быть адресом вида 10.0.0.5:8080 или https://host.lan.",
-  "{host!r} does not run Docker.": "{host!r} не запускает Docker."
+  "{host!r} does not run Docker.": "{host!r} не запускает Docker.",
+  "A custom update needs a command.": "Для своего обновления нужна команда.",
+  "A project that was not running is pulled and left stopped. Services with a <code>build:</code> section are not pulled; rebuild them by hand or with a custom command. Unused images are pruned once per host afterwards.": "Проект, который не работал, получает новые образы и остаётся остановленным. Сервисы с разделом <code>build:</code> не скачиваются; пересоберите их вручную или своей командой. Затем неиспользуемые образы удаляются один раз на хост.",
+  "Not updated by the run. Timar's own project is always skipped: recreating itself would end the run halfway.": "Не обновляется прогоном. Собственный проект Timar всегда пропускается: пересоздание самого себя прервало бы прогон на середине.",
+  "Past the limit the project is marked failed; the command keeps running.": "После превышения лимита проект помечается как неудачный; команда продолжает работать.",
+  "Runs in the compose directory instead, for example <code>docker compose up -d --build</code>.": "Вместо этого выполняется в каталоге compose, например <code>docker compose up -d --build</code>.",
+  "Runs in the update run, right after its host is updated: <code>docker compose pull --ignore-buildable</code>, then <code>docker compose up -d</code>, which recreates only the containers whose image changed. Never <code>down</code> first — a failed pull leaves the project as it was, not removed.": "Выполняется в прогоне обновлений сразу после обновления хоста: <code>docker compose pull --ignore-buildable</code>, затем <code>docker compose up -d</code>, который пересоздаёт только контейнеры с изменившимся образом. Никогда сначала <code>down</code> — неудачный pull оставляет проект как был, а не удалённым.",
+  "Update must be one of: {options}.": "Обновление должно быть одним из: {options}.",
+  "custom command": "своя команда",
+  "pull + up": "pull + up",
+  "skip": "пропустить",
+  "with custom command": "при своей команде"
 }

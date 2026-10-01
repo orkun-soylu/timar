@@ -7,6 +7,7 @@ import logging
 import time
 from dataclasses import dataclass
 
+from . import containers as container_module
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -23,6 +24,7 @@ class UpdateResult:
     was_running: bool = True
     skipped: bool = False
     error: str = ""
+    note: str = ""      # a word about how it went, shown after the name — "left stopped"
 
 
 # How long one host's update command may take. The old value was 300s, which is shorter than
@@ -111,7 +113,54 @@ def _wait_offline(host: str, max_wait: int = 120):
         time.sleep(5)
 
 
-def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
+def _update_containers(ssh, server_cfg: dict, entries: list[dict]) -> list[UpdateResult]:
+    """Update the compose projects registered on this host, one result each.
+
+    Run on the connection the host's own update used, right after it: the host is up and
+    reachable now, and for a host that was woken for the run, now is the only time it is.
+    """
+    if not entries:
+        return []
+    host_name = server_cfg["name"]
+    out, err, code = run(ssh, container_module.DOCKER + "$D ps -a --no-trunc --format json", timeout=60)
+    if code != 0:
+        return [UpdateResult(server=f"containers on {host_name}", success=False,
+                             error=(err.strip() or out.strip() or "docker ps failed")[-300:])]
+    by_dir = container_module.parse_ps(out)
+    me = container_module.self_container_id()
+
+    results = []
+    for entry in entries:
+        label = f"{entry['name']} ({host_name})"
+        found = by_dir.get(entry["path"].rstrip("/"), [])
+        if me and any(c.id == me for c in found):
+            results.append(UpdateResult(server=label, success=True, skipped=True,
+                                        error="Timar itself — updated by its own release, not from inside"))
+            continue
+        if entry.get("update") == "skip":
+            results.append(UpdateResult(server=label, success=True, skipped=True, error="update: skip"))
+            continue
+        running = any(c.state in ("running", "restarting") for c in found)
+        logger.info("Updating container project %s ...", label)
+        try:
+            ok, err = _do_update(ssh, container_module.update_command(entry, running),
+                                 timeout=_timeout_for(entry))
+        except Exception as e:
+            ok, err = False, str(e)
+        note = "" if running or entry.get("update") == "custom" else "pulled, left stopped"
+        results.append(UpdateResult(server=label, success=ok, error="" if ok else err, note=note))
+
+    # Best effort: an image the pulls replaced is now unused, and a failure to tidy up is not a
+    # failure of the run.
+    try:
+        run(ssh, container_module.DOCKER + "$D image prune -f", timeout=300)
+    except Exception:
+        logger.warning("image prune on %s failed", host_name)
+    return results
+
+
+def update_server(server_cfg: dict, servers_map: dict,
+                  containers_by_server: dict | None = None) -> list[UpdateResult]:
     name = server_cfg["name"]
     host = server_cfg["host"]
     platform = get_platform(server_cfg.get("platform"))
@@ -147,6 +196,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
             ok, err = _do_update(ssh, update_cmd, timeout=_timeout_for(server_cfg))
             results.append(UpdateResult(server=name, success=ok, was_running=was_running,
                                         error=err if not ok else ""))
+            results.extend(_update_containers(ssh, server_cfg, (containers_by_server or {}).get(name, [])))
     except Exception as e:
         logger.exception("update %s", name)
         results.append(UpdateResult(server=name, success=False, was_running=was_running, error=str(e)))
@@ -197,6 +247,7 @@ def update_server(server_cfg: dict, servers_map: dict) -> list[UpdateResult]:
                 ok, err = _do_update(ssh, vm_update_cmd, timeout=_timeout_for(vm_cfg))
                 results.append(UpdateResult(server=vm_name, success=ok, was_running=vm_was_running,
                                             error=err if not ok else ""))
+                results.extend(_update_containers(ssh, vm_cfg, (containers_by_server or {}).get(vm_name, [])))
         except Exception as e:
             logger.exception("update vm %s", vm_name)
             results.append(UpdateResult(server=vm_name, success=False,
@@ -236,10 +287,14 @@ def run_updates(cfg) -> list[UpdateResult]:
         for vm in s.get("manages_vms", []):
             managed_vms.add(vm["server_name"])
 
+    containers_by_server: dict[str, list[dict]] = {}
+    for entry in cfg.get("containers") or []:
+        containers_by_server.setdefault(entry.get("server"), []).append(entry)
+
     all_results = []
     for server in servers:
         if server["name"] in managed_vms:
             continue
-        all_results.extend(update_server(server, servers_map))
+        all_results.extend(update_server(server, servers_map, containers_by_server))
 
     return all_results

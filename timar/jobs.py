@@ -103,7 +103,7 @@ def run_update(cfg: dict) -> Outcome:
         elif r.success:
             # Whether the machine was woken for this is the detail an operator checks first when
             # a machine they expected to find asleep is running.
-            note = "" if r.was_running else " (woken, updated, shut down again)"
+            note = f" ({r.note})" if r.note else ("" if r.was_running else " (woken, updated, shut down again)")
             rows.append(f"✅ {r.server}{note}")
         else:
             # Not truncated here. The failure text is already bounded where it is produced, and

@@ -101,22 +101,7 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
         else:
             errors.append(_("Web interface must be an address such as 10.0.0.5:8006 or https://host.lan."))
 
-    if raw_timeout := (form.get("update_timeout") or "").strip():
-        try:
-            seconds = int(raw_timeout)
-        except ValueError:
-            errors.append(_("Update timeout must be a whole number of seconds."))
-        else:
-            # The lower bound is not fussiness. A timeout below a minute cannot outlast an
-            # `apt-get update` on a slow link, so it would fail every run while looking like a
-            # deliberate setting; the upper bound keeps one wedged host from holding the
-            # sequential fleet walk for most of a day.
-            if not MIN_UPDATE_TIMEOUT <= seconds <= MAX_UPDATE_TIMEOUT:
-                errors.append(_(
-                    "Update timeout must be between {low} and {high} seconds.",
-                    low=MIN_UPDATE_TIMEOUT, high=MAX_UPDATE_TIMEOUT))
-            else:
-                entry["update_timeout"] = seconds
+    _update_timeout(form, entry, errors)
 
     if errors:
         raise ValidationError(errors)
@@ -142,7 +127,8 @@ def web_url(raw: str) -> str | None:
     return url
 
 
-CONTAINER_FIELDS = frozenset({"name", "server", "path", "on_demand", "web_url", "health_url"})
+CONTAINER_FIELDS = frozenset({"name", "server", "path", "on_demand", "web_url", "health_url",
+                              "update", "update_cmd", "update_timeout"})
 
 
 def container(form: dict, existing_names: set[str], servers: list[dict],
@@ -183,9 +169,41 @@ def container(form: dict, existing_names: set[str], servers: list[dict],
             else:
                 errors.append(_("{field} must be an address such as 10.0.0.5:8080 or https://host.lan.", field=label))
 
+    # `pull` is the default and is not written, so an entry that never chose stays minimal.
+    mode = (form.get("update") or "pull").strip()
+    if mode not in ("pull", "custom", "skip"):
+        errors.append(_("Update must be one of: {options}.", options="pull, custom, skip"))
+    elif mode == "custom":
+        if cmd := (form.get("update_cmd") or "").strip():
+            entry["update"], entry["update_cmd"] = "custom", cmd
+        else:
+            errors.append(_("A custom update needs a command."))
+    elif mode == "skip":
+        entry["update"] = "skip"
+    _update_timeout(form, entry, errors)
+
     if errors:
         raise ValidationError(errors)
     return entry
+
+
+def _update_timeout(form: dict, entry: dict, errors: list[str]) -> None:
+    if raw_timeout := (form.get("update_timeout") or "").strip():
+        try:
+            seconds = int(raw_timeout)
+        except ValueError:
+            errors.append(_("Update timeout must be a whole number of seconds."))
+        else:
+            # The lower bound is not fussiness. A timeout below a minute cannot outlast an
+            # `apt-get update` on a slow link, so it would fail every run while looking like a
+            # deliberate setting; the upper bound keeps one wedged host from holding the
+            # sequential fleet walk for most of a day.
+            if not MIN_UPDATE_TIMEOUT <= seconds <= MAX_UPDATE_TIMEOUT:
+                errors.append(_(
+                    "Update timeout must be between {low} and {high} seconds.",
+                    low=MIN_UPDATE_TIMEOUT, high=MAX_UPDATE_TIMEOUT))
+            else:
+                entry["update_timeout"] = seconds
 
 
 def guest_link(form: dict, servers: list[dict], name: str,

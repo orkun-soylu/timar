@@ -40,6 +40,24 @@
     </div>
 
     <div class="form-section">
+      {{ section_head(_("Update"), "help-container-update") }}
+      <div class="row">
+        <label><span>{{ _("Update") }}</span>
+          <select name="update">
+            {% set mode = values.get('update') or 'pull' %}
+            <option value="pull" {{ "selected" if mode == "pull" else "" }}>{{ _("pull + up") }}</option>
+            <option value="custom" {{ "selected" if mode == "custom" else "" }}>{{ _("custom command") }}</option>
+            <option value="skip" {{ "selected" if mode == "skip" else "" }}>{{ _("skip") }}</option>
+          </select></label>
+        <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
+          <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
+                 placeholder="{{ default_update_timeout }}" value="{{ values.get('update_timeout', '') }}"></label>
+      </div>
+      <label><span>{{ _("Update command") }} <em class="muted">{{ _("with custom command") }}</em></span>
+        <input name="update_cmd" placeholder="docker compose up -d --build" value="{{ values.get('update_cmd', '') }}"></label>
+    </div>
+
+    <div class="form-section">
       {{ section_head(_("Health check"), "help-health") }}
       <label><span>{{ _("Health check") }} <em class="muted">{{ _("optional") }}</em></span>
         <input name="health_url" placeholder="https://photos.host.lan/api/server/ping"
@@ -87,6 +105,22 @@
       <dd>{{ _("Forgets the entry. The containers on the host are not touched.") }}</dd>
     </dl>
     <button type="button" class="secondary" popovertarget="help-container" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="help-container-update" popover class="popover">
+    <h3>{{ _("Update") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("pull + up") }}</dt>
+      <dd>{{ _("Runs in the update run, right after its host is updated: <code>docker compose pull --ignore-buildable</code>, then <code>docker compose up -d</code>, which recreates only the containers whose image changed. Never <code>down</code> first — a failed pull leaves the project as it was, not removed.") }}</dd>
+      <dd>{{ _("A project that was not running is pulled and left stopped. Services with a <code>build:</code> section are not pulled; rebuild them by hand or with a custom command. Unused images are pruned once per host afterwards.") }}</dd>
+      <dt>{{ _("custom command") }}</dt>
+      <dd>{{ _("Runs in the compose directory instead, for example <code>docker compose up -d --build</code>.") }}</dd>
+      <dt>{{ _("skip") }}</dt>
+      <dd>{{ _("Not updated by the run. Timar's own project is always skipped: recreating itself would end the run halfway.") }}</dd>
+      <dt>{{ _("Update timeout") }}</dt>
+      <dd>{{ _("Past the limit the project is marked failed; the command keeps running.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-container-update" popovertargetaction="hide">{{ _("close") }}</button>
   </div>
 
   <div id="help-health" popover class="popover">

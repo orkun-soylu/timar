@@ -513,6 +513,9 @@ def _container_form(request: Request, *, edit: str | None = None, submitted: dic
              if get_platform(s.get("platform")).supports_docker]
     return _panel(request, "_container_form.html", {
         "editing": editing, "values": values, "hosts": hosts, "errors": errors or [],
+        "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
+        "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
+        "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
     }, title=_("Edit {name}", name=editing) if editing else _("Add a container"),
        status_code=status_code, section="containers")
 

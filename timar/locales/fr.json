@@ -257,5 +257,16 @@
   "stop": "arrêter",
   "stopped": "arrêté",
   "{field} must be an address such as 10.0.0.5:8080 or https://host.lan.": "{field} doit être une adresse comme 10.0.0.5:8080 ou https://host.lan.",
-  "{host!r} does not run Docker.": "{host!r} n’exécute pas Docker."
+  "{host!r} does not run Docker.": "{host!r} n’exécute pas Docker.",
+  "A custom update needs a command.": "Une mise à jour personnalisée demande une commande.",
+  "A project that was not running is pulled and left stopped. Services with a <code>build:</code> section are not pulled; rebuild them by hand or with a custom command. Unused images are pruned once per host afterwards.": "Un projet qui ne tournait pas est mis à jour (pull) et laissé arrêté. Les services avec une section <code>build:</code> ne sont pas tirés ; reconstruisez-les à la main ou avec une commande personnalisée. Les images inutilisées sont ensuite supprimées une fois par hôte.",
+  "Not updated by the run. Timar's own project is always skipped: recreating itself would end the run halfway.": "Pas mis à jour par la tournée. Le projet de Timar lui-même est toujours ignoré : se recréer arrêterait la tournée à mi-chemin.",
+  "Past the limit the project is marked failed; the command keeps running.": "Passé la limite, le projet est marqué en échec ; la commande continue de tourner.",
+  "Runs in the compose directory instead, for example <code>docker compose up -d --build</code>.": "S’exécute à la place dans le répertoire compose, par exemple <code>docker compose up -d --build</code>.",
+  "Runs in the update run, right after its host is updated: <code>docker compose pull --ignore-buildable</code>, then <code>docker compose up -d</code>, which recreates only the containers whose image changed. Never <code>down</code> first — a failed pull leaves the project as it was, not removed.": "S’exécute pendant la tournée de mises à jour, juste après son hôte : <code>docker compose pull --ignore-buildable</code>, puis <code>docker compose up -d</code>, qui ne recrée que les conteneurs dont l’image a changé. Jamais <code>down</code> d’abord — un pull raté laisse le projet tel quel, pas supprimé.",
+  "Update must be one of: {options}.": "La mise à jour doit être l’une de : {options}.",
+  "custom command": "commande personnalisée",
+  "pull + up": "pull + up",
+  "skip": "ignorer",
+  "with custom command": "avec commande personnalisée"
 }

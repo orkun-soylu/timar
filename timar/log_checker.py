@@ -3,6 +3,7 @@
 Every command is chosen by the host's `Platform` (see platforms.py) rather than hardcoded, so
 pointing this at an OpenWrt router does not silently produce an all-clear.
 """
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import date
@@ -11,6 +12,7 @@ from .network import is_host_up
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run
+from .containers import parse_ps
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +102,32 @@ def _check_log_file(ssh, path: str) -> list[str]:
     return hits[-20:]
 
 
-def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85) -> LogResult:
+def stopped_containers(output: str, on_demand_dirs=frozenset()) -> list[str]:
+    """Exited containers, minus those of compose projects registered as stopped on purpose.
+
+    Containers outside any compose project, and those of projects nobody registered, are all
+    still reported: an unknown stopped container is exactly what the sweep is for.
+    """
+    names = []
+    seen = set()
+    for working_dir, found in parse_ps(output).items():
+        seen.update(c.id for c in found)
+        if working_dir in on_demand_dirs:
+            continue
+        names += [c.name for c in found]
+    # parse_ps keeps only compose containers; the rest are reported by name as before.
+    for line in output.splitlines():
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if row.get("ID") not in seen and row.get("Names"):
+            names.append(row["Names"])
+    return names
+
+
+def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
+                 on_demand_dirs=frozenset()) -> LogResult:
     name = server_cfg["name"]
     host = server_cfg["host"]
     platform = get_platform(server_cfg.get("platform"))
@@ -121,7 +148,7 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85) -> 
             if cmd := platform.docker_cmd():
                 out, _, rc = run(ssh, cmd)
                 if rc == 0:
-                    containers_stopped = [l.strip() for l in out.splitlines() if l.strip()]
+                    containers_stopped = stopped_containers(out, on_demand_dirs)
 
             job_logs = {}
             for job in server_cfg.get("job_logs", []):
@@ -153,8 +180,14 @@ def run_log_checks(cfg: dict) -> list[LogResult]:
     hours = defaults.get("journal_hours", 6)
     threshold = defaults.get("disk_threshold", 85)
 
+    on_demand: dict[str, set[str]] = {}
+    for entry in cfg.get("containers") or []:
+        if entry.get("on_demand"):
+            on_demand.setdefault(entry.get("server"), set()).add(entry["path"].rstrip("/"))
+
     results = []
     for server in cfg.get("servers", []):
         logger.info("Checking logs on %s", server["name"])
-        results.append(check_server(server, hours, threshold))
+        results.append(check_server(server, hours, threshold,
+                                    frozenset(on_demand.get(server["name"], ()))))
     return results
