@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.17] — 2026-10-01
+
+### Added
+
+- **SSH on a port other than 22.** The address takes a port after the host —
+  `10.0.0.5:2222`, `host.lan:2345`, or `[fd00::5]:2222` for IPv6 — and every connection made
+  from it uses that port: the status probe, enrolment, log sweeps, update runs, shutdowns and
+  wake relays. Before, the port was fixed at 22, so a host whose sshd listens elsewhere, or one
+  reached through a local port forward, could not be added at all.
+
 ## [0.1.16] — 2026-10-01
 
 ### Added
@@ -272,7 +282,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.16...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.17...HEAD
+[0.1.17]: https://github.com/orkun-soylu/timar/compare/v0.1.16...v0.1.17
 [0.1.16]: https://github.com/orkun-soylu/timar/compare/v0.1.15...v0.1.16
 [0.1.15]: https://github.com/orkun-soylu/timar/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/orkun-soylu/timar/compare/v0.1.13...v0.1.14
