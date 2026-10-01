@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.9] — 2026-10-02
+
+### Fixed
+
+- **The *Scheduled work* heading's controls line up.** The **?** sat 4.5px above the heading's
+  centre line — its 1.5rem button was baseline-aligned next to the 2rem **+** — and to the left
+  of it. It is now at the far right, where every other heading keeps its **?**, with **+** just
+  inside, both centred on the line.
+
 ## [0.2.8] — 2026-10-02
 
 ### Changed
@@ -483,7 +492,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.8...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.9...HEAD
+[0.2.9]: https://github.com/orkun-soylu/timar/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/orkun-soylu/timar/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/orkun-soylu/timar/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/orkun-soylu/timar/compare/v0.2.5...v0.2.6
