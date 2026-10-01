@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.11] — 2026-10-02
+
+### Changed
+
+- **A report opens in a dialog.** The report button on a row of the reports list used to leave
+  the page; it now opens the report over the list, in a dialog wide enough for its columns, and
+  Esc or × brings the list back as it was. `/reports/<id>` still opens as a page of its own for a
+  bookmark or without scripting.
+
 ## [0.2.10] — 2026-10-02
 
 ### Changed
@@ -17,10 +26,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   "stored — leave blank to keep it"; they now say only *stored* or *not set*. What that means —
   never shown again, empty keeps it, typing replaces it, switching provider drops the key — is
   in the section's **?**, reworded to match what the box shows.
-- **A report opens in a dialog.** The report button on a row of the reports list used to leave
-  the page; it now opens the report over the list, in a dialog wide enough for its columns, and
-  Esc or × brings the list back as it was. `/reports/<id>` still opens as a page of its own for a
-  bookmark or without scripting.
 
 ## [0.2.9] — 2026-10-02
 
@@ -505,7 +510,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.10...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.11...HEAD
+[0.2.11]: https://github.com/orkun-soylu/timar/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/orkun-soylu/timar/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/orkun-soylu/timar/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/orkun-soylu/timar/compare/v0.2.7...v0.2.8
