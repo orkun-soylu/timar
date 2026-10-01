@@ -173,6 +173,9 @@
     /* A heading that carries a control on its right — the panel's own affordance, kept on the
        heading row so it is visible before the list is read. */
     section.panel h2.with-action { display: flex; align-items: center; justify-content: space-between; }
+    /* Several controls on a heading's right: a row of its own, every control centred on the
+       heading's line whatever its height (an icon button is 2rem, the "?" 1.5rem). */
+    .heading-actions { display: flex; align-items: center; gap: 0.5rem; }
     .with-action .action {
       text-decoration: none; color: var(--muted); font-size: 1.25rem; line-height: 1;
       padding: 0 0.35rem; border-radius: 6px; border: 1px solid var(--line);

@@ -603,6 +603,8 @@ class TestJobsDialog:
         page = client.get("/reports").text
         heading = page.split("Scheduled work", 1)[1].split("</h2>", 1)[0]
         assert 'hx-get="/settings/jobs"' in heading and 'popovertarget="help-jobs"' in heading
+        # + inside, ? at the far right like every other heading's.
+        assert heading.index('hx-get="/settings/jobs"') < heading.index('popovertarget="help-jobs"')
         # In the body, where htmx can swap into it — not swallowed by the <title> block.
         assert page.index('id="dialog-body"') > page.index("<body")
 
