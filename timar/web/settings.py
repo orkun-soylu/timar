@@ -152,16 +152,11 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
     llm_cfg = cfg.get("llm") or {}
     telegram_cfg = cfg.get("telegram") or {}
     return TEMPLATES.TemplateResponse(request, "settings.html", {
-        "log_check": cfg.get("log_check", {}),
         "llm": {k: v for k, v in llm_cfg.items() if k != "api_key"},
         "llm_has_key": bool(llm_cfg.get("api_key")),
         "telegram_chat_id": telegram_cfg.get("chat_id", ""),
         "telegram_has_token": bool(telegram_cfg.get("token")),
         "providers": llm_module.PROVIDERS,
-        "schedules": cfg.get("schedules") or {},
-        "jobs": [{"name": n, "title": _(jobs.TITLES[n])} for n in jobs.JOBS],
-        "days": list(_DAYS),
-        "kinds": list(_KINDS),
         "errors": errors or [],
         "notice": notice,
     }, status_code=status_code)
@@ -359,18 +354,6 @@ async def delete_server(request: Request, name: str):
     return _done(request)
 
 
-@router.post("/log-check")
-async def save_log_check(request: Request):
-    form = dict(await request.form())
-    cfg = config.load()
-    try:
-        cfg["log_check"] = validate.log_check(form)
-    except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
-    config.save(cfg)
-    return _redirect("saved")
-
-
 @router.post("/llm")
 async def save_llm(request: Request):
     form = dict(await request.form())
@@ -462,21 +445,60 @@ async def test_telegram():
     return HTMLResponse(f'<span class="ok">{_escape(_("Sent — check your chat."))}</span>')
 
 
-@router.post("/schedules")
-async def save_schedules(request: Request):
+def _jobs_form(request: Request, *, errors: list[str] | None = None,
+               submitted: dict | None = None, status_code: int = 200):
+    """The schedules and the log sweep's settings, in the reports page's dialog.
+
+    A rejected save comes back with what was typed: the schedule fields are rebuilt from the
+    form so a mistake in one job does not reset the other.
+    """
+    cfg = config.load()
+    schedules = cfg.get("schedules") or {}
+    log_check = cfg.get("log_check", {})
+    if submitted is not None:
+        schedules = {name: {
+            "enabled": submitted.get(f"{name}_enabled") in ("on", "true", "1"),
+            "kind": submitted.get(f"{name}_kind"), "at": submitted.get(f"{name}_at"),
+            "day": submitted.get(f"{name}_day"), "every_hours": submitted.get(f"{name}_every_hours"),
+        } for name in jobs.JOBS}
+        log_check = {"journal_hours": submitted.get("journal_hours"),
+                     "disk_threshold": submitted.get("disk_threshold")}
+    return _panel(request, "_jobs_form.html", {
+        "schedules": schedules, "log_check": log_check,
+        "jobs": [{"name": n, "title": _(jobs.TITLES[n])} for n in jobs.JOBS],
+        "days": list(_DAYS), "kinds": list(_KINDS), "errors": errors or [],
+    }, title=_("Schedule a job"), status_code=status_code, section="reports")
+
+
+@router.get("/jobs", response_class=HTMLResponse)
+async def jobs_form(request: Request):
+    return _jobs_form(request)
+
+
+@router.post("/jobs")
+async def save_jobs(request: Request):
+    """Both settings in one save, validated together so neither is written half-way."""
     form = dict(await request.form())
     cfg = config.load()
+    errors: list[str] = []
     try:
-        cfg["schedules"] = validate.schedules(form, jobs.JOBS)
+        log_check = validate.log_check(form)
     except validate.ValidationError as e:
-        return _view(request, errors=e.errors, status_code=400)
+        errors += e.errors
+    try:
+        schedules = validate.schedules(form, jobs.JOBS)
+    except validate.ValidationError as e:
+        errors += e.errors
+    if errors:
+        return _jobs_form(request, errors=errors, submitted=form, status_code=400)
+    cfg["log_check"], cfg["schedules"] = log_check, schedules
     config.save(cfg)
     # The running loops re-read config on their next tick, so no restart is needed -- but the
     # stored next_run is now wrong until that happens, and a dashboard showing a next run that
     # no longer matches the schedule is exactly the kind of thing that erodes trust in it.
     for name in jobs.JOBS:
         state.set_next_run(name, None)
-    return _redirect("saved")
+    return _done(request, "/reports")
 
 
 @router.get("/servers/{name}/enroll")

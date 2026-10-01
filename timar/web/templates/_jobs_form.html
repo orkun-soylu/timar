@@ -1,0 +1,86 @@
+{# The schedule of each job and the log sweep's own settings — what used to be two panels on the
+   settings page, now opened from + beside Scheduled work. One section per job, one save. #}
+{% from "_icons.html" import close_dialog with context %}
+{% from "_form.html" import section_head with context %}
+<section class="panel" id="jobs-form">
+  <h2 class="with-action">{{ _("Schedule a job") }}
+    {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
+
+  {% if errors %}
+    <div class="notice bad" style="margin:0">
+      {% for message in errors %}<div>{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/settings/jobs" class="stack"
+        {% if in_dialog %}hx-post="/settings/jobs" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
+    {% for job in jobs %}
+      {% set current = schedules.get(job.name, {}) %}
+      <div class="form-section">
+        {{ section_head(job.title, "help-job-" ~ job.name) }}
+        <label class="inline">
+          <input type="checkbox" name="{{ job.name }}_enabled" {{ "checked" if current.get("enabled") else "" }}>
+          <span>{{ _("Run on a schedule") }}</span>
+        </label>
+        <div class="row">
+          <label><span>{{ _("How often") }}</span>
+            <select name="{{ job.name }}_kind">
+              {% for kind in kinds %}
+              <option value="{{ kind }}" {{ "selected" if current.get("kind", "daily") == kind else "" }}>{{ _(kind) }}</option>
+              {% endfor %}
+            </select></label>
+          <label><span>{{ _("At (for daily and weekly)") }}</span>
+            <input name="{{ job.name }}_at" placeholder="09:00" value="{{ current.get('at', '09:00') }}"></label>
+        </div>
+        <div class="row">
+          <label><span>{{ _("Day (for weekly)") }}</span>
+            <select name="{{ job.name }}_day">
+              {% for day in days %}
+              <option value="{{ day }}" {{ "selected" if current.get("day", "monday") == day else "" }}>{{ _(day.capitalize()) }}</option>
+              {% endfor %}
+            </select></label>
+          <label><span>{{ _("Every N hours (for interval)") }}</span>
+            <input name="{{ job.name }}_every_hours" type="number" min="1" max="168"
+                   value="{{ current.get('every_hours', 6) }}"></label>
+        </div>
+        {% if job.name == "log_sweep" %}
+        <div class="row">
+          <label><span>{{ _("System log window (hours)") }}</span>
+            <input name="journal_hours" type="number" min="1" max="168"
+                   value="{{ log_check.journal_hours | default(6) }}"></label>
+          <label><span>{{ _("Disk threshold (percent full)") }}</span>
+            <input name="disk_threshold" type="number" min="50" max="99"
+                   value="{{ log_check.disk_threshold | default(85) }}"></label>
+        </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <div class="actions form-actions">
+      <button type="submit">{{ _("Save") }}</button>
+      {% if in_dialog %}
+        <button type="button" class="secondary" data-close-dialog>{{ _("cancel") }}</button>
+      {% else %}
+        <a href="/reports" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <div id="help-job-log_sweep" popover class="popover">
+    <h3>{{ _("Log sweep") }}</h3>
+    <dl class="help-list">
+      <dd>{{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.") }}</dd>
+      <dt>{{ _("System log window (hours)") }} · {{ _("Disk threshold (percent full)") }}</dt>
+      <dd>{{ _("One window and one threshold for every machine in the fleet — there is no per-server override.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-job-log_sweep" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+  <div id="help-job-update" popover class="popover">
+    <h3>{{ _("Update run") }}</h3>
+    <dl class="help-list">
+      <dd>{{ _("An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.") }}</dd>
+      <dd>{{ _("A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-job-update" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+</section>

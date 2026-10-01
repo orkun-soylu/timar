@@ -140,7 +140,6 @@
   "System log window (hours)": "系统日志时间窗口（小时）",
   "Disk threshold (percent full)": "磁盘阈值（占用百分比）",
   "Save": "保存",
-  "Schedules": "计划",
   "A schedule belongs to a <em>job</em>, not to a machine: one sweep and one update run visit the whole fleet. Times are the container's local time — set <code>TZ</code> on the container if a report scheduled for 07:00 arrives at 04:00.": "计划属于<em>任务</em>，而不是机器：一次巡检和一次更新都会覆盖整个机群。时间为容器的本地时间 — 如果计划在 07:00 的报告在 04:00 到达，请在容器上设置 <code>TZ</code>。",
   "Run on a schedule": "按计划运行",
   "How often": "频率",
@@ -148,7 +147,6 @@
   "Day (for weekly)": "星期（每周）",
   "Every N hours (for interval)": "每 N 小时（间隔）",
   "An update run wakes machines that are asleep, updates them, and shuts them back down. OpenWrt hosts are skipped unless you gave them an update command of their own.": "更新运行会唤醒休眠的机器、更新它们，然后再关机。除非你为 OpenWrt 主机单独设置了更新命令，否则会跳过它们。",
-  "Save schedules": "保存计划",
   "Model": "模型",
   "Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.": "用于总结日志巡检结果。可选 — 没有模型时，唤醒、更新和巡检照常工作，只是得到的是原始发现，而不是书面评估。",
   "Provider": "提供商",
@@ -283,5 +281,6 @@
   "Stop the log sweep? It stops after the host being checked; the hosts after it are not checked this time.": "停止日志巡检？它会在正在检查的主机之后停止；之后的主机本次不再检查。",
   "Stop the update run? It stops after the step in progress: a command already running on a host finishes first, and a machine woken for the run is still shut down. Machines it has not reached yet are not updated this time.": "停止更新任务？它会在当前步骤之后停止：主机上已在运行的命令会先执行完，为本次运行唤醒的机器仍会关机。尚未到达的机器本次不会更新。",
   "Wakes the machines that are asleep, updates them and their compose projects, and shuts down again what it woke.": "唤醒休眠的机器，更新它们及其 compose 项目，并把唤醒的机器重新关机。",
-  "stopping…": "正在停止…"
+  "stopping…": "正在停止…",
+  "Schedule a job": "计划任务"
 }

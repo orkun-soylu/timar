@@ -2,11 +2,19 @@
 {% block title %}{{ _("Reports") }} — Timar{% endblock %}
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav("reports") }}
+{% from "_icons.html" import icon %}
 
 <section class="panel">
+  {# The schedules live with the jobs they drive: + opens them in the dialog, as + on the servers
+     page opens a new server. #}
   <h2 class="with-action">{{ _("Scheduled work") }}
-    <button type="button" class="help" popovertarget="help-jobs"
-            aria-label="{{ _("About {section}", section=_("Scheduled work")) }}">?</button></h2>
+    <span class="icon-row">
+      <button type="button" class="help" popovertarget="help-jobs"
+              aria-label="{{ _("About {section}", section=_("Scheduled work")) }}">?</button>
+      <a href="/settings/jobs" class="icon-btn" title="{{ _("Schedule a job") }}"
+         aria-label="{{ _("Schedule a job") }}"
+         hx-get="/settings/jobs" hx-target="#dialog-body" hx-swap="innerHTML">{{ icon("add") }}</a>
+    </span></h2>
   <div id="jobs-panel"
        hx-get="/fragments/jobs"
        hx-trigger="every 15s"
@@ -79,4 +87,5 @@
   </dl>
   <button type="button" class="secondary" popovertarget="help-reports" popovertargetaction="hide">{{ _("close") }}</button>
 </div>
+{% with label = _("Scheduled work") %}{% include "_dialog.html" %}{% endwith %}
 {% endblock %}

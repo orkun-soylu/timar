@@ -541,10 +541,12 @@ class TestSettingsPage:
         ]})
         return client
 
-    def test_it_carries_the_four_fleet_wide_sections_and_no_server_list(self, settings):
+    def test_it_carries_model_and_notifications_only(self, settings):
+        """The log sweep and the schedules moved to the reports page's + dialog."""
         page = settings.get("/settings").text
-        for heading in ("Log sweep", "Schedules", "Model", "Notifications"):
+        for heading in ("Model", "Notifications"):
             assert f"<h2>{heading}</h2>" in page
+        assert 'name="journal_hours"' not in page and "_enabled" not in page
         assert "10.0.0.1" not in page and "web-01" not in page
 
     def test_the_old_global_tab_url_still_opens(self, settings):
@@ -572,17 +574,14 @@ class TestSettingsPage:
 
     def test_saving_a_global_form_comes_back_with_a_notice(self, settings):
         for path, data in [
-            ("/settings/log-check", {"journal_hours": "6", "disk_threshold": "85"}),
             ("/settings/telegram", {"token": "", "chat_id": ""}),
             ("/settings/llm", {"provider": "", "model": "", "base_url": "", "api_key": ""}),
-            ("/settings/schedules", {}),
         ]:
             location = settings.post(path, data=data).headers["location"]
             assert location == "/settings?notice=saved", path
 
     def test_a_rejected_global_form_stays_on_the_page(self, settings):
-        response = settings.post("/settings/log-check",
-                                 data={"journal_hours": "0", "disk_threshold": "85"})
+        response = settings.post("/settings/telegram", data={"token": "t", "chat_id": ""})
         assert response.status_code == 400 and "Bot token" in response.text
 
     def test_saving_a_server_goes_back_to_the_dashboard(self, settings):
@@ -590,6 +589,50 @@ class TestSettingsPage:
             "name": "new-01", "host": "10.0.0.9", "user": "deploy", "platform": "linux",
         }).headers["location"]
         assert location == "/"
+
+
+class TestJobsDialog:
+    """The schedules and the log sweep's settings, opened by + beside Scheduled work."""
+
+    def test_reports_offers_it_from_a_plus_beside_the_heading(self, client):
+        complete_setup(client)
+        page = client.get("/reports").text
+        heading = page.split("Scheduled work", 1)[1].split("</h2>", 1)[0]
+        assert 'hx-get="/settings/jobs"' in heading and 'popovertarget="help-jobs"' in heading
+        # In the body, where htmx can swap into it — not swallowed by the <title> block.
+        assert page.index('id="dialog-body"') > page.index("<body")
+
+    def test_one_section_per_job_with_the_sweep_settings_in_its_own(self, client):
+        complete_setup(client)
+        body = client.get("/settings/jobs", headers={"HX-Request": "true"}).text
+        sweep = body.split("<h3>Log sweep</h3>", 1)[1].split("<h3>Update run</h3>", 1)[0]
+        assert 'name="log_sweep_enabled"' in sweep and 'name="journal_hours"' in sweep
+        assert 'name="update_enabled"' in body.split("<h3>Update run</h3>", 1)[1]
+
+    def test_saving_writes_both_and_goes_back_to_reports(self, client):
+        from timar import config
+        complete_setup(client)
+        response = client.post("/settings/jobs", data={
+            "journal_hours": "12", "disk_threshold": "90",
+            "update_enabled": "on", "update_kind": "weekly", "update_at": "07:00", "update_day": "friday",
+            "log_sweep_kind": "daily", "log_sweep_at": "09:30"}, headers={"HX-Request": "true"})
+        assert response.headers["HX-Redirect"] == "/reports"
+        cfg = config.load()
+        assert cfg["log_check"] == {"journal_hours": 12, "disk_threshold": 90}
+        assert cfg["schedules"]["update"]["enabled"] and cfg["schedules"]["update"]["day"] == "friday"
+        assert not cfg["schedules"]["log_sweep"]["enabled"]
+
+    def test_a_mistake_writes_nothing_and_keeps_what_was_typed(self, client):
+        from timar import config
+        complete_setup(client)
+        before = config.load()
+        response = client.post("/settings/jobs", data={
+            "journal_hours": "0", "disk_threshold": "85",
+            "update_enabled": "on", "update_kind": "weekly", "update_at": "07:00", "update_day": "friday"},
+            headers={"HX-Request": "true"})
+        assert response.status_code == 200 and "between 1 and 168" in response.text
+        assert 'name="update_day"' in response.text and 'value="friday" selected' in response.text
+        assert config.load().get("schedules") == before.get("schedules")
 
 
 class TestServerForm:
@@ -711,7 +754,8 @@ class TestSettings:
             ("get", "/settings/servers/new"),
             ("get", "/settings/servers/web-01/edit"),
             ("post", "/settings/servers"),
-            ("post", "/settings/log-check"),
+            ("get", "/settings/jobs"),
+            ("post", "/settings/jobs"),
             ("post", "/settings/llm"),
             ("post", "/settings/llm/test"),
             ("post", "/settings/llm/models"),
