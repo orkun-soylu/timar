@@ -452,17 +452,26 @@ async def archived_report(request: Request, report_id: str,
 
 # -- containers ----------------------------------------------------------------------------
 
-@app.get("/containers", response_class=HTMLResponse)
-async def containers_page(request: Request, operator: str = Depends(current_operator)):
+async def _containers_view(sort: str | None, dir: str | None) -> dict:
+    """The containers table in the order picked — in the URL, like the servers table's."""
+    key = sort if sort in container_status.SORT_KEYS else "name"
+    descending = dir == "desc"
     projects = await asyncio.to_thread(container_status.projects, config.load())
-    return TEMPLATES.TemplateResponse(request, "containers.html", {"projects": projects})
+    return {"projects": container_status.sort_projects(projects, key, descending),
+            "sort": key, "descending": descending}
+
+
+@app.get("/containers", response_class=HTMLResponse)
+async def containers_page(request: Request, sort: str | None = None, dir: str | None = None,
+                          operator: str = Depends(current_operator)):
+    return TEMPLATES.TemplateResponse(request, "containers.html", await _containers_view(sort, dir))
 
 
 @app.get("/fragments/containers", response_class=HTMLResponse)
-async def containers_fragment(request: Request, operator: str = Depends(current_operator)):
+async def containers_fragment(request: Request, sort: str | None = None, dir: str | None = None,
+                              operator: str = Depends(current_operator)):
     """The table alone, polled by HTMX. In a thread: it may open an SSH session per host."""
-    projects = await asyncio.to_thread(container_status.projects, config.load())
-    return TEMPLATES.TemplateResponse(request, "_containers.html", {"projects": projects})
+    return TEMPLATES.TemplateResponse(request, "_containers.html", await _containers_view(sort, dir))
 
 
 @app.post("/containers/{name}/{action}", response_class=HTMLResponse)

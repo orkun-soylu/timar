@@ -400,3 +400,14 @@ def discover(server: dict) -> list[Found]:
         raise ContainerError((err.strip() or out.strip() or "docker compose ls failed")[-300:])
     ls_output, ps_output = out.split("---timar---", 1)
     return parse_discovery(ls_output.strip(), ps_output)
+
+
+SORT_KEYS = ("name", "host")
+
+
+def sort_projects(projects: list[ProjectStatus], key: str, descending: bool = False) -> list[ProjectStatus]:
+    """By name, or by host and then directory; ties fall back to the name so the order is stable."""
+    by_name = sorted(projects, key=lambda p: p.name.casefold())
+    if key == "host":
+        by_name = sorted(by_name, key=lambda p: (p.server.casefold(), p.path))
+    return by_name[::-1] if descending else by_name

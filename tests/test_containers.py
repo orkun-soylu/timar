@@ -458,3 +458,28 @@ class TestBackgroundStatus:
         status.refresh(cfg)
         containers.refresh(cfg)
         assert sorted(asked) == ["https://a.lan", "on"]
+
+
+class TestSort:
+    def test_by_name_and_by_host_both_ways(self):
+        mk = lambda name, server, path: containers.ProjectStatus(
+            name=name, server=server, path=path, state="up", detail="", images=(), on_demand=False,
+            web_url=None, is_self=False)
+        ps = [mk("b", "h2", "/b"), mk("a", "h2", "/z"), mk("c", "h1", "/c")]
+        assert [p.name for p in containers.sort_projects(ps, "name")] == ["a", "b", "c"]
+        assert [p.name for p in containers.sort_projects(ps, "host")] == ["c", "b", "a"]
+        assert [p.name for p in containers.sort_projects(ps, "host", True)] == ["a", "b", "c"]
+
+    def test_the_headings_sort_and_the_poll_keeps_the_order(self, client, monkeypatch):
+        from timar import config
+        complete_setup(client)
+        config.save({"servers": [{"name": "h", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
+                     "containers": [{"name": "b", "server": "h", "path": "/b"},
+                                    {"name": "a", "server": "h", "path": "/a"}]})
+        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: False)
+        page = client.get("/containers?sort=host&dir=desc").text
+        assert 'href="/containers?sort=host&amp;dir=asc"' in page        # active column flips
+        assert 'href="/containers?sort=name&amp;dir=asc"' in page
+        assert 'hx-get="/fragments/containers?sort=host&amp;dir=desc"' in page
+        rows = client.get("/fragments/containers?sort=name&dir=desc").text
+        assert rows.index('href="/settings/containers/b/edit"') < rows.index('href="/settings/containers/a/edit"')

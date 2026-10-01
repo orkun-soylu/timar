@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.14] — 2026-10-02
+
+### Added
+
+- **The containers table sorts by *Name* and *Host*,** like the servers table: click a heading,
+  click again to flip it. Host sorts by server, then directory. The order is in the URL, so the
+  15-second refresh, a reload and a bookmark keep it. The sortable heading is one macro
+  (`_table.html`) shared by both tables.
+
 ## [0.2.13] — 2026-10-02
 
 ### Changed
@@ -536,7 +545,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.13...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.14...HEAD
+[0.2.14]: https://github.com/orkun-soylu/timar/compare/v0.2.13...v0.2.14
 [0.2.13]: https://github.com/orkun-soylu/timar/compare/v0.2.12...v0.2.13
 [0.2.12]: https://github.com/orkun-soylu/timar/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/orkun-soylu/timar/compare/v0.2.10...v0.2.11

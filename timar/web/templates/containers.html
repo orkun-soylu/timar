@@ -3,7 +3,8 @@
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav("containers") }}
 
-<div class="panel" hx-get="/fragments/containers" hx-trigger="every 15s" hx-swap="innerHTML">
+<div class="panel" hx-get="/fragments/containers?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}"
+     hx-trigger="every 15s" hx-swap="innerHTML">
   {% include "_containers.html" %}
 </div>
 
