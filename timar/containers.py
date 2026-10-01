@@ -36,7 +36,7 @@ WORKING_DIR_LABEL = "com.docker.compose.project.working_dir"
 
 # Plain `docker` when the account is in the docker group, `sudo -n docker` when it is not —
 # decided on the host, so an operator does not have to tell Timar which of the two applies.
-_DOCKER = 'if docker info >/dev/null 2>&1; then D=docker; else D="sudo -n docker"; fi; '
+DOCKER = _DOCKER = 'if docker info >/dev/null 2>&1; then D=docker; else D="sudo -n docker"; fi; '
 
 _cache: dict[str, tuple[float, "HostContainers"]] = {}
 _health_cache: dict[str, tuple[float, bool]] = {}
@@ -248,6 +248,31 @@ def projects(cfg: dict) -> list[ProjectStatus]:
 
 
 ACTIONS = {"start": "up -d", "stop": "stop", "restart": "restart"}
+
+UPDATE_MODES = ("pull", "custom", "skip")
+
+
+def update_command(entry: dict, running: bool) -> str:
+    """What an update run executes for one project, from its directory.
+
+    Never `down` first. A `down` followed by a failed pull leaves the project removed and off —
+    the update script this replaces lost a service for six days that way, when a locally built
+    image could not be pulled. Pulling first changes nothing on failure, and `up -d` recreates
+    only the containers whose image changed.
+
+    `--ignore-buildable`: services with a `build:` section have no image to pull; asking the
+    registry for one fails the whole pull. They are rebuilt by hand, or by a custom command.
+
+    A project that was not running is pulled and left stopped: the run puts the machine back
+    the way it found it, and starting an on-demand project can be the very thing that hurts.
+    """
+    cd = f"cd {shlex.quote(entry['path'])} && "
+    if entry.get("update") == "custom":
+        return _DOCKER + cd + entry["update_cmd"]
+    command = _DOCKER + cd + "$D compose pull --ignore-buildable"
+    if running:
+        command += " && $D compose up -d"
+    return command
 
 
 def act(entry: dict, servers: list[dict], action: str) -> str:

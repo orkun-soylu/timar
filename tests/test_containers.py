@@ -91,8 +91,20 @@ class TestValidate:
             self.entry(health_url="javascript:alert(1)//")
 
     def test_the_form_owns_exactly_what_it_writes(self):
-        entry = self.entry(web_url="a.lan", health_url="b.lan", on_demand="on")
+        entry = self.entry(web_url="a.lan", health_url="b.lan", on_demand="on",
+                           update="custom", update_cmd="docker compose up -d --build",
+                           update_timeout="900")
         assert set(entry) == validate.CONTAINER_FIELDS
+
+    def test_pull_is_the_default_and_is_not_written(self):
+        assert "update" not in self.entry(update="pull") and "update" not in self.entry()
+        assert self.entry(update="skip")["update"] == "skip"
+
+    def test_a_custom_update_needs_its_command(self):
+        with pytest.raises(validate.ValidationError, match="needs a command"):
+            self.entry(update="custom")
+        with pytest.raises(validate.ValidationError, match="Update must be one of"):
+            self.entry(update="rebuild")
 
 
 class TestAct:
@@ -178,11 +190,11 @@ class TestPage:
     def test_an_edit_keeps_keys_the_form_does_not_own(self, page):
         from timar import config
         cfg = config.load()
-        cfg["containers"][0]["update"] = "skip"
+        cfg["containers"][0]["notes"] = "written by hand"
         config.save(cfg)
         page.post("/settings/containers", data={
             "original_name": "immich", "name": "immich", "server": "docker-01", "path": "/srv/immich"})
-        assert config.load()["containers"][0]["update"] == "skip"
+        assert config.load()["containers"][0]["notes"] == "written by hand"
 
     def test_a_server_rename_follows_into_its_containers(self, page):
         from timar import config
@@ -202,3 +214,86 @@ class TestPage:
         assert "<b>" not in body and "&lt;b&gt;" in body
         assert page.post("/containers/immich/explode").status_code == 404
         assert page.post("/containers/nope/stop").status_code == 404
+
+
+class TestUpdateCommand:
+    def test_pull_then_up_only_for_a_running_project_and_never_down(self):
+        running = containers.update_command({"path": "/srv/a b"}, running=True)
+        assert "cd '/srv/a b' && $D compose pull --ignore-buildable && $D compose up -d" in running
+        stopped = containers.update_command({"path": "/srv/a"}, running=False)
+        assert stopped.endswith("$D compose pull --ignore-buildable")
+        assert "down" not in running + stopped
+
+    def test_custom_runs_in_the_directory(self):
+        cmd = containers.update_command({"path": "/srv/a", "update": "custom",
+                                         "update_cmd": "docker compose up -d --build"}, running=True)
+        assert cmd.endswith("cd /srv/a && docker compose up -d --build")
+
+
+class TestUpdateRun:
+    """The update run's container half, against a fake SSH session."""
+
+    def run_it(self, monkeypatch, entries, ps_output, me=None, fail=()):
+        from timar import updater
+        sent = []
+
+        def fake_run(ssh, cmd, timeout=120):
+            sent.append(cmd)
+            return (ps_output, "", 0) if "ps -a" in cmd else ("", "", 0)
+
+        def fake_update(ssh, cmd, timeout):
+            sent.append(cmd)
+            return (False, "pull access denied") if any(f in cmd for f in fail) else (True, "")
+        monkeypatch.setattr(updater, "run", fake_run)
+        monkeypatch.setattr(updater, "_do_update", fake_update)
+        monkeypatch.setattr(containers, "self_container_id", lambda: me)
+        results = updater._update_containers(object(), {"name": "docker-01"}, entries)
+        return results, sent
+
+    def test_each_project_gets_its_own_result_and_the_host_is_pruned_once(self, monkeypatch):
+        ps = "\n".join([ps_line("/srv/immich", "immich-server"),
+                         ps_line("/srv/odata", "odata-1", "exited", "Exited (0) 2 days ago")])
+        results, sent = self.run_it(monkeypatch, [
+            {"name": "immich", "path": "/srv/immich"},
+            {"name": "odata", "path": "/srv/odata", "on_demand": True},
+            {"name": "brain", "path": "/srv/brain", "update": "skip"},
+            {"name": "bad", "path": "/srv/bad"},
+        ], ps, fail=("/srv/bad",))
+        by = {r.server: r for r in results}
+        assert by["immich (docker-01)"].success and not by["immich (docker-01)"].note
+        assert by["odata (docker-01)"].note == "pulled, left stopped"
+        assert by["brain (docker-01)"].skipped
+        assert not by["bad (docker-01)"].success and "pull access denied" in by["bad (docker-01)"].error
+        assert sum("image prune" in c for c in sent) == 1
+        assert any("cd /srv/immich && $D compose pull --ignore-buildable && $D compose up -d" in c for c in sent)
+        assert not any("cd /srv/odata" in c and "up -d" in c for c in sent)
+
+    def test_timar_never_updates_itself(self, monkeypatch):
+        me = "e" * 64
+        results, sent = self.run_it(monkeypatch, [{"name": "timar", "path": "/srv/timar"}],
+                                    ps_line("/srv/timar", "timar", cid=me), me=me)
+        assert results[0].skipped and "Timar itself" in results[0].error
+        assert not any("cd /srv/timar" in c for c in sent)
+
+    def test_run_updates_hands_each_host_its_own_projects(self, monkeypatch):
+        from timar import updater
+        seen = {}
+        monkeypatch.setattr(updater, "update_server",
+                            lambda server, servers_map, by_server: seen.update(by_server) or [])
+        updater.run_updates({"servers": [{"name": "a"}, {"name": "b"}],
+                             "containers": [{"name": "x", "server": "a", "path": "/x"},
+                                            {"name": "y", "server": "b", "path": "/y"},
+                                            {"name": "z", "server": "a", "path": "/z"}]})
+        assert [e["name"] for e in seen["a"]] == ["x", "z"] and [e["name"] for e in seen["b"]] == ["y"]
+
+
+class TestLogSweep:
+    def test_stopped_containers_of_on_demand_projects_are_not_findings(self):
+        from timar.log_checker import stopped_containers
+        out = "\n".join([
+            ps_line("/srv/odata", "odata-1", "exited", "Exited (0) 1 day ago"),
+            ps_line("/srv/immich", "immich-db", "exited", "Exited (1) 1 hour ago"),
+            json.dumps({"ID": "loose", "Names": "one-off", "State": "exited", "Labels": ""}),
+        ])
+        assert stopped_containers(out, frozenset({"/srv/odata"})) == ["immich-db", "one-off"]
+        assert sorted(stopped_containers(out)) == ["immich-db", "odata-1", "one-off"]

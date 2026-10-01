@@ -257,5 +257,16 @@
   "stop": "停止",
   "stopped": "已停止",
   "{field} must be an address such as 10.0.0.5:8080 or https://host.lan.": "{field} 必须是类似 10.0.0.5:8080 或 https://host.lan 的地址。",
-  "{host!r} does not run Docker.": "{host!r} 没有运行 Docker。"
+  "{host!r} does not run Docker.": "{host!r} 没有运行 Docker。",
+  "A custom update needs a command.": "自定义更新需要一条命令。",
+  "A project that was not running is pulled and left stopped. Services with a <code>build:</code> section are not pulled; rebuild them by hand or with a custom command. Unused images are pruned once per host afterwards.": "未在运行的项目只拉取镜像并保持停止。带有 <code>build:</code> 段的服务不会拉取；请手动或用自定义命令重新构建。之后每台主机清理一次未使用的镜像。",
+  "Not updated by the run. Timar's own project is always skipped: recreating itself would end the run halfway.": "不由更新任务更新。Timar 自身的项目总是跳过：重建自己会让任务中途结束。",
+  "Past the limit the project is marked failed; the command keeps running.": "超过限制后项目记为失败；命令会继续运行。",
+  "Runs in the compose directory instead, for example <code>docker compose up -d --build</code>.": "改为在 compose 目录中运行，例如 <code>docker compose up -d --build</code>。",
+  "Runs in the update run, right after its host is updated: <code>docker compose pull --ignore-buildable</code>, then <code>docker compose up -d</code>, which recreates only the containers whose image changed. Never <code>down</code> first — a failed pull leaves the project as it was, not removed.": "在更新任务中、其主机更新之后立即运行：<code>docker compose pull --ignore-buildable</code>，然后 <code>docker compose up -d</code>，只重建镜像有变化的容器。从不先 <code>down</code> — 拉取失败时项目保持原样，而不是被删除。",
+  "Update must be one of: {options}.": "更新必须是以下之一：{options}。",
+  "custom command": "自定义命令",
+  "pull + up": "pull + up",
+  "skip": "跳过",
+  "with custom command": "使用自定义命令时"
 }

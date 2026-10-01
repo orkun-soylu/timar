@@ -104,7 +104,9 @@ class Platform:
     def docker_cmd(self) -> str | None:
         if not self.supports_docker:
             return None
-        return "docker ps -a --filter status=exited --format '{{.Names}}' 2>/dev/null"
+        # JSON, not bare names: the compose working-directory label is what lets the sweep tell
+        # a project that is stopped on purpose from one that fell over.
+        return "docker ps -a --filter status=exited --no-trunc --format json 2>/dev/null"
 
     # -- power ---------------------------------------------------------------
 

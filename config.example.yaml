@@ -117,10 +117,14 @@ containers:
     path: /srv/immich                   # absolute: the directory with docker-compose.yml
     web_url: "https://photos.example.lan"          # optional: the name links here while it runs
     health_url: "http://192.0.2.10:2283/api/server/ping"   # optional: must answer below HTTP 500
+    # update: pull | custom | skip     -- pull (default): compose pull, then up -d if running
+    # update_cmd: "docker compose up -d --build"   # with update: custom, run in the directory
+    # update_timeout: 1800
   - name: batch-tools
     server: web-01
     path: /srv/batch-tools
-    on_demand: true                     # stopped on purpose: reads as asleep, not down
+    on_demand: true                     # stopped on purpose: reads as asleep, not down; an
+                                        # update pulls it and leaves it stopped
 
 log_check:
   journal_hours: 6      # how far back to read the system log

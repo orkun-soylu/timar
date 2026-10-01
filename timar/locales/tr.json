@@ -257,5 +257,16 @@
   "stop": "durdur",
   "stopped": "durdurulmuş",
   "{field} must be an address such as 10.0.0.5:8080 or https://host.lan.": "{field} 10.0.0.5:8080 ya da https://host.lan gibi bir adres olmalı.",
-  "{host!r} does not run Docker.": "{host!r} Docker çalıştırmıyor."
+  "{host!r} does not run Docker.": "{host!r} Docker çalıştırmıyor.",
+  "A custom update needs a command.": "Özel güncelleme bir komut ister.",
+  "A project that was not running is pulled and left stopped. Services with a <code>build:</code> section are not pulled; rebuild them by hand or with a custom command. Unused images are pruned once per host afterwards.": "Çalışmayan bir projenin imajları çekilir ve proje durdurulmuş bırakılır. <code>build:</code> bölümü olan servisler çekilmez; onları elle ya da özel komutla yeniden build edin. Ardından her host'ta kullanılmayan imajlar bir kez temizlenir.",
+  "Not updated by the run. Timar's own project is always skipped: recreating itself would end the run halfway.": "Güncelleme turunda güncellenmez. Timar'ın kendi projesi her zaman atlanır: kendini yeniden yaratmak turu yarıda keserdi.",
+  "Past the limit the project is marked failed; the command keeps running.": "Sınır aşılınca proje başarısız sayılır; komut çalışmaya devam eder.",
+  "Runs in the compose directory instead, for example <code>docker compose up -d --build</code>.": "Bunun yerine compose dizininde çalışır, örneğin <code>docker compose up -d --build</code>.",
+  "Runs in the update run, right after its host is updated: <code>docker compose pull --ignore-buildable</code>, then <code>docker compose up -d</code>, which recreates only the containers whose image changed. Never <code>down</code> first — a failed pull leaves the project as it was, not removed.": "Güncelleme turunda, host'u güncellendikten hemen sonra çalışır: <code>docker compose pull --ignore-buildable</code>, ardından yalnız imajı değişen container'ları yeniden yaratan <code>docker compose up -d</code>. Asla önce <code>down</code> yapılmaz — başarısız bir pull projeyi silinmiş değil, olduğu gibi bırakır.",
+  "Update must be one of: {options}.": "Güncelleme şunlardan biri olmalı: {options}.",
+  "custom command": "özel komut",
+  "pull + up": "pull + up",
+  "skip": "atla",
+  "with custom command": "özel komutla"
 }

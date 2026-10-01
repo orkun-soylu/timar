@@ -31,7 +31,7 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.0`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.1`) to choose when
 you move.
 
 Add, edit and remove servers and containers from their pages; a server is enrolled from its form's *SSH access*
@@ -152,6 +152,24 @@ path of the directory holding its `docker-compose.yml`.
 - The account needs to be in the `docker` group or have passwordless sudo; Timar tries plain
   `docker` first and falls back to `sudo -n docker`.
 - Removing an entry only forgets it. Nothing on the host is touched.
+
+**Updates.** The update run updates each registered project right after its host, over the same
+connection — one line per project in the report:
+
+| `update` | What runs, in the project's directory |
+|---|---|
+| `pull` (default) | `docker compose pull --ignore-buildable`, then `docker compose up -d` — only if the project was running |
+| `custom` | your `update_cmd`, for example `docker compose up -d --build` |
+| `skip` | nothing |
+
+There is never a `down` first: a failed pull leaves the project as it was, where `down` + failed
+pull would leave it removed. `up -d` recreates only the containers whose image changed. A
+project that was not running is pulled and left stopped. Services with a `build:` section are not
+pulled (rebuild them by hand or with a custom command). Unused images are pruned once per host
+afterwards. Timar's own project is always skipped — recreating itself would end the run halfway.
+
+**Log sweep.** Stopped containers of a project marked on-demand are not reported; everything
+else that exited still is, registered or not.
 
 ## Supported platforms
 

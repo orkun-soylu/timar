@@ -9,6 +9,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-10-01
+
+### Added
+
+- **The update run updates compose projects**, each right after its host and over the same
+  connection, with a line of its own in the report. Per project, an *Update* section in its form:
+  **pull + up** (default) — `docker compose pull --ignore-buildable`, then `up -d` only if the
+  project was running; **custom command**, run in the project's directory; or **skip**.
+  - Never `down` first: a failed pull leaves the project as it was rather than removed.
+  - A project that was not running is pulled and left stopped ("pulled, left stopped").
+  - Unused images are pruned once per host afterwards.
+  - Timar's own project is always skipped, whatever its setting.
+- **The log sweep knows on-demand projects.** Their stopped containers are no longer findings.
+  The sweep reads `docker ps` as JSON now, so it can tell which project a container belongs to;
+  stopped containers outside a registered on-demand project are reported as before.
+
 ## [0.2.0] — 2026-10-01
 
 ### Added
@@ -377,7 +393,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/orkun-soylu/timar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/orkun-soylu/timar/compare/v0.1.22...v0.2.0
 [0.1.22]: https://github.com/orkun-soylu/timar/compare/v0.1.21...v0.1.22
 [0.1.21]: https://github.com/orkun-soylu/timar/compare/v0.1.20...v0.1.21
