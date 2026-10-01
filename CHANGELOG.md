@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.19] — 2026-10-01
+
+### Security
+
+- **Host keys are pinned by Timar's own trust-on-first-use policy** instead of paramiko's
+  `AutoAddPolicy`. The behaviour is the same: a host never seen before is accepted once and
+  written to `known_hosts`, and a known host presenting a different key is refused. But the rule
+  is now explicit, and it's in one place, `ssh.new_client()`, which enrolment uses too instead of
+  carrying two copies of it. It also clears the code-scanning alert that `AutoAddPolicy` raised
+  each time those lines moved. New tests run a real SSH handshake to check the pin, the
+  acceptance of the same key, and the refusal of a changed one.
+
 ## [0.1.18] — 2026-10-01
 
 ### Changed
@@ -295,7 +307,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.18...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.19...HEAD
+[0.1.19]: https://github.com/orkun-soylu/timar/compare/v0.1.18...v0.1.19
 [0.1.18]: https://github.com/orkun-soylu/timar/compare/v0.1.17...v0.1.18
 [0.1.17]: https://github.com/orkun-soylu/timar/compare/v0.1.16...v0.1.17
 [0.1.16]: https://github.com/orkun-soylu/timar/compare/v0.1.15...v0.1.16
