@@ -31,7 +31,7 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.4`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.5`) to choose when
 you move.
 
 Add, edit and remove servers and containers from their pages; a server is enrolled from its form's *SSH access*
