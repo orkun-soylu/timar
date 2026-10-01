@@ -1,0 +1,22 @@
+{# The one header every signed-in page carries: the name, then the three places, the language
+   and the way out. The place you are on is the accent colour and not a link; the others stay
+   plain underlined links, so the bar reads the same on every page and only the highlight moves.
+   Imported `with context` — it needs `_`, the language list and the request. #}
+{% macro nav(section) -%}
+<header class="topnav">
+  <a href="/" class="brand">timar</a>
+  <span class="spacer"></span>
+  <nav aria-label="{{ _("Main") }}">
+    {%- for key, href, label in [("servers", "/", _("servers")),
+                                 ("reports", "/reports", _("reports")),
+                                 ("settings", "/settings", _("settings"))] %}
+    {% if key == section %}<a href="{{ href }}" class="current" aria-current="page">{{ label }}</a>
+    {%- else %}<a href="{{ href }}">{{ label }}</a>{% endif %}
+    {%- endfor %}
+  </nav>
+  {% include "_lang.html" %}
+  <form method="post" action="/logout" style="margin:0">
+    <button type="submit" class="linkish">{{ _("sign out") }}</button>
+  </form>
+</header>
+{%- endmacro %}

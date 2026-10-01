@@ -1,12 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Settings") }} — Timar{% endblock %}
 {% block body %}
-<header>
-  <h1>{{ _("Settings") }}</h1>
-  <span class="spacer"></span>
-  <a href="/" class="muted">← {{ _("dashboard") }}</a>
-  {% include "_lang.html" %}
-</header>
+{% from "_nav.html" import nav with context %}{{ nav("settings") }}
 
 {% if errors %}
   <div class="panel notice bad">

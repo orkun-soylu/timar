@@ -193,7 +193,7 @@ class TestPages:
         if path == "/login":
             client.cookies.clear()
         body = client.get(path).text
-        header = body[body.index("<header>"):body.index("</header>")]
+        header = body[body.index("<header"):body.index("</header>")]
         assert 'action="/lang"' in header
         assert body.count('action="/lang"') == 1
 

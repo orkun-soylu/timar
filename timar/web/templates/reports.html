@@ -1,14 +1,25 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Reports") }} — Timar{% endblock %}
 {% block body %}
-<header>
-  <h1>{{ _("Reports") }}</h1>
-  <span class="spacer"></span>
-  <a href="/" class="muted">← {{ _("dashboard") }}</a>
-  {% include "_lang.html" %}
-</header>
+{% from "_nav.html" import nav with context %}{{ nav("reports") }}
 
 <section class="panel">
+  <h2>{{ _("Scheduled work") }}</h2>
+  <div id="jobs-panel"
+       hx-get="/fragments/jobs"
+       hx-trigger="every 15s"
+       hx-swap="innerHTML">
+    {% include "_jobs.html" %}
+  </div>
+</section>
+
+<p class="muted">
+  {{ _("If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.") }}
+</p>
+
+
+<section class="panel">
+  <h2>{{ _("Reports") }}</h2>
   {# A plain GET form, so the filter works with no scripting at all and the choice lands in a
      URL that can be bookmarked. HTMX upgrades it in place: it re-requests this same page,
      takes only the list out of the response and pushes the real URL — so a filtered view
@@ -42,6 +53,6 @@
 </section>
 
 <p class="muted">
-  {{ _("Every run a job finishes is kept here, whether or not it was also sent to Telegram. The dashboard shows the latest one; this shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.") }}
+  {{ _("Every run a job finishes is kept here, whether or not it was also sent to Telegram. Scheduled work shows the latest one; this list shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.") }}
 </p>
 {% endblock %}

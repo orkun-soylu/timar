@@ -3,7 +3,6 @@
    dashboard is below the jobs table — out of sight, and it was not found.
    A plain GET form so it works without scripting; the select submits itself when there is. #}
 <form method="get" action="/lang" class="lang">
-  <span aria-hidden="true">🌐</span>
   <input type="hidden" name="next"
          value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query }}">
   <select name="code" aria-label="Language" onchange="this.form.submit()">

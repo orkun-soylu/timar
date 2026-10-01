@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 {% block body %}
-<header>
-  <h1>Timar</h1>
-  <span class="spacer"></span>
-  <a href="/reports" class="muted">{{ _("reports") }}</a>
-  <a href="/settings" class="muted">{{ _("settings") }}</a>
-  {% include "_lang.html" %}
-  <span class="muted">{{ operator }}</span>
-  <form method="post" action="/logout" style="margin:0">
-    <button type="submit" class="linkish">{{ _("sign out") }}</button>
-  </form>
-</header>
+{% from "_nav.html" import nav with context %}{{ nav("servers") }}
 
 <div class="panel"
      hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}"
@@ -44,20 +34,7 @@
 </script>
 
 <p class="muted" style="margin-top:0.75rem; margin-bottom:2rem">
-  {{ _("Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.") }}
+  {{ _("Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Any running machine can be shut down; only one Timar can start again gets a wake button.") }}
 </p>
 
-<section class="panel">
-  <h2>{{ _("Scheduled work") }}</h2>
-  <div id="jobs-panel"
-       hx-get="/fragments/jobs"
-       hx-trigger="every 15s"
-       hx-swap="innerHTML">
-    {% include "_jobs.html" %}
-  </div>
-</section>
-
-<p class="muted">
-  {{ _("If <em>last run</em> stops advancing, the schedule has stopped even though everything else looks healthy — that is the failure this panel exists to show. Edit schedules in <a href='/settings'>settings</a>.") }}
-</p>
 {% endblock %}
