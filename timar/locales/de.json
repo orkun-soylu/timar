@@ -149,7 +149,6 @@
   "none": "keiner",
   "Base URL": "Basis-URL",
   "API key": "API-Schlüssel",
-  "stored — leave blank to keep it": "gespeichert — leer lassen, um ihn zu behalten",
   "not set": "nicht gesetzt",
   "Test connection": "Verbindung testen",
   "List models": "Modelle auflisten",
@@ -286,9 +285,7 @@
   "Day": "Tag",
   "Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.": "Die Compose-Projekte jeder Maschine werden direkt nach ihr aktualisiert. Üblich ist ein wöchentlicher Termin zu einer ruhigen Stunde: Container mit geändertem Image werden neu erstellt.",
   "Every N hours": "Alle N Stunden",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.": "Von Telegrams @BotFather beim Anlegen des Bots. Nach dem Speichern nie wieder angezeigt; Feld leer lassen, um ihn zu behalten.",
   "How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.": "Wie weit die Prüfung im Systemlog jeder Maschine nach Fehlern zurückliest. Länger als der Abstand zweier Prüfungen, damit nichts dazwischen fällt — 25 Stunden bei täglicher Prüfung.",
-  "Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.": "Nach dem Speichern nie wieder angezeigt. Feld leer lassen, um den gespeicherten Schlüssel zu behalten; ein Wechsel des Anbieters verwirft ihn.",
   "Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.": "Nur für einen eigenen Endpunkt, etwa <code>http://10.0.0.40:11434</code>. Leer: die öffentliche API des Anbieters, oder <code>http://localhost:11434</code> für Ollama.",
   "Sends one message with the saved token and chat ID, so save first.": "Sendet eine Nachricht mit dem gespeicherten Token und der Chat-ID; also zuerst speichern.",
   "The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.": "Der Bericht jeder abgeschlossenen Log-Prüfung und jedes Update-Laufs, bei Länge in mehrere Nachrichten geteilt. Eine fehlgeschlagene Zustellung lässt die Aufgabe nicht scheitern: der Bericht steht weiter auf der Berichtsseite.",
@@ -297,5 +294,8 @@
   "What is sent": "Was gesendet wird",
   "What it sees": "Was es sieht",
   "Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.": "Wohin die Berichte gehen: Ihr eigener Chat mit dem Bot oder eine Gruppe, in der er Mitglied ist. Schreiben Sie dem Bot zuerst — ein Bot kann kein Gespräch beginnen — und lesen Sie die ID dann unter <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.",
-  "Saving": "Speichern"
+  "Saving": "Speichern",
+  "stored": "gespeichert",
+  "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "Nach dem Speichern nie wieder angezeigt — das Feld zeigt nur <em>gespeichert</em> oder <em>nicht gesetzt</em>. Leer lassen, um den gespeicherten Schlüssel zu behalten, einen neuen eingeben, um ihn zu ersetzen; ein Wechsel des Anbieters verwirft ihn.",
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Von Telegrams @BotFather beim Anlegen des Bots. Nach dem Speichern nie wieder angezeigt — das Feld zeigt nur <em>gespeichert</em> oder <em>nicht gesetzt</em>. Leer lassen, um das gespeicherte Token zu behalten, ein neues eingeben, um es zu ersetzen."
 }

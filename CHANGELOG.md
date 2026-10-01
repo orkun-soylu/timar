@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.10] — 2026-10-02
+
+### Changed
+
+- **The settings page carries no instructions of its own.** The API key and bot token boxes said
+  "stored — leave blank to keep it"; they now say only *stored* or *not set*. What that means —
+  never shown again, empty keeps it, typing replaces it, switching provider drops the key — is
+  in the section's **?**, reworded to match what the box shows.
+
 ## [0.2.9] — 2026-10-02
 
 ### Fixed
@@ -492,7 +501,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.9...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.10...HEAD
+[0.2.10]: https://github.com/orkun-soylu/timar/compare/v0.2.9...v0.2.10
 [0.2.9]: https://github.com/orkun-soylu/timar/compare/v0.2.8...v0.2.9
 [0.2.8]: https://github.com/orkun-soylu/timar/compare/v0.2.7...v0.2.8
 [0.2.7]: https://github.com/orkun-soylu/timar/compare/v0.2.6...v0.2.7

@@ -38,7 +38,7 @@
                value="{{ llm.base_url | default('') }}"></label>
       <label><span>{{ _("API key") }}</span>
         <input name="api_key" type="password" autocomplete="off"
-               placeholder="{{ _("stored — leave blank to keep it") if llm_has_key else _("not set") }}"></label>
+               placeholder="{{ _("stored") if llm_has_key else _("not set") }}"></label>
     </div>
     <div class="actions">
       <button type="submit">{{ _("Save") }}</button>
@@ -62,7 +62,7 @@
     <div class="row">
       <label><span>{{ _("Bot token") }}</span>
         <input name="token" type="password" autocomplete="off"
-               placeholder="{{ _("stored — leave blank to keep it") if telegram_has_token else _("not set") }}"></label>
+               placeholder="{{ _("stored") if telegram_has_token else _("not set") }}"></label>
       <label><span>{{ _("Chat ID") }}</span>
         <input name="chat_id" value="{{ telegram_chat_id }}"></label>
     </div>
@@ -86,7 +86,7 @@
     <dt>{{ _("Base URL") }}</dt>
     <dd>{{ _("Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.") }}</dd>
     <dt>{{ _("API key") }}</dt>
-    <dd>{{ _("Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.") }}</dd>
+    <dd>{{ _("Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.") }}</dd>
     <dt>{{ _("Test connection") }} · {{ _("List models") }}</dt>
     <dd>{{ _("Both buttons use the <em>saved</em> connection, so save the provider and key first. The model itself can stay empty until you have the list.") }}</dd>
     <dt>{{ _("What it sees") }}</dt>
@@ -104,7 +104,7 @@
     <dt>{{ _("What is sent") }}</dt>
     <dd>{{ _("The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.") }}</dd>
     <dt>{{ _("Bot token") }}</dt>
-    <dd>{{ _("From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.") }}</dd>
+    <dd>{{ _("From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.") }}</dd>
     <dt>{{ _("Chat ID") }}</dt>
     <dd>{{ _("Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.") }}</dd>
     <dt>{{ _("Send test message") }}</dt>

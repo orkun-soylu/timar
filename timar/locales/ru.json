@@ -149,7 +149,6 @@
   "none": "нет",
   "Base URL": "Базовый URL",
   "API key": "API-ключ",
-  "stored — leave blank to keep it": "сохранён — оставьте пустым, чтобы не менять",
   "not set": "не задан",
   "Test connection": "Проверить подключение",
   "List models": "Список моделей",
@@ -286,9 +285,7 @@
   "Day": "День",
   "Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.": "Проекты compose каждой машины обновляются сразу после неё. Обычно выбирают еженедельное окно в спокойный час: контейнеры с изменившимся образом пересоздаются.",
   "Every N hours": "Каждые N часов",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.": "Выдаётся @BotFather в Telegram при создании бота. После сохранения больше не показывается; чтобы сохранить его, оставьте поле пустым.",
   "How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.": "Насколько далеко назад проверка читает системный журнал каждой машины в поисках ошибок. Дольше, чем промежуток между двумя проверками, чтобы ничего не выпало, — 25 часов для ежедневной проверки.",
-  "Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.": "После сохранения больше не показывается. Оставьте поле пустым, чтобы сохранить ключ; смена провайдера его сбрасывает.",
   "Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.": "Только для своей точки доступа, например <code>http://10.0.0.40:11434</code>. Пусто — публичный API провайдера или <code>http://localhost:11434</code> для Ollama.",
   "Sends one message with the saved token and chat ID, so save first.": "Отправляет одно сообщение с сохранёнными токеном и ID чата; сначала сохраните.",
   "The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.": "Отчёт каждой завершённой проверки логов и каждого прогона обновлений; длинный разбивается на несколько сообщений. Неудачная доставка не делает задачу неудачной: отчёт остаётся на странице отчётов.",
@@ -297,5 +294,8 @@
   "What is sent": "Что отправляется",
   "What it sees": "Что он видит",
   "Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.": "Куда идут отчёты: ваш собственный чат с ботом или группа, в которой он состоит. Сначала напишите боту — бот не может начать разговор сам, — затем посмотрите ID на <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.",
-  "Saving": "Сохранение"
+  "Saving": "Сохранение",
+  "stored": "сохранён",
+  "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "После сохранения больше не показывается — в поле только <em>сохранён</em> или <em>не задан</em>. Оставьте пустым, чтобы сохранить ключ, введите новый, чтобы заменить; смена провайдера его сбрасывает.",
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Выдаётся @BotFather в Telegram при создании бота. После сохранения больше не показывается — в поле только <em>сохранён</em> или <em>не задан</em>. Оставьте пустым, чтобы сохранить токен, введите новый, чтобы заменить."
 }

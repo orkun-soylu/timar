@@ -149,7 +149,6 @@
   "none": "aucun",
   "Base URL": "URL de base",
   "API key": "Clé d’API",
-  "stored — leave blank to keep it": "enregistrée — laissez vide pour la conserver",
   "not set": "non définie",
   "Test connection": "Tester la connexion",
   "List models": "Lister les modèles",
@@ -286,9 +285,7 @@
   "Day": "Jour",
   "Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.": "Les projets compose de chaque machine sont mis à jour juste après elle. Un créneau hebdomadaire à une heure calme est le choix habituel : les conteneurs dont l’image a changé sont recréés.",
   "Every N hours": "Toutes les N heures",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.": "Fourni par @BotFather de Telegram à la création du bot. Jamais réaffiché une fois enregistré ; laissez le champ vide pour le garder.",
   "How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.": "Jusqu’où l’inspection remonte dans le journal système de chaque machine pour y chercher des erreurs. Plus long que l’écart entre deux inspections, pour que rien ne passe entre les deux — 25 heures pour une inspection quotidienne.",
-  "Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.": "Jamais réaffichée une fois enregistrée. Laissez le champ vide pour garder la clé stockée ; changer de fournisseur la supprime.",
   "Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.": "Seulement pour un point d’accès à vous, par exemple <code>http://10.0.0.40:11434</code>. Vide : l’API publique du fournisseur, ou <code>http://localhost:11434</code> pour Ollama.",
   "Sends one message with the saved token and chat ID, so save first.": "Envoie un message avec le jeton et l’ID de chat enregistrés ; enregistrez d’abord.",
   "The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.": "Le rapport de chaque inspection et de chaque tournée de mises à jour terminée, découpé en plusieurs messages s’il est long. Un envoi raté ne fait pas échouer la tâche : le rapport reste sur la page des rapports.",
@@ -297,5 +294,8 @@
   "What is sent": "Ce qui est envoyé",
   "What it sees": "Ce qu’il voit",
   "Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.": "Où vont les rapports : votre propre conversation avec le bot, ou un groupe dont il est membre. Écrivez d’abord au bot — un bot ne peut pas ouvrir de conversation — puis lisez l’ID sur <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.",
-  "Saving": "Enregistrement"
+  "Saving": "Enregistrement",
+  "stored": "enregistré",
+  "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "Jamais réaffichée une fois enregistrée — le champ indique seulement <em>enregistré</em> ou <em>non définie</em>. Laissez-le vide pour garder la clé stockée, saisissez-en une nouvelle pour la remplacer ; changer de fournisseur la supprime.",
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Fourni par @BotFather de Telegram à la création du bot. Jamais réaffiché une fois enregistré — le champ indique seulement <em>enregistré</em> ou <em>non définie</em>. Laissez-le vide pour garder le jeton stocké, saisissez-en un nouveau pour le remplacer."
 }
