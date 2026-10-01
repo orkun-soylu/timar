@@ -268,5 +268,13 @@
   "custom command": "commande personnalisée",
   "pull + up": "pull + up",
   "skip": "ignorer",
-  "with custom command": "avec commande personnalisée"
+  "with custom command": "avec commande personnalisée",
+  "A project whose containers were removed with <code>down</code> has nothing for Compose to list; add it by hand below.": "Un projet dont les conteneurs ont été supprimés avec <code>down</code> n’a rien que Compose puisse lister ; ajoutez-le à la main ci-dessous.",
+  "Add selected": "Ajouter la sélection",
+  "Add selected adds every ticked row with the defaults — update pull + up, no health check — or, if any row is wrong, none of them. Edit a project afterwards for the rest.": "Ajouter la sélection ajoute chaque ligne cochée avec les valeurs par défaut — mise à jour pull + up, pas de contrôle de santé — ou, si une ligne est fausse, aucune. Modifiez ensuite le projet pour le reste.",
+  "Asks the host for its compose projects (<code>docker compose ls</code>) and lists those not registered yet. The name and directory come from Compose; the web interface is a guess from a Traefik <code>Host()</code> rule on the project's containers — keep it, change it or clear it.": "Demande à l’hôte ses projets compose (<code>docker compose ls</code>) et liste ceux qui ne sont pas encore enregistrés. Le nom et le répertoire viennent de Compose ; l’interface web est une supposition tirée d’une règle Traefik <code>Host()</code> sur les conteneurs du projet — gardez-la, modifiez-la ou effacez-la.",
+  "Every compose project on {host} is already registered.": "Tous les projets compose sur {host} sont déjà enregistrés.",
+  "Find": "Chercher",
+  "Find on a host": "Chercher sur un hôte",
+  "Tick at least one project.": "Cochez au moins un projet."
 }

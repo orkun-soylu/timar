@@ -268,5 +268,13 @@
   "custom command": "своя команда",
   "pull + up": "pull + up",
   "skip": "пропустить",
-  "with custom command": "при своей команде"
+  "with custom command": "при своей команде",
+  "A project whose containers were removed with <code>down</code> has nothing for Compose to list; add it by hand below.": "У проекта, контейнеры которого удалены через <code>down</code>, Compose нечего показать; добавьте его вручную ниже.",
+  "Add selected": "Добавить выбранные",
+  "Add selected adds every ticked row with the defaults — update pull + up, no health check — or, if any row is wrong, none of them. Edit a project afterwards for the rest.": "«Добавить выбранные» добавляет каждую отмеченную строку со значениями по умолчанию — обновление pull + up, без проверки здоровья — или, если хоть одна строка неверна, ни одной. Остальное настройте потом в проекте.",
+  "Asks the host for its compose projects (<code>docker compose ls</code>) and lists those not registered yet. The name and directory come from Compose; the web interface is a guess from a Traefik <code>Host()</code> rule on the project's containers — keep it, change it or clear it.": "Спрашивает у хоста его проекты compose (<code>docker compose ls</code>) и показывает ещё не зарегистрированные. Имя и каталог берутся из Compose; веб-интерфейс — догадка по правилу Traefik <code>Host()</code> на контейнерах проекта: оставьте, измените или очистите.",
+  "Every compose project on {host} is already registered.": "Все проекты compose на {host} уже зарегистрированы.",
+  "Find": "Найти",
+  "Find on a host": "Найти на хосте",
+  "Tick at least one project.": "Отметьте хотя бы один проект."
 }

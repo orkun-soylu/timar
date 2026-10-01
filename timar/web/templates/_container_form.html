@@ -12,6 +12,24 @@
     </div>
   {% endif %}
 
+  {# Adding only: the projects already on a host, read from it and offered to tick. Its own form,
+     before the manual one — forms do not nest. #}
+  {% if not editing %}
+  <div class="stack form-section">
+    {{ section_head(_("Find on a host"), "help-discover") }}
+    <form method="get" action="/settings/containers/discover" class="row" style="align-items:flex-end"
+          {% if in_dialog %}hx-get="/settings/containers/discover" hx-target="#discover-result" hx-swap="innerHTML"
+          hx-indicator="#discover-result"{% endif %}>
+      <label><span>{{ _("Host") }}</span>
+        <select name="server">
+          {% for host in hosts %}<option value="{{ host.name }}">{{ host.name }}</option>{% endfor %}
+        </select></label>
+      <button type="submit" class="secondary" style="flex:0 0 auto; margin-bottom:1rem">{{ _("Find") }}</button>
+    </form>
+    <div id="discover-result" class="result"></div>
+  </div>
+  {% endif %}
+
   <form method="post" action="/settings/containers" class="stack"
         {% if in_dialog %}hx-post="/settings/containers" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
     {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
@@ -105,6 +123,16 @@
       <dd>{{ _("Forgets the entry. The containers on the host are not touched.") }}</dd>
     </dl>
     <button type="button" class="secondary" popovertarget="help-container" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="help-discover" popover class="popover">
+    <h3>{{ _("Find on a host") }}</h3>
+    <dl class="help-list">
+      <dd>{{ _("Asks the host for its compose projects (<code>docker compose ls</code>) and lists those not registered yet. The name and directory come from Compose; the web interface is a guess from a Traefik <code>Host()</code> rule on the project's containers — keep it, change it or clear it.") }}</dd>
+      <dd>{{ _("Add selected adds every ticked row with the defaults — update pull + up, no health check — or, if any row is wrong, none of them. Edit a project afterwards for the rest.") }}</dd>
+      <dd>{{ _("A project whose containers were removed with <code>down</code> has nothing for Compose to list; add it by hand below.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-discover" popovertargetaction="hide">{{ _("close") }}</button>
   </div>
 
   <div id="help-container-update" popover class="popover">

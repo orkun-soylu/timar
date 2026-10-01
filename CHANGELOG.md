@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-10-01
+
+### Added
+
+- **Find on a host.** The add-container form opens with a host picker and **Find**. Timar asks
+  that server for its compose projects (`docker compose ls -a` and `docker ps`, one SSH session)
+  and lists those not registered yet. Each row shows a tick box, an editable name, the directory
+  with Compose's status, and a web address guessed from a Traefik `Host()` rule on the project's
+  containers. **Add selected** adds the ticked rows with the defaults — all of them, or, if any
+  row is wrong (a name already taken, say), none, with the list coming back as it was sent.
+  A project removed with `down` has nothing for Compose to list and is still added by hand.
+
 ## [0.2.2] — 2026-10-01
 
 ### Fixed
@@ -402,7 +414,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/orkun-soylu/timar/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/orkun-soylu/timar/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/orkun-soylu/timar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/orkun-soylu/timar/compare/v0.1.22...v0.2.0

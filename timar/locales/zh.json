@@ -268,5 +268,13 @@
   "custom command": "自定义命令",
   "pull + up": "pull + up",
   "skip": "跳过",
-  "with custom command": "使用自定义命令时"
+  "with custom command": "使用自定义命令时",
+  "A project whose containers were removed with <code>down</code> has nothing for Compose to list; add it by hand below.": "用 <code>down</code> 删除了容器的项目，Compose 无法列出；请在下方手动添加。",
+  "Add selected": "添加所选",
+  "Add selected adds every ticked row with the defaults — update pull + up, no health check — or, if any row is wrong, none of them. Edit a project afterwards for the rest.": "“添加所选”会用默认值添加每一行勾选的项目（更新为 pull + up，无健康检查）；只要有一行有误，就一个都不添加。其他设置请之后编辑项目。",
+  "Asks the host for its compose projects (<code>docker compose ls</code>) and lists those not registered yet. The name and directory come from Compose; the web interface is a guess from a Traefik <code>Host()</code> rule on the project's containers — keep it, change it or clear it.": "向主机查询其 compose 项目（<code>docker compose ls</code>），列出尚未登记的项目。名称和目录来自 Compose；Web 界面是根据项目容器上的 Traefik <code>Host()</code> 规则推测的 — 可以保留、修改或清空。",
+  "Every compose project on {host} is already registered.": "{host} 上的所有 compose 项目都已登记。",
+  "Find": "查找",
+  "Find on a host": "在主机上查找",
+  "Tick at least one project.": "请至少勾选一个项目。"
 }

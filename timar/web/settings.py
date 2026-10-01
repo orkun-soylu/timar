@@ -574,3 +574,63 @@ async def delete_container(request: Request, name: str):
     config.save(cfg)
     container_status.invalidate()
     return _done(request, "/containers")
+
+
+def _discover_panel(request: Request, server_name: str, *, errors: list[str] | None = None,
+                    submitted: dict | None = None, picked: list[str] | None = None,
+                    status_code: int = 200):
+    """The projects on one host that are not registered yet, to tick and add."""
+    cfg = config.load()
+    server = next((x for x in cfg.get("servers", []) if x["name"] == server_name), None)
+    if server is None:
+        raise HTTPException(404)
+    registered = {(c.get("server"), c.get("path", "").rstrip("/")) for c in cfg.get("containers") or []}
+    found, error = [], None
+    try:
+        found = [f for f in container_status.discover(server) if (server_name, f.path) not in registered]
+    except container_status.ContainerError as e:
+        error = str(e)
+    return _panel(request, "_container_discover.html", {
+        "server": server_name, "found": found, "error": error, "errors": errors or [],
+        "submitted": submitted or {}, "picked": picked or [],
+    }, title=_("Find on a host"), status_code=status_code, section="containers")
+
+
+@router.get("/containers/discover", response_class=HTMLResponse)
+async def discover_containers(request: Request, server: str = ""):
+    return await asyncio.to_thread(_discover_panel, request, server)
+
+
+@router.post("/containers/import")
+async def import_containers(request: Request):
+    """Add the ticked projects — all of them or, if any row is wrong, none.
+
+    All-or-nothing so a rejected list can be fixed and sent again as it is, without working out
+    which half of it already went in.
+    """
+    form = await request.form()
+    server_name = form.get("server") or ""
+    cfg = config.load()
+    entries = cfg.get("containers") or []
+    names = {c["name"] for c in entries}
+    added, errors = [], []
+    for i in form.getlist("pick"):
+        row = {"name": form.get(f"name_{i}", ""), "server": server_name,
+               "path": form.get(f"path_{i}", ""), "web_url": form.get(f"web_{i}", "")}
+        try:
+            entry = validate.container(row, names, cfg.get("servers", []))
+        except validate.ValidationError as e:
+            errors += [f"{row['name'] or row['path']}: {message}" for message in e.errors]
+            continue
+        names.add(entry["name"])
+        added.append(entry)
+    if not added and not errors:
+        errors.append(_("Tick at least one project."))
+    if errors:
+        return await asyncio.to_thread(_discover_panel, request, server_name, errors=errors,
+                                       submitted=dict(form), picked=form.getlist("pick"),
+                                       status_code=400)
+    cfg["containers"] = entries + added
+    config.save(cfg)
+    container_status.invalidate()
+    return _done(request, "/containers")
