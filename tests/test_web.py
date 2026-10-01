@@ -1223,6 +1223,19 @@ class TestTopNav:
         assert "🌐" not in header
         assert "dashboard" not in client.get("/settings").text
 
+    def test_action_results_go_to_the_header_toast(self, client):
+        """Beside the name, in the sticky header — not under the table, out of sight."""
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [{"name": "web-01", "host": "10.0.0.1", "user": "op"}],
+                     "containers": [{"name": "app", "server": "web-01", "path": "/srv/app"}]})
+        page = client.get("/").text
+        header = page[page.index('<header class="topnav">'):page.index("</header>")]
+        assert header.index('class="brand"') < header.index('id="toast"') < header.index("<nav")
+        assert "power-result" not in page and "container-result" not in client.get("/containers").text
+        assert 'hx-target="#toast"' in client.get("/fragments/fleet").text
+        assert "setTimeout" in page and "3000" in page
+
     def test_scheduled_work_lives_on_the_reports_page(self, client):
         complete_setup(client)
         assert "jobs-panel" not in client.get("/").text

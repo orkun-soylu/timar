@@ -33,16 +33,16 @@
           <span class="icon-slot" title="{{ _("Timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
         {%- elif p.running %}
           <button type="button" class="icon-btn" title="{{ _("stop") }}" aria-label="{{ _("stop") }}"
-                  hx-post="/containers/{{ p.name }}/stop" hx-target="#container-result" hx-swap="innerHTML"
-                  hx-indicator="#container-result" hx-disabled-elt="this"
+                  hx-post="/containers/{{ p.name }}/stop" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this"
                   hx-confirm="{{ _("Stop {name}?", name=p.name) }}">{{ icon("stop") }}</button>
           <button type="button" class="icon-btn" title="{{ _("restart") }}" aria-label="{{ _("restart") }}"
-                  hx-post="/containers/{{ p.name }}/restart" hx-target="#container-result" hx-swap="innerHTML"
-                  hx-indicator="#container-result" hx-disabled-elt="this">{{ icon("restart") }}</button>
+                  hx-post="/containers/{{ p.name }}/restart" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this">{{ icon("restart") }}</button>
         {%- elif p.state in ("asleep", "down") and p.detail != "host not configured" %}
           <button type="button" class="icon-btn" title="{{ _("start") }}" aria-label="{{ _("start") }}"
-                  hx-post="/containers/{{ p.name }}/start" hx-target="#container-result" hx-swap="innerHTML"
-                  hx-indicator="#container-result" hx-disabled-elt="this">{{ icon("play") }}</button>
+                  hx-post="/containers/{{ p.name }}/start" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this">{{ icon("play") }}</button>
           <span class="icon-slot"></span>
         {%- else %}
           <span class="icon-slot"></span><span class="icon-slot"></span>

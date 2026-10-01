@@ -9,10 +9,6 @@
   {% include "_fleet.html" %}
 </div>
 
-{# Outside the polled panel: a message written inside it would be swept away by the next
-   refresh, taking the reason a wake failed with it. #}
-<div id="power-result" class="result" style="margin-top:0.75rem"></div>
-
 {# Edit and add open here. Outside the polled panel, so the ten-second refresh cannot
    wipe a half-typed form; closed with Esc, a click on the backdrop, or the panel's own cancel. #}
 <dialog id="server-dialog" aria-label="{{ _("Server") }}">

@@ -164,6 +164,7 @@ class TestPage:
         assert '<a href="https://photos.lan" target="_blank"' in rows and "immich:v2" in rows
         assert "/containers/immich/stop" in rows and "/containers/immich/restart" in rows
         assert "/containers/odata/start" in rows
+        assert 'hx-target="#toast"' in rows
         assert rows.count('href="/settings/containers/new"') == 1
 
     def test_the_page_carries_the_menu_and_requires_a_session(self, page):
