@@ -27,8 +27,11 @@
           {% endif %}
         </td>
         <td style="text-align:right; white-space:nowrap">
+          {# A link first — it opens the report as a page without scripting — and the dialog
+             when htmx is there, so the list stays where it was. #}
           <a href="/reports/{{ entry.id }}" class="icon-btn"
-             title="{{ _("report") }}" aria-label="{{ _("report") }}">{{ icon("report") }}</a>
+             title="{{ _("report") }}" aria-label="{{ _("report") }}"
+             hx-get="/reports/{{ entry.id }}" hx-target="#dialog-body" hx-swap="innerHTML">{{ icon("report") }}</a>
         </td>
       </tr>
     {% endfor %}
