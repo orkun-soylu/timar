@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.22] — 2026-10-01
+
+### Changed
+
+- **Remove moved into the server form.** The row's trash button is gone; *remove* sits at the
+  right end of the edit form's buttons, in red, and asks first ("Remove … from Timar? The
+  machine is not touched."). A row now carries only its power button and *edit*.
+- The *Actions* heading keeps the add button on its own line instead of letting it drop under
+  the word once a row has two buttons.
+
 ## [0.1.21] — 2026-10-01
 
 ### Changed
@@ -347,7 +357,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.21...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.22...HEAD
+[0.1.22]: https://github.com/orkun-soylu/timar/compare/v0.1.21...v0.1.22
 [0.1.21]: https://github.com/orkun-soylu/timar/compare/v0.1.20...v0.1.21
 [0.1.20]: https://github.com/orkun-soylu/timar/compare/v0.1.19...v0.1.20
 [0.1.19]: https://github.com/orkun-soylu/timar/compare/v0.1.18...v0.1.19
