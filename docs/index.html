@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Timar — agentless fleet care for homelabs</title>
-<meta name="description" content="Timar wakes the machines in your homelab that are asleep, updates them, reads their logs, and puts them back the way it found them. One container, one volume, nothing installed on the machines you manage." />
+<title>timar — agentless fleet care for homelabs</title>
+<meta name="description" content="timar wakes the machines in your homelab that are asleep, updates them, reads their logs, and puts them back the way it found them. One container, one volume, nothing installed on the machines you manage." />
 <link rel="canonical" href="https://timar.tools/" />
 
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://timar.tools/" />
 <!-- Keep in step with the <h1>: a share card renders og:title right beside og:image, and
      og:image is a capture of the hero. A stale title puts two different headlines in one card. -->
-<meta property="og:title" content="Timar — off is the right default, unpatched isn't" />
+<meta property="og:title" content="timar — off is the right default, unpatched isn't" />
 <meta property="og:description" content="Wake, update, sweep the logs, shut back down. Agentless: SSH and Wake-on-LAN, nothing installed on the machines you manage. Linux, OpenWrt and Proxmox. MIT." />
 <meta property="og:image" content="https://timar.tools/images/og-cover.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Timar's landing page: the headline 'Off is the right default. Unpatched isn't.' above a short description and two buttons, Run it and Source on GitHub." />
+<meta property="og:image:alt" content="timar's landing page: the headline 'Off is the right default. Unpatched isn't.' above a short description and two buttons, Run it and Source on GitHub." />
 <meta name="twitter:card" content="summary_large_image" />
 
 <!-- The same mark is the application's tab icon (timar/web/templates/base.html); keep the two in step. -->
@@ -202,7 +202,7 @@
 
 <header class="bar">
   <div class="wrap">
-    <span class="brand"><span class="dot"></span>Timar</span>
+    <span class="brand"><span class="dot"></span>timar</span>
     <nav>
       <a href="#how" class="hide-sm">How it works</a>
       <a href="#measured" class="hide-sm">Measured</a>
@@ -217,7 +217,7 @@
   <p class="eyebrow">MIT · one container · no agents</p>
   <h1>Off is the right default. Unpatched isn't.</h1>
   <p class="lede">
-    Timar wakes the machines in your homelab, updates them, reads their logs, and
+    timar wakes the machines in your homelab, updates them, reads their logs, and
     <strong>puts them back the way it found them</strong>. Nothing is installed on them — it
     needs SSH, and Wake-on-LAN for the ones that sleep. Between runs they stay dark, which is
     why most of them are off in the first place.
@@ -232,14 +232,14 @@
   </p>
 
   <figure class="shot">
-    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1862"
-         alt="Timar's dashboard listing six machines, each with a coloured light before its name: two green (up), three grey (asleep, on-demand), one red (down). Each row's actions are icon buttons — wake for the sleeping ones, then enrol, edit and remove. Below, a scheduled work panel shows a daily log sweep and a weekly update run with their last and next runs." />
-    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1862"
+    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1116"
+         alt="timar's servers page: seven machines, each with a coloured light before its name — four green (up), two grey (asleep), one red (down). The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep — and an edit button; + on the heading adds a server." />
+    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1116"
          alt="The same dashboard in a light theme." />
     <figcaption>
       Three states, not two: grey <em>asleep</em> is a machine that is meant to be off, and it
       is not painted like a fault. A status page that shows both in red teaches you to ignore
-      red. Servers are added, edited, enrolled and removed from the same page.
+      red. A server is added, edited, enrolled and removed from its own dialog.
     </figcaption>
   </figure>
 </div>
@@ -255,7 +255,7 @@
       without a security update are the ones nothing is watching.
     </p>
     <p class="muted">
-      Timar inverts it. <strong style="color:var(--ink)">Waking the host is step one of the
+      timar inverts it. <strong style="color:var(--ink)">Waking the host is step one of the
       job</strong>, and shutting it back down is the last. A machine that was off before the run
       is off after it.
     </p>
@@ -275,6 +275,10 @@
         <span>apt on Debian, dist-upgrade on Proxmox, or your own command. OpenWrt is skipped by
         default: an unattended <code>apk upgrade</code> can fill the overlay or break a kernel
         module on the machine carrying the session you would repair it from.</span></li>
+      <li><strong>Update its containers</strong>
+        <span>Each Docker Compose project registered on that machine: pull, then
+        <code>up -d</code> if it was running — never a <code>down</code> first, so a failed pull
+        leaves it as it was. A stopped project is pulled and left stopped.</span></li>
       <li><strong>Sweep the logs while it is up</strong>
         <span>System log errors, disks past a threshold, stopped containers — and scheduled jobs
         on that machine that did not run today. Watching for <em>absence</em> is the point.</span></li>
@@ -284,13 +288,14 @@
     </ol>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/report-update-dark.png" width="2560" height="798"
-           alt="An archived update run, summarised as five updated, none failed, one skipped. Three machines are annotated 'woken, updated, shut down again'; two that were already on carry no annotation; the OpenWrt router is marked skipped because no update command is configured for it." />
-      <img class="shot-light" src="images/report-update-light.png" width="2560" height="798"
+      <img class="shot-dark" src="images/report-update-dark.png" width="1986" height="784"
+           alt="An archived update run: nas-01 and five of its compose projects updated, one project pulled and left stopped, timar's own project skipped, three machines woken, updated and shut down again, build-01 failed to come up, the router skipped as left out and the laptop as not enrolled." />
+      <img class="shot-light" src="images/report-update-light.png" width="1986" height="784"
            alt="The same update run in a light theme." />
       <figcaption>
-        A run says what it <em>did</em> to each machine. The three annotated lines were asleep
-        before the run and are asleep again; the router was skipped, not quietly left out.
+        A run says what it <em>did</em> to each machine and each project. The three annotated
+        machines were asleep before the run and are asleep again; what was skipped says why, not
+        quietly left out.
       </figcaption>
     </figure>
 
@@ -303,14 +308,43 @@
     </div>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/report-sweep-dark.png" width="2560" height="1220"
-           alt="An archived log sweep: one machine with findings, none unreachable, three asleep. A written assessment at the top singles out a disk at 91 percent and a drive reporting a pending sector, and says which of the two is the more urgent. Below it, the raw per-host findings — the two smartd lines and the disk, then 'clean' for two hosts and 'offline, not checked' for the three that were asleep." />
-      <img class="shot-light" src="images/report-sweep-light.png" width="2560" height="1220"
+      <img class="shot-dark" src="images/report-sweep-dark.png" width="1986" height="1092"
+           alt="An archived log sweep: one machine with findings, one unreachable, two asleep. A written assessment at the top: nas-01's /srv at 91 percent and climbing, and its grafana container failing a healthcheck; build-01 did not answer. Below it, the raw findings for nas-01, then 'clean' for three hosts, build-01 unreachable, and 'asleep — not checked' for the two that were off." />
+      <img class="shot-light" src="images/report-sweep-light.png" width="1986" height="1092"
            alt="The same log sweep in a light theme." />
       <figcaption>
         The written assessment sits above the findings it came from, never instead of them. A
         machine that was asleep is <em>not checked</em>, not clean — a sweep does not wake the
         fleet, and calling an unchecked host healthy is the one thing a status page must not do.
+      </figcaption>
+    </figure>
+
+    <figure class="shot narrow">
+      <div>
+        <img class="shot-dark" src="images/job-dialog-dark.png" width="1410" height="1772"
+             alt="The update run's dialog: a weekly Sunday 04:00 schedule, then three lists. Runs on: build-01, gpu-01, hv-01, nas-01, vm-01, each with a minus button. Left out: router, with a plus button. Not enrolled: laptop, with a link to enrol it from its card." />
+        <img class="shot-light" src="images/job-dialog-light.png" width="1410" height="1772"
+             alt="The same dialog in a light theme." />
+      </div>
+      <figcaption>
+        <strong style="color:var(--ink)">Each job says where it runs.</strong> The pencil on a job
+        opens its schedule and its servers: everything enrolled runs, <strong>−</strong> leaves a
+        machine out of that job, and one timar has never logged in to links to its card to be
+        enrolled. A running job has a <strong>stop</strong>: it finishes the step it is on — and
+        still shuts down what it woke — then goes no further.
+      </figcaption>
+    </figure>
+
+    <figure class="shot">
+      <img class="shot-dark" src="images/containers-dark.png" width="2560" height="1086"
+           alt="The containers page: six compose projects on nas-01 with their images. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." />
+      <img class="shot-light" src="images/containers-light.png" width="2560" height="1086"
+           alt="The same page in a light theme." />
+      <figcaption>
+        Containers, one row per Compose project: state from one <code>docker ps</code> per host,
+        start, stop and restart, and an update with every run. Yellow means running but not
+        well — a failing healthcheck, a crashed container, a health address that stopped
+        answering. timar will not stop the project it runs in.
       </figcaption>
     </figure>
   </div>
@@ -335,17 +369,17 @@
         why the compose file ships <code>network_mode: host</code>.</p>
       </div>
       <div class="card">
-        <span class="num">3.02s → 0.01s</span>
-        <h3>Cold and cached probes</h3>
+        <span class="num">3.02s → 0.002s</span>
+        <h3>Probes off the page</h3>
         <p>Most of the fleet is supposed to be unreachable, so a probe timeout is the normal case.
-        Probes run in parallel behind a short TTL: the page costs one timeout, not one per
-        sleeping machine.</p>
+        A background task asks every host every ten seconds and the page reads the last answer:
+        measured on a sixteen-machine fleet, nine of them off, it no longer waits at all.</p>
       </div>
       <div class="card">
-        <span class="num">126 MB</span>
+        <span class="num">127 MB</span>
         <h3>The whole thing</h3>
         <p>One Alpine image, running as a non-root fixed UID, for amd64 and arm64. A Raspberry
-        Pi is a first-class host — it is what Timar is written on.</p>
+        Pi is a first-class host.</p>
       </div>
     </div>
   </div>
@@ -390,14 +424,15 @@
 
     <figure class="shot narrow">
       <div>
-        <img class="shot-dark" src="images/server-dialog-dark.png" width="1408" height="2006"
-             alt="The edit dialog for vm-01: name, address, SSH user and platform; Wake-on-LAN MAC and relay; 'Guest of hv-01' with VM id 101; update command, update timeout, and context for the log analysis." />
-        <img class="shot-light" src="images/server-dialog-light.png" width="1408" height="2006"
+        <img class="shot-dark" src="images/server-dialog-dark.png" width="1410" height="2204"
+             alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, timeout, context for the log analysis. SSH access: user, a password used only to enrol, passwordless sudo, and an Enrol button." />
+        <img class="shot-light" src="images/server-dialog-light.png" width="1410" height="2204"
              alt="The same dialog in a light theme." />
       </div>
       <figcaption>
-        <strong style="color:var(--ink)">Servers are managed from the dashboard.</strong> Add,
-        edit and enrol open in a dialog like this one; underneath it is still just
+        <strong style="color:var(--ink)">One dialog per server.</strong> Its details, how it is
+        updated, and SSH access — where it is enrolled with your password once, never stored —
+        each with a <strong>?</strong> that explains it. Underneath it is still just
         <code>config.yaml</code>, which you can edit by hand.
         <br><br>
         A VM has no wake address of its own, so it names the hypervisor that starts it and
@@ -408,7 +443,7 @@
 
     <div class="callout">
       <p>
-        <strong>Do not expose this to the internet.</strong> Timar holds an SSH key that reaches
+        <strong>Do not expose this to the internet.</strong> timar holds an SSH key that reaches
         every machine it manages and can grant itself <code>sudo</code> on them. Keep it on a
         private network, or behind a reverse proxy you control.
       </p>
@@ -416,7 +451,7 @@
     <div class="grid g2">
       <div class="card">
         <h3>Nothing to install on the fleet</h3>
-        <p>SSH, and Wake-on-LAN for the machines that sleep. Timar generates its own keypair on
+        <p>SSH, and Wake-on-LAN for the machines that sleep. timar generates its own keypair on
         first use, installs it with your password once, and pins each host key on first sight.</p>
       </div>
       <div class="card">
@@ -431,7 +466,7 @@
 
 <footer>
   <div class="wrap">
-    <span>Timar — <a href="https://github.com/orkun-soylu/timar/blob/main/LICENSE">MIT</a></span>
+    <span>timar — <a href="https://github.com/orkun-soylu/timar/blob/main/LICENSE">MIT</a></span>
     <a href="https://github.com/orkun-soylu/timar">GitHub</a>
     <a href="https://github.com/orkun-soylu/timar/blob/main/CHANGELOG.md">Changelog</a>
     <a href="https://github.com/orkun-soylu/timar/blob/main/ARCHITECTURE.md">Architecture</a>

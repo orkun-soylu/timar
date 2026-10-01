@@ -159,7 +159,6 @@
   "Chat ID": "Chat ID",
   "Send test message": "Test mesajı gönder",
   "Settings are stored in <code>config.yaml</code> in Timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.": "Ayarlar Timar'ın veri birimindeki <code>config.yaml</code> dosyasında saklanır. Bu sayfadan kaydetmek o dosyayı yeniden yazar ve elle eklediğiniz yorumlar silinir.",
-  "Set up Timar": "Timar'ı kur",
   "Create the operator account. Timar holds SSH access to every machine it manages, so this password is the only thing standing in front of your fleet — make it long.": "Operatör hesabını oluşturun. Timar yönettiği her makineye SSH erişimi tutar; bu parola filonuzun önündeki tek engeldir — uzun tutun.",
   "Password (at least 12 characters)": "Parola (en az 12 karakter)",
   "Create account": "Hesap oluştur",
@@ -311,5 +310,6 @@
   "Virtual machines": "Sanal makineler",
   "add": "ekle",
   "enrol from its card": "kartından enrol et",
-  "leave out": "çıkar"
+  "leave out": "çıkar",
+  "Set up timar": "timar'ı kur"
 }

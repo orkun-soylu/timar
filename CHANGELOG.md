@@ -9,6 +9,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.16] — 2026-10-02
+
+### Changed
+
+- **The name is written *timar*, lower case,** in the browser tab of every page (and *Set up
+  timar* on the first run), in the README and on timar.tools — matching the name in the header.
+- **README and timar.tools describe the current timar.** New screenshots from a demo instance
+  with a fictional fleet: the servers page, the three-section server dialog, the containers page,
+  the reports page, a job's dialog with the servers it runs on, and an update run and a log
+  sweep opened as dialogs. The text gained what was missing — the reports page and the two
+  jobs (schedule, which servers, stop), containers in the update run, an SSH port in the address,
+  the web-interface link — and lost what is no longer true (the probe card now says the
+  background refresh, measured at 3.02s → 0.002s). The share card is regenerated from the hero.
+
 ## [0.2.15] — 2026-10-02
 
 ### Added
@@ -565,7 +579,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.15...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.16...HEAD
+[0.2.16]: https://github.com/orkun-soylu/timar/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/orkun-soylu/timar/compare/v0.2.14...v0.2.15
 [0.2.14]: https://github.com/orkun-soylu/timar/compare/v0.2.13...v0.2.14
 [0.2.13]: https://github.com/orkun-soylu/timar/compare/v0.2.12...v0.2.13

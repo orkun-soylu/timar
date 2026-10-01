@@ -127,7 +127,7 @@ class TestPages:
     def test_setup_follows_the_browser_language(self, client):
         body = client.get("/setup", headers={"Accept-Language": "tr-TR,tr;q=0.9"}).text
         assert '<html lang="tr">' in body
-        assert "Timar'ı kur" in body
+        assert "timar'ı kur" in body
 
     def test_language_switch_is_open_before_setup(self, client):
         # The person who cannot read the setup page is the one who needs the switch most.
@@ -135,7 +135,7 @@ class TestPages:
         assert response.status_code == 303
         assert response.headers["location"] == "/setup"
         assert response.cookies.get(i18n.COOKIE) == "ja"
-        assert "Timar のセットアップ" in client.get("/setup").text
+        assert "timar のセットアップ" in client.get("/setup").text
 
     @pytest.mark.parametrize("target", ["https://evil.example/", "/\\evil", "/\t/evil.example",
                                         "/\n/evil.example", "evil.example"])

@@ -1,7 +1,7 @@
 {# The dialog's content as a page of its own: what the dashboard's buttons lead to when there
    is no scripting, and what a bookmark to an edit or an enrolment opens. #}
 {% extends "base.html" %}
-{% block title %}{{ page_title }} — Timar{% endblock %}
+{% block title %}{{ page_title }} — timar{% endblock %}
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav(section | default("servers")) }}
 {% include body_template %}
