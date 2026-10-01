@@ -1385,6 +1385,18 @@ class TestReportArchive:
         assert 'class="current" aria-current="page">reports<' in body
         assert "Update run · Archived run" in body
 
+    def test_a_report_opens_in_the_dialog_and_still_as_a_page(self, client):
+        complete_setup(client)
+        report_id = self.archive("update", title="Update run", summary="3 updated", report="all fine")
+        listing = client.get("/reports").text
+        row = listing.split(f'href="/reports/{report_id}"', 1)[1].split(">", 1)[0]
+        assert f'hx-get="/reports/{report_id}"' in row and 'hx-target="#dialog-body"' in row
+        bare = client.get(f"/reports/{report_id}", headers={"HX-Request": "true"}).text
+        assert "<html" not in bare and 'id="report-panel"' in bare and "data-close-dialog" in bare
+        assert "all fine" in bare
+        page = client.get(f"/reports/{report_id}").text
+        assert "<html" in page and "all fine" in page and "data-close-dialog" not in page
+
     def test_an_archived_report_is_escaped_rather_than_rendered(self, client):
         """Findings carry remote log lines. A host that logs `<script>` must not run it here."""
         complete_setup(client)

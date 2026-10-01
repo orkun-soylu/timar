@@ -305,7 +305,7 @@ async def job_report(request: Request, name: str, operator: str = Depends(curren
     if name not in jobs.JOBS:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     record = state.job(name)
-    return TEMPLATES.TemplateResponse(request, "report.html", {
+    return _report_response(request, {
         "title": _(jobs.TITLES[name]),
         "subtitle": _("Last run"),
         "report": record.get("last_report") or "",
@@ -313,6 +313,13 @@ async def job_report(request: Request, name: str, operator: str = Depends(curren
         "summary": record.get("last_summary"),
         "error": record.get("last_error"),
     })
+
+
+def _report_response(request: Request, context: dict):
+    """A report as the dialog's panel when htmx asks, as a page of its own otherwise."""
+    if request.headers.get("HX-Request") == "true":
+        return TEMPLATES.TemplateResponse(request, "_report.html", {**context, "in_dialog": True})
+    return TEMPLATES.TemplateResponse(request, "report.html", {**context, "in_dialog": False})
 
 
 def _filters(selected: str | None) -> list[dict]:
@@ -410,7 +417,7 @@ async def archived_report(request: Request, report_id: str,
     entry = reports.get(report_id)
     if entry is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
-    return TEMPLATES.TemplateResponse(request, "report.html", {
+    return _report_response(request, {
         # The stored title is the English one, written when the run finished; translated on the
         # way out so the archive follows the reader's language rather than the writer's.
         "title": _(entry.get("title") or entry.get("job", "Report")),

@@ -1,0 +1,29 @@
+{# One report as a panel: opened in the reports page's dialog from a row's report button, or
+   wrapped in report.html as a page of its own (a bookmark, or no scripting). #}
+{% from "_icons.html" import close_dialog with context %}
+<section class="panel" id="report-panel">
+  <h2 class="with-action">{{ title }} · {{ subtitle or _("Last run") }}
+    {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
+  <p class="hint">
+    {% if last_run %}
+      {{ last_run | replace("T", " ") }}{% if summary %} — {{ summary }}{% endif %}
+    {% else %}
+      {{ _("This job has not run yet.") }}
+    {% endif %}
+  </p>
+
+  {% if error %}
+    <p class="error" style="padding:0 1rem 1rem; margin:0">{{ error }}</p>
+  {% endif %}
+
+  {% if report %}
+    {# Preformatted: the findings are laid out in columns, and reflowing them loses the
+       alignment that makes a long list scannable. Scrolls in its own box so a long device
+       name cannot push the page sideways. #}
+    <pre class="report">{{ report }}</pre>
+  {% elif not error %}
+    <p class="empty">
+      {{ _("Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> under Scheduled work on the reports page.") }}
+    </p>
+  {% endif %}
+</section>

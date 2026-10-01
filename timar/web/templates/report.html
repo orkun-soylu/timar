@@ -2,30 +2,5 @@
 {% block title %}{{ title }} — Timar{% endblock %}
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav("reports") }}
-
-<section class="panel">
-  <h2>{{ title }} · {{ subtitle or _("Last run") }}</h2>
-  <p class="hint">
-    {% if last_run %}
-      {{ last_run | replace("T", " ") }}{% if summary %} — {{ summary }}{% endif %}
-    {% else %}
-      {{ _("This job has not run yet.") }}
-    {% endif %}
-  </p>
-
-  {% if error %}
-    <p class="error" style="padding:0 1rem 1rem; margin:0">{{ error }}</p>
-  {% endif %}
-
-  {% if report %}
-    {# Preformatted: the findings are laid out in columns, and reflowing them loses the
-       alignment that makes a long list scannable. Scrolls in its own box so a long device
-       name cannot push the page sideways. #}
-    <pre class="report">{{ report }}</pre>
-  {% elif not error %}
-    <p class="empty">
-      {{ _("Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> under Scheduled work on the reports page.") }}
-    </p>
-  {% endif %}
-</section>
+{% include "_report.html" %}
 {% endblock %}

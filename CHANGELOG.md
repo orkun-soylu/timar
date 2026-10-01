@@ -17,6 +17,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   "stored — leave blank to keep it"; they now say only *stored* or *not set*. What that means —
   never shown again, empty keeps it, typing replaces it, switching provider drops the key — is
   in the section's **?**, reworded to match what the box shows.
+- **A report opens in a dialog.** The report button on a row of the reports list used to leave
+  the page; it now opens the report over the list, in a dialog wide enough for its columns, and
+  Esc or × brings the list back as it was. `/reports/<id>` still opens as a page of its own for a
+  bookmark or without scripting.
 
 ## [0.2.9] — 2026-10-02
 
