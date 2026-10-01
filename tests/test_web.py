@@ -595,51 +595,78 @@ class TestSettingsPage:
         assert location == "/"
 
 
-class TestJobsDialog:
-    """The schedules and the log sweep's settings, opened by + beside Scheduled work."""
+class TestJobEdit:
+    """Each job's settings, opened by the pencil on its row in Scheduled work."""
 
-    def test_reports_offers_it_from_a_plus_beside_the_heading(self, client):
+    def test_the_heading_has_only_its_question_mark(self, client):
         complete_setup(client)
         page = client.get("/reports").text
         heading = page.split("Scheduled work", 1)[1].split("</h2>", 1)[0]
-        assert 'hx-get="/settings/jobs"' in heading and 'popovertarget="help-jobs"' in heading
-        # + inside, ? at the far right like every other heading's.
-        assert heading.index('hx-get="/settings/jobs"') < heading.index('popovertarget="help-jobs"')
-        # In the body, where htmx can swap into it — not swallowed by the <title> block.
+        assert 'popovertarget="help-jobs"' in heading and "/settings/jobs" not in heading
         assert page.index('id="dialog-body"') > page.index("<body")
 
-    def test_one_section_per_job_with_the_sweep_settings_in_its_own(self, client):
+    def test_each_row_has_a_pencil_beside_run(self, client):
         complete_setup(client)
-        body = client.get("/settings/jobs", headers={"HX-Request": "true"}).text
-        sweep = body.split("<h3>Log sweep</h3>", 1)[1].split("<h3>Update run</h3>", 1)[0]
-        assert 'name="log_sweep_enabled"' in sweep and 'name="journal_hours"' in sweep
-        assert 'name="update_enabled"' in body.split("<h3>Update run</h3>", 1)[1]
-        assert 'class="hint"' not in body and "(for daily and weekly)" not in body
+        rows = client.get("/fragments/jobs").text
+        for name in ("log_sweep", "update"):
+            assert f'hx-get="/settings/jobs/{name}/edit"' in rows and f"/jobs/{name}/run" in rows
 
-    def test_saving_writes_both_and_goes_back_to_reports(self, client):
+    def test_the_sweep_dialog_holds_its_schedule_and_its_settings_filled(self, client):
         from timar import config
         complete_setup(client)
-        response = client.post("/settings/jobs", data={
-            "journal_hours": "12", "disk_threshold": "90",
-            "update_enabled": "on", "update_kind": "weekly", "update_at": "07:00", "update_day": "friday",
-            "log_sweep_kind": "daily", "log_sweep_at": "09:30"}, headers={"HX-Request": "true"})
-        assert response.headers["HX-Redirect"] == "/reports"
         cfg = config.load()
-        assert cfg["log_check"] == {"journal_hours": 12, "disk_threshold": 90}
-        assert cfg["schedules"]["update"]["enabled"] and cfg["schedules"]["update"]["day"] == "friday"
-        assert not cfg["schedules"]["log_sweep"]["enabled"]
+        cfg["schedules"] = {"log_sweep": {"enabled": True, "kind": "daily", "at": "09:30"}}
+        cfg["log_check"] = {"journal_hours": 25, "disk_threshold": 90}
+        config.save(cfg)
+        body = client.get("/settings/jobs/log_sweep/edit", headers={"HX-Request": "true"}).text
+        assert 'name="log_sweep_enabled" checked' in body and 'value="09:30"' in body
+        assert 'value="25"' in body and 'value="90"' in body
+        assert "update_enabled" not in body and 'id="help-job-update"' not in body
+        assert 'class="hint"' not in body and "(for daily and weekly)" not in body
+
+    def test_the_update_dialog_has_no_sweep_settings(self, client):
+        complete_setup(client)
+        body = client.get("/settings/jobs/update/edit", headers={"HX-Request": "true"}).text
+        assert 'name="update_enabled"' in body and "journal_hours" not in body
+
+    def test_saving_one_job_leaves_the_other_alone(self, client):
+        from timar import config
+        complete_setup(client)
+        cfg = config.load()
+        cfg["schedules"] = {"log_sweep": {"enabled": True, "kind": "daily", "at": "09:30"}}
+        config.save(cfg)
+        response = client.post("/settings/jobs/update", data={
+            "update_enabled": "on", "update_kind": "weekly", "update_at": "07:00",
+            "update_day": "friday"}, headers={"HX-Request": "true"})
+        assert response.headers["HX-Redirect"] == "/reports"
+        schedules = config.load()["schedules"]
+        assert schedules["update"]["day"] == "friday"
+        assert schedules["log_sweep"] == {"enabled": True, "kind": "daily", "at": "09:30"}
+
+    def test_the_sweep_saves_its_settings_too(self, client):
+        from timar import config
+        complete_setup(client)
+        client.post("/settings/jobs/log_sweep", data={
+            "journal_hours": "12", "disk_threshold": "90", "log_sweep_kind": "daily",
+            "log_sweep_at": "09:30"})
+        assert config.load()["log_check"] == {"journal_hours": 12, "disk_threshold": 90}
 
     def test_a_mistake_writes_nothing_and_keeps_what_was_typed(self, client):
         from timar import config
         complete_setup(client)
         before = config.load()
-        response = client.post("/settings/jobs", data={
-            "journal_hours": "0", "disk_threshold": "85",
-            "update_enabled": "on", "update_kind": "weekly", "update_at": "07:00", "update_day": "friday"},
+        response = client.post("/settings/jobs/log_sweep", data={
+            "journal_hours": "0", "disk_threshold": "85", "log_sweep_enabled": "on",
+            "log_sweep_kind": "weekly", "log_sweep_at": "07:00", "log_sweep_day": "friday"},
             headers={"HX-Request": "true"})
         assert response.status_code == 200 and "between 1 and 168" in response.text
-        assert 'name="update_day"' in response.text and 'value="friday" selected' in response.text
+        assert 'value="friday" selected' in response.text
         assert config.load().get("schedules") == before.get("schedules")
+
+    def test_an_unknown_job_is_404(self, client):
+        complete_setup(client)
+        assert client.get("/settings/jobs/nope/edit").status_code == 404
+        assert client.post("/settings/jobs/nope", data={}).status_code == 404
 
 
 class TestServerForm:
@@ -761,8 +788,8 @@ class TestSettings:
             ("get", "/settings/servers/new"),
             ("get", "/settings/servers/web-01/edit"),
             ("post", "/settings/servers"),
-            ("get", "/settings/jobs"),
-            ("post", "/settings/jobs"),
+            ("get", "/settings/jobs/update/edit"),
+            ("post", "/settings/jobs/update"),
             ("post", "/settings/llm"),
             ("post", "/settings/llm/test"),
             ("post", "/settings/llm/models"),
