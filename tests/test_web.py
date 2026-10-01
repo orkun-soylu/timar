@@ -1253,9 +1253,11 @@ class TestModelListing:
         monkeypatch.setattr(llm_module, "list_models", lambda _cfg: ["glm-5.2:cloud", "kimi-k2.6"])
 
         body = client.post("/settings/llm/models").text
-        assert '<datalist id="model-options">' in body
-        assert '<option value="glm-5.2:cloud">' in body
+        assert '<select class="model-pick"' in body and "this.form.model.value" in body
+        assert '<option value="glm-5.2:cloud">glm-5.2:cloud</option>' in body
         assert "2 models" in body
+        # Never submitted with the form: the field is what is saved.
+        assert '<select name=' not in body
 
     def test_a_provider_error_is_reported_not_raised(self, client, monkeypatch):
         complete_setup(client)
@@ -1269,7 +1271,7 @@ class TestModelListing:
         response = client.post("/settings/llm/models")
         assert response.status_code == 200
         assert "could not reach ollama" in response.text
-        assert "datalist" not in response.text
+        assert "<select" not in response.text
 
     def test_no_provider_saved_says_so_rather_than_erroring(self, client):
         complete_setup(client)
@@ -1282,7 +1284,7 @@ class TestModelListing:
         monkeypatch.setattr(llm_module, "list_models", lambda _cfg: [])
         assert "listed no models" in client.post("/settings/llm/models").text
 
-    def test_model_names_are_escaped_into_the_datalist(self, client, monkeypatch):
+    def test_model_names_are_escaped_into_the_picker(self, client, monkeypatch):
         """Model names come from a remote provider and land in an HTML attribute."""
         complete_setup(client)
         from timar import config, llm as llm_module
@@ -1292,9 +1294,16 @@ class TestModelListing:
         assert "<script>" not in body
         assert "&lt;script&gt;" in body
 
-    def test_the_model_field_is_wired_to_the_datalist(self, client):
+    def test_the_model_field_has_no_datalist(self, client):
+        """A datalist is filtered by the field's value: with a model saved it hid most of the list."""
         complete_setup(client)
-        assert 'list="model-options"' in client.get("/settings").text
+        assert 'list="model-options"' not in client.get("/settings").text
+
+    def test_the_help_names_the_default_the_code_uses(self, client):
+        complete_setup(client)
+        from timar import llm as llm_module
+        default = llm_module.DEFAULTS["anthropic"]["model"]
+        assert f"its default model is <code>{default}</code>" in client.get("/settings").text
 
 
 class TestTopNav:

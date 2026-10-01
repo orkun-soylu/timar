@@ -27,9 +27,9 @@
           {% endfor %}
         </select></label>
       <label><span>{{ _("Model") }}</span>
-        {# `list` stays free text — the datalist suggests, it does not restrict, so a model the
-           provider has not advertised yet can still be typed. #}
-        <input name="model" list="model-options" autocomplete="off"
+        {# Free text — "List models" offers a picker beside it, so a model the provider has not
+           advertised yet can still be typed. #}
+        <input name="model" autocomplete="off"
                value="{{ llm.model | default('') }}"></label>
     </div>
     <div class="row">
@@ -82,7 +82,7 @@
   <dl class="help-list">
     <dd>{{ _("Used to summarise log sweeps. Optional — without it, waking, updating and the sweep all still work; you just get the raw findings instead of a written assessment.") }}</dd>
     <dt>{{ _("Provider") }}</dt>
-    <dd>{{ _("<code>anthropic</code> needs an API key; its default model is <code>claude-opus-5</code>. <code>openai</code> is any OpenAI-compatible endpoint — OpenAI, OpenRouter, LM Studio, vLLM, llama.cpp; local servers usually need no key. <code>ollama</code> is Ollama's own API.") }}</dd>
+    <dd>{{ _("<code>anthropic</code> needs an API key; its default model is <code>{model}</code>. <code>openai</code> is any OpenAI-compatible endpoint — OpenAI, OpenRouter, LM Studio, vLLM, llama.cpp; local servers usually need no key. <code>ollama</code> is Ollama's own API.", model=anthropic_default) }}</dd>
     <dt>{{ _("Base URL") }}</dt>
     <dd>{{ _("Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.") }}</dd>
     <dt>{{ _("API key") }}</dt>

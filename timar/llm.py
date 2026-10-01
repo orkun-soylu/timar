@@ -33,7 +33,7 @@ PROVIDERS = (ANTHROPIC, OPENAI, OLLAMA)
 ANTHROPIC_API_VERSION = "2023-06-01"
 
 DEFAULTS = {
-    ANTHROPIC: {"base_url": "https://api.anthropic.com", "model": "claude-opus-5"},
+    ANTHROPIC: {"base_url": "https://api.anthropic.com", "model": "claude-opus-5-5"},
     OPENAI: {"base_url": "https://api.openai.com/v1", "model": ""},
     # Anything speaking Ollama's native API: a local daemon, or a LAN box the fleet already has.
     OLLAMA: {"base_url": "http://localhost:11434", "model": ""},
