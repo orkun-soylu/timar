@@ -87,7 +87,10 @@
     th.sortable a:hover { color: var(--text); }
     th.sortable[aria-sort] a { color: var(--text); }
     th.actions-head span { vertical-align: middle; }
-    th.actions-head .icon-btn { float: right; margin: -0.35rem 0; }
+    /* Inline, not floated: a float lets the cell shrink to the row buttons and pushes the
+       button under the word once a row carries only two of them. */
+    th.actions-head .icon-btn { margin: -0.35rem 0 -0.35rem 0.6rem; }
+    th.actions-head { text-align: right; }
 
     /* A narrow screen scrolls the table rather than clipping its last column — which is the
        one with the buttons. */
@@ -201,6 +204,9 @@
     }
     button.help:hover { color: var(--text); border-color: var(--muted); }
     .form-actions { margin-top: 1.5rem; }
+    .actions .push-right { margin-left: auto; }
+    button.danger { color: var(--down); border-color: var(--down); }
+    button.danger:hover { background: var(--down); color: var(--bg); }
     /* Exists only to be the form's default for Enter; never seen, never tabbed to. */
     .default-submit { position: absolute; left: -9999px; width: 1px; height: 1px; padding: 0; border: 0; }
     .help-list dt { font-weight: 600; font-size: 0.875rem; margin-top: 0.8rem; }

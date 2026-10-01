@@ -131,6 +131,21 @@
       {% else %}
         <a href="/" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
       {% endif %}
+      {# Removal lives with the rest of a server's settings, kept apart on the right and asked
+         about first. In the dialog htmx posts it; without scripting the button submits this
+         form to the delete route instead, after the browser's own confirm. #}
+      {% if editing %}
+        {% set confirm_remove = _("Remove {name} from Timar? The machine is not touched.", name=editing) %}
+        {% if in_dialog %}
+        <button type="button" class="secondary danger push-right"
+                hx-post="/settings/servers/{{ editing }}/delete" hx-confirm="{{ confirm_remove }}"
+                >{{ _("remove") }}</button>
+        {% else %}
+        <button type="submit" class="secondary danger push-right" formnovalidate
+                formaction="/settings/servers/{{ editing }}/delete"
+                onclick='return confirm({{ confirm_remove | tojson }})'>{{ _("remove") }}</button>
+        {% endif %}
+      {% endif %}
     </div>
   </form>
 

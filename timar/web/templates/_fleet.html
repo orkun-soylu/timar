@@ -52,8 +52,8 @@
       <td class="col-mid"><code>{{ host.host }}</code></td>
       <td class="col-mid muted wide">{{ host.platform }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
-         empty, so edit and remove sit in the same place on every row. Enrolment is in the
-         edit form's SSH section. #}
+         empty, so edit sits in the same place on every row. Enrolment and removal are in the
+         edit form. #}
       <td class="col-edge"><div class="icon-row">
         {%- if host.state == "up" %}
           {# Every running machine can be shut down. The confirmation is where the difference
@@ -84,13 +84,6 @@
            title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
            hx-get="/settings/servers/{{ host.name }}/edit" hx-target="#dialog-body"
            hx-swap="innerHTML">{{ icon("edit") }}</a>
-        <form method="post" action="/settings/servers/{{ host.name }}/delete" style="display:contents"
-              {# tojson, not a quoted string: a translation with an apostrophe in it would
-                 otherwise close the JavaScript string early. #}
-              onsubmit='return confirm({{ _("Remove {name} from Timar? The machine is not touched.", name=host.name) | tojson }})'>
-          <button type="submit" class="icon-btn danger"
-                  title="{{ _("remove") }}" aria-label="{{ _("remove") }}">{{ icon("remove") }}</button>
-        </form>
       </div>
       </td>
     </tr>

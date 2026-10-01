@@ -249,20 +249,24 @@ class TestActionsColumn:
             assert f"/servers/{name}/wake" not in rows
         assert rows.split("printer-b", 1)[0].rsplit("<tr ", 1)[1].startswith('class="asleep"')
 
-    def test_every_row_offers_edit_and_remove(self, fleet):
-        """Enrolment lives in the edit form's SSH section; there is no separate button."""
+    def test_every_row_offers_edit_and_nothing_else_of_its_own(self, fleet):
+        """Enrolment and removal live in the edit form."""
         rows = fleet.get("/fragments/fleet").text
-        assert "/enroll" not in rows
+        assert "/enroll" not in rows and "/delete" not in rows
         for name in ("web-01", "gpu-01", "gpu-02"):
             assert f'href="/settings/servers/{name}/edit"' in rows
-            assert f'action="/settings/servers/{name}/delete"' in rows
         # The add button is on the heading row, not repeated per server.
         assert rows.count('href="/settings/servers/new"') == 1
 
-    def test_remove_asks_first(self, fleet):
-        rows = fleet.get("/fragments/fleet").text
-        form = rows.split('action="/settings/servers/web-01/delete"', 1)[1].split(">", 1)[0]
-        assert "confirm(" in form and "Remove web-01 from Timar?" in form
+    def test_remove_is_in_the_edit_form_and_asks_first(self, fleet):
+        dialog = fleet.get("/settings/servers/web-01/edit", headers={"HX-Request": "true"}).text
+        button = dialog.split('hx-post="/settings/servers/web-01/delete"', 1)[1].split(">", 1)[0]
+        assert "Remove web-01 from Timar?" in button and "hx-confirm" in button
+        page = fleet.get("/settings/servers/web-01/edit").text
+        button = page.split('formaction="/settings/servers/web-01/delete"', 1)[1].split(">", 1)[0]
+        assert "confirm(" in button and "Remove web-01 from Timar?" in button
+        # Not offered for a server that does not exist yet.
+        assert "/delete" not in fleet.get("/settings/servers/new").text
 
     def test_removing_goes_back_to_the_dashboard(self, fleet):
         response = fleet.post("/settings/servers/web-01/delete")
