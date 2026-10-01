@@ -80,7 +80,7 @@ def _connect(host: str, user: str, password: str) -> paramiko.SSHClient:
         )
     except paramiko.BadHostKeyException as e:
         raise EnrollError(
-            f"the host key for {host} has changed since Timar first connected. "
+            f"the host key for {host} has changed since timar first connected. "
             "Either the machine was rebuilt, or something is impersonating it. "
             "Remove its entry from /data/ssh/known_hosts only if you know why it changed."
         ) from e

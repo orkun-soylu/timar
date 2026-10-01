@@ -69,7 +69,7 @@ async def _keep_status_fresh() -> None:
         await asyncio.sleep(fleet_status.REFRESH_EVERY)
 
 
-app = FastAPI(title="Timar", docs_url=None, redoc_url=None, lifespan=lifespan)
+app = FastAPI(title="timar", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
 app.include_router(settings.router)
 

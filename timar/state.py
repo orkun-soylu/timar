@@ -113,7 +113,7 @@ def mark_interrupted(name: str) -> datetime | None:
     fields: dict[str, Any] = {
         "status": FAILED,
         "last_error": (
-            f"Interrupted: Timar stopped during a run that began at "
+            f"Interrupted: timar stopped during a run that began at "
             f"{started or 'an unknown time'}. An update run that stops here has already woken "
             f"machines and not shut them down again."
         ),

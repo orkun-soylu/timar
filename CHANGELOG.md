@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.17] — 2026-10-02
+
+### Changed
+
+- **The name is *timar* inside the app too** — in every help text, confirmation and message that
+  mentions it (all six languages), in the messages a run or an action can leave ("timar itself —
+  …", "Interrupted: timar stopped …", a changed host key), and in the Telegram test message.
+- **timar.tools' browser tab reads just *timar*.** The description and the share title keep
+  their longer wording. The update-run screenshot is retaken with the new wording.
+
 ## [0.2.16] — 2026-10-02
 
 ### Changed
@@ -579,7 +589,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.16...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.17...HEAD
+[0.2.17]: https://github.com/orkun-soylu/timar/compare/v0.2.16...v0.2.17
 [0.2.16]: https://github.com/orkun-soylu/timar/compare/v0.2.15...v0.2.16
 [0.2.15]: https://github.com/orkun-soylu/timar/compare/v0.2.14...v0.2.15
 [0.2.14]: https://github.com/orkun-soylu/timar/compare/v0.2.13...v0.2.14

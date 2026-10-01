@@ -128,7 +128,7 @@ class TestAct:
         monkeypatch.setattr(containers, "_host_containers", lambda server: containers.HostContainers(
             by_dir=containers.parse_ps(ps_line("/srv/timar", "timar", cid=me))))
         servers = [{"name": "h", "host": "10.0.0.1", "user": "op", "platform": "linux"}]
-        with pytest.raises(containers.ContainerError, match="Timar itself"):
+        with pytest.raises(containers.ContainerError, match="timar itself"):
             containers.act({"name": "timar", "server": "h", "path": "/srv/timar"}, servers, "stop")
 
 
@@ -273,7 +273,7 @@ class TestUpdateRun:
         me = "e" * 64
         results, sent = self.run_it(monkeypatch, [{"name": "timar", "path": "/srv/timar"}],
                                     ps_line("/srv/timar", "timar", cid=me), me=me)
-        assert results[0].skipped and "Timar itself" in results[0].error
+        assert results[0].skipped and "timar itself" in results[0].error
         assert not any("cd /srv/timar" in c for c in sent)
 
     def test_run_updates_hands_each_host_its_own_projects(self, monkeypatch):

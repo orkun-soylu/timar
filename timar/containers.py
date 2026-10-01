@@ -322,7 +322,7 @@ def act(entry: dict, servers: list[dict], action: str) -> str:
     if me and action != "start":
         answer = _host_containers(server)
         if any(c.id == me for c in answer.by_dir.get(entry.get("path", "").rstrip("/"), [])):
-            raise ContainerError(f"{entry['name']} is Timar itself — stopping it from here would "
+            raise ContainerError(f"{entry['name']} is timar itself — stopping it from here would "
                                  "take this page down with it")
     command = (_DOCKER + f"cd {shlex.quote(entry['path'])} && $D compose {ACTIONS[action]} 2>&1")
     try:

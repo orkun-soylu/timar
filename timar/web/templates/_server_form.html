@@ -129,7 +129,7 @@
          about first. In the dialog htmx posts it; without scripting the button submits this
          form to the delete route instead, after the browser's own confirm. #}
       {% if editing %}
-        {% set confirm_remove = _("Remove {name} from Timar? The machine is not touched.", name=editing) %}
+        {% set confirm_remove = _("Remove {name} from timar? The machine is not touched.", name=editing) %}
         {% if in_dialog %}
         <button type="button" class="secondary danger push-right"
                 hx-post="/settings/servers/{{ editing }}/delete" hx-confirm="{{ confirm_remove }}"
@@ -153,9 +153,9 @@
       <dt>{{ _("Address") }}</dt>
       <dd>{{ _("An IP or a hostname. SSH on another port goes after it: <code>10.0.0.5:2222</code>, or <code>[fd00::5]:2222</code> for IPv6.") }}</dd>
       <dt>{{ _("Platform") }}</dt>
-      <dd>{{ _("Decides which commands Timar runs there — the log reader, the disk check, the update command and how it is shut down.") }}</dd>
+      <dd>{{ _("Decides which commands timar runs there — the log reader, the disk check, the update command and how it is shut down.") }}</dd>
       <dt>{{ _("Wake-on-LAN MAC") }}</dt>
-      <dd>{{ _("With a MAC Timar can wake the machine: updates wake it and shut it down again, and the row gets a wake button. In another subnet, or Timar on a bridge network? Set a wake relay in <code>config.yaml</code> — see the README.") }}</dd>
+      <dd>{{ _("With a MAC timar can wake the machine: updates wake it and shut it down again, and the row gets a wake button. In another subnet, or timar on a bridge network? Set a wake relay in <code>config.yaml</code> — see the README.") }}</dd>
       <dt>{{ _("On-demand") }}</dt>
       <dd>{{ _("Off on purpose most of the time. Off reads as <em>asleep</em> rather than <em>down</em>, and updates wake it (with a MAC or as a VM) or skip it until it is back (without either). A machine with a MAC is on-demand anyway. A VM inherits it from its hypervisor: every guest of an on-demand host is on-demand; tick it for a VM on an always-on host that you start only when needed.") }}</dd>
       <dt>{{ _("Guest of") }}</dt>
@@ -196,14 +196,14 @@
     <h3>{{ _("SSH access") }}</h3>
     <dl class="help-list">
       <dt>{{ _("SSH user") }}</dt>
-      <dd>{{ _("The account Timar logs in as. Not root? It needs passwordless sudo for updates and shutdowns.") }}</dd>
+      <dd>{{ _("The account timar logs in as. Not root? It needs passwordless sudo for updates and shutdowns.") }}</dd>
       <dt>{{ _("Enrol") }}</dt>
-      <dd>{{ _("Saves the form, connects once with the password, appends Timar's key to the user's <code>authorized_keys</code>, then proves the key works on its own. <strong>The password is used for this request and nothing else</strong> — not stored, not logged, not sent back to the page.") }}</dd>
+      <dd>{{ _("Saves the form, connects once with the password, appends timar's key to the user's <code>authorized_keys</code>, then proves the key works on its own. <strong>The password is used for this request and nothing else</strong> — not stored, not logged, not sent back to the page.") }}</dd>
       <dd>{{ _("With the password left empty, Enrol only checks an existing enrolment: it connects with the key and reports who it becomes and whether passwordless sudo works.") }}</dd>
       <dt>{{ _("Also grant passwordless sudo") }}</dt>
       <dd>{{ _("Writes <code>user ALL=(ALL) NOPASSWD:ALL</code> to <code>/etc/sudoers.d/timar</code>, validated with <code>visudo</code> first — if validation fails nothing is changed. Skipped for root and on OpenWrt, which has no sudo.") }}</dd>
-      <dt>{{ _("Timar's key") }}</dt>
-      <dd>{{ _("One keypair for the whole installation, generated on first use and kept in its data volume. You can also install it by hand — Timar only needs it accepted — and then Enrol with no password to check.") }}</dd>
+      <dt>{{ _("timar's key") }}</dt>
+      <dd>{{ _("One keypair for the whole installation, generated on first use and kept in its data volume. You can also install it by hand — timar only needs it accepted — and then Enrol with no password to check.") }}</dd>
       <dd><code>{{ fingerprint }}</code></dd>
       <dd><pre class="report">{{ public_key }}</pre></dd>
     </dl>
