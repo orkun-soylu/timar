@@ -1223,10 +1223,12 @@ class TestTopNav:
         assert "🌐" not in header
         assert "dashboard" not in client.get("/settings").text
 
-    def test_action_results_go_to_the_header_toast(self, client):
+    def test_action_results_go_to_the_header_toast(self, client, monkeypatch):
         """Beside the name, in the sticky header — not under the table, out of sight."""
         from timar import config, status as fleet_status
         complete_setup(client)
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: True)   # gets a power button
+        fleet_status.invalidate()
         config.save({"servers": [{"name": "web-01", "host": "10.0.0.1", "user": "op"}],
                      "containers": [{"name": "app", "server": "web-01", "path": "/srv/app"}]})
         page = client.get("/").text
