@@ -184,6 +184,20 @@
     header.topnav nav a.current { color: var(--accent); text-decoration: none; font-weight: 600; }
     header.topnav .linkish { text-decoration: underline; font-size: inherit; }
     header.topnav .linkish:hover { color: var(--text); }
+    .field { margin-bottom: 1rem; }
+    .field-label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .field-label .linkish { font-size: inherit; text-decoration: underline; color: var(--muted); }
+    .field-label .linkish:hover { color: var(--text); }
+    .popover {
+      width: min(40rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto;
+      padding: 1rem 1rem 1.25rem; border: 1px solid var(--line); border-radius: 10px;
+      background: var(--panel); color: var(--text); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+    .popover::backdrop { background: rgba(0, 0, 0, 0.35); }
+    .popover h3 { font-size: 1rem; margin: 0 0 0.25rem; }
+    .popover .default-cmd { margin: 1rem 0; }
+    .popover .default-cmd pre.report { margin: 0.35rem 0 0; }
+    .popover .default-cmd p { margin: 0.35rem 0 0; }
     form.lang { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
     form.lang select { width: auto; padding: 0.25rem 0.45rem; font-size: 0.8rem; color: var(--muted); }
   </style>

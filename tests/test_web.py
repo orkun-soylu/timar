@@ -734,6 +734,36 @@ class TestSettings:
             "platform": "proxmox", "web_url": ""})
         assert "web_url" not in config.load()["servers"][0]
 
+    def test_an_edit_keeps_hand_written_wake_settings_and_shows_them(self, client):
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [
+            {"name": "relay-01", "host": "10.0.0.1", "user": "op", "platform": "linux"},
+            {"name": "gpu-01", "host": "10.1.0.2", "user": "op", "platform": "linux",
+             "wol_mac": "aa:bb:cc:dd:ee:ff", "wol_broadcast": "10.1.0.255", "wol_relay": "relay-01"},
+        ]})
+        form = client.get("/settings/servers/gpu-01/edit").text
+        assert 'name="wol_relay"' not in form and 'name="wol_broadcast"' not in form
+        assert "Woken through relay-01." in form and "Broadcast address 10.1.0.255." in form
+        client.post("/settings/servers", data={
+            "original_name": "gpu-01", "name": "gpu-01", "host": "10.1.0.2", "user": "op",
+            "platform": "linux", "wol_mac": "aa:bb:cc:dd:ee:ff", "context": "edited"})
+        saved = config.load()["servers"][1]
+        assert saved["context"] == "edited"
+        assert (saved["wol_relay"], saved["wol_broadcast"]) == ("relay-01", "10.1.0.255")
+
+    def test_the_platform_defaults_open_from_the_update_command(self, client):
+        complete_setup(client)
+        import html
+        from timar.platforms import PLATFORMS
+        form = client.get("/settings/servers/new").text
+        assert 'popovertarget="platform-defaults"' in form and 'id="platform-defaults" popover' in form
+        for platform in PLATFORMS.values():
+            assert platform.label in form
+            if platform.default_update_cmd:
+                assert html.escape(platform.default_update_cmd, quote=False) in form
+        assert "None — swept, never updated." in form          # OpenWrt
+
     def test_edit_keeps_the_fields_the_form_does_not_show(self, client):
         """The form is not the whole entry. `job_logs`, `watch_logs` and `ssh_key` are written by
         hand, have no input on this page, and an edit that rebuilt the entry from the form alone

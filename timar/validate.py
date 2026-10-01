@@ -33,9 +33,12 @@ class ValidationError(ValueError):
 # across untouched, and it lives here rather than at the call site so the two cannot drift: a
 # field added to the form and forgotten in a copy of this set would be treated as hand-written,
 # and clearing it in the form would silently never stick.
+#
+# `wol_broadcast` and `wol_relay` are deliberately not here: they are advanced settings written in
+# `config.yaml` by hand (see config.example.yaml), and leaving them out is what makes an edit in
+# the form carry them across untouched instead of dropping them.
 SERVER_FIELDS = frozenset({
-    "name", "host", "user", "platform",
-    "wol_mac", "wol_broadcast", "wol_relay",
+    "name", "host", "user", "platform", "wol_mac",
     "update_cmd", "context", "update_timeout", "on_demand", "web_url",
 })
 
@@ -76,25 +79,11 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
 
     entry: dict = {"name": name, "host": host, "user": user, "platform": platform}
 
-    mac = (form.get("wol_mac") or "").strip()
-    if mac:
+    if mac := (form.get("wol_mac") or "").strip():
         if not MAC.match(mac):
             errors.append(_("Wake-on-LAN MAC must look like aa:bb:cc:dd:ee:ff."))
         else:
             entry["wol_mac"] = mac.lower().replace("-", ":")
-        if broadcast := (form.get("wol_broadcast") or "").strip():
-            entry["wol_broadcast"] = broadcast
-        if relay := (form.get("wol_relay") or "").strip():
-            if relay == name:
-                errors.append(_("A server cannot be its own wake relay."))
-            elif relay not in existing_names and relay != original_name:
-                errors.append(_("Wake relay {relay!r} is not a configured server.", relay=relay))
-            else:
-                entry["wol_relay"] = relay
-    elif (form.get("wol_broadcast") or "").strip() or (form.get("wol_relay") or "").strip():
-        # Silently keeping a broadcast address or a relay for a machine with no MAC would leave
-        # a setting visible in the file that can never take effect.
-        errors.append(_("Wake settings need a MAC address to go with them."))
 
     # Only without a MAC: with one the machine is on-demand already, and the flag would be a
     # second switch that does nothing. A guest's own box is `guest_on_demand`, kept on the

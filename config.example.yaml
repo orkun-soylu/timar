@@ -11,9 +11,10 @@ servers:
     user: deploy
     platform: linux           # linux | openwrt | proxmox
 
-    # Optional: overrides the built-in default for this platform. On OpenWrt there IS no
-    # default -- see the note further down.
-    # update_cmd: "sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+    # Optional: replaces the platform's default update command (the README lists them). The
+    # Linux default is apt-get upgrade --with-new-pkgs with --force-confold, then autoremove and
+    # clean. On OpenWrt there IS no default -- see the note further down.
+    # update_cmd: "sudo apt-get update -qq && sudo apt-get -y upgrade --with-new-pkgs && ./my-extra-step.sh"
 
     # Optional: how long that command may take, in seconds (default 1800, range 60-14400).
     # Raise it for a host that pulls container images or rebuilds a DKMS module. Reaching the
@@ -52,13 +53,21 @@ servers:
     user: deploy
     platform: linux
     wol_mac: "aa:bb:cc:dd:ee:ff"
-    wol_broadcast: 192.0.2.255   # the broadcast address of the target's own segment
 
-    # Optional: send the magic packet from another configured server instead of from Timar.
-    # A broadcast only reaches its own segment, so a relay is required when the target is in a
-    # different subnet (another site, an office network) -- no networking mode can reach those --
-    # and when Timar itself runs on a bridge network. The relay must be always on, already
-    # enrolled, and have python3 or wakeonlan.
+    # Advanced, config.yaml only -- the server form does not show these as fields (it notes
+    # when they are set), and saving the form keeps them. See "Advanced wake settings" in the
+    # README.
+    #
+    # The address the magic packet is sent to. Default 255.255.255.255, which leaves through the
+    # default route's interface; on a host with several networks give the target segment's own
+    # broadcast address so the packet leaves through the right one.
+    # wol_broadcast: 192.0.2.255
+    #
+    # Send the packet from another configured server instead of from Timar. A broadcast only
+    # reaches its own segment, so a relay is required when the target is in a different subnet
+    # (another site, an office network) -- no networking mode can reach those -- and when Timar
+    # itself runs on a bridge network. The relay must be always on, already enrolled, and have
+    # python3 or wakeonlan.
     # wol_relay: web-01
 
   # A machine that is off on purpose but has no way to be woken -- a Wi-Fi board, a laptop,

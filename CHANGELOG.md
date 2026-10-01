@@ -9,6 +9,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.20] — 2026-10-01
+
+### Changed
+
+- **The Linux default update command takes new packages.** It is now
+  `apt-get -y -o Dpkg::Options::=--force-confold upgrade --with-new-pkgs`, then `autoremove`
+  and `clean`. Plain `upgrade` held back every update that needs a package it does not have
+  yet — kernel ABI bumps among them — so security kernels were never installed and nothing
+  said so. `--force-confold` keeps an edited config file instead of stopping at a prompt.
+- **The server form is shorter.** *Broadcast address* and *Wake through* are no longer form
+  fields; they are advanced settings written in `config.yaml` (`wol_broadcast`, `wol_relay`),
+  documented in the README under *Advanced wake settings*. The form notes when one is set, and
+  saving it keeps them — they are no longer in `validate.SERVER_FIELDS`, so an edit carries
+  them across.
+- **"platform default" opens the defaults.** Next to *Update command*, a link opens a popover
+  with each platform's default command, so leaving the field empty is no longer a guess. The
+  README lists them too.
+
 ## [0.1.19] — 2026-10-01
 
 ### Security
@@ -307,7 +325,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.19...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.20...HEAD
+[0.1.20]: https://github.com/orkun-soylu/timar/compare/v0.1.19...v0.1.20
 [0.1.19]: https://github.com/orkun-soylu/timar/compare/v0.1.18...v0.1.19
 [0.1.18]: https://github.com/orkun-soylu/timar/compare/v0.1.17...v0.1.18
 [0.1.17]: https://github.com/orkun-soylu/timar/compare/v0.1.16...v0.1.17

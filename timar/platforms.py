@@ -30,9 +30,17 @@ class Platform:
     authorized_keys = ".ssh/authorized_keys"
 
     # `None` means "this platform has no safe default"; the operator must supply one.
+    #
+    # `--with-new-pkgs`: plain `upgrade` holds back anything that needs a package it does not
+    # have yet — a kernel ABI bump, a driver metapackage — so security kernels sat "kept back"
+    # and were never installed, silently. Unlike `full-upgrade` it still never removes a
+    # package. `--force-confold` keeps a locally edited config file rather than stopping at a
+    # prompt nobody will answer. Then the usual tidy-up.
     default_update_cmd = (
         "sudo apt-get update -qq && "
-        "sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y"
+        "sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=--force-confold "
+        "upgrade --with-new-pkgs && "
+        "sudo apt-get autoremove -y && sudo apt-get clean"
     )
 
     # Filesystems whose fullness is not a fault. RAM-backed mounts are excluded because a full
