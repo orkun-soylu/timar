@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-10-01
+
+### Fixed
+
+- **Pages no longer shift sideways when moving between them.** A page short enough to fit the
+  window (the servers table) had no scrollbar, so its centred content sat about 15px to the
+  right of a long page's, and the menu, the table's edges and its corners jumped on every
+  switch. The scrollbar's room is now kept on every page (`scrollbar-gutter: stable`).
+
 ## [0.2.1] — 2026-10-01
 
 ### Added
@@ -393,7 +402,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/orkun-soylu/timar/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/orkun-soylu/timar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/orkun-soylu/timar/compare/v0.1.22...v0.2.0
 [0.1.22]: https://github.com/orkun-soylu/timar/compare/v0.1.21...v0.1.22
