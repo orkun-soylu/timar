@@ -89,6 +89,12 @@ class TestCommands:
         assert OpenWrt().default_update_cmd is None
         assert Platform().default_update_cmd is not None
 
+    def test_the_linux_default_takes_new_packages_and_keeps_local_config(self):
+        """Plain `upgrade` leaves kernel ABI bumps "kept back" — never installed, never reported."""
+        cmd = Platform().default_update_cmd
+        assert "upgrade --with-new-pkgs" in cmd and "full-upgrade" not in cmd
+        assert "--force-confold" in cmd and "autoremove" in cmd
+
     def test_openwrt_shutdown_never_calls_sudo(self):
         assert OpenWrt().shutdown_cmd("root") == "poweroff"
         assert "sudo" not in OpenWrt().shutdown_cmd("someone")

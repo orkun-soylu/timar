@@ -23,8 +23,8 @@ class TestServer:
         name would be mistaken for hand-written config, and clearing it in the form would look
         like it worked and never persist.
         """
-        maximal = server({**MINIMAL, "wol_mac": "aa:bb:cc:dd:ee:ff", "wol_broadcast": "10.0.0.255",
-                          "wol_relay": "other-01", "update_cmd": "true", "context": "a note",
+        maximal = server({**MINIMAL, "wol_mac": "aa:bb:cc:dd:ee:ff",
+                          "update_cmd": "true", "context": "a note",
                           "update_timeout": "3600", "web_url": "10.0.0.1:8006"},
                          {"other-01"})
         # `on_demand` is the one field a MAC excludes, so it cannot be in the same entry.
@@ -69,11 +69,6 @@ class TestServer:
         """Dashes and capitals are how people paste MACs; the file should hold one shape."""
         entry = server(MINIMAL | {"wol_mac": "AA-BB-CC-DD-EE-FF"}, set())
         assert entry["wol_mac"] == "aa:bb:cc:dd:ee:ff"
-
-    def test_broadcast_without_mac_rejected(self):
-        """Otherwise the file carries a setting that can never take effect."""
-        with pytest.raises(ValidationError, match="need a MAC"):
-            server(MINIMAL | {"wol_broadcast": "10.0.0.255"}, set())
 
     def test_blank_optionals_are_omitted_not_stored_empty(self):
         entry = server(MINIMAL | {"update_cmd": "  ", "context": "", "wol_mac": "",
@@ -190,26 +185,16 @@ class TestTelegram:
         assert result == {"token": "t", "chat_id": "456"}
 
 
-class TestWakeRelay:
-    def test_relay_must_be_a_configured_server(self):
-        with pytest.raises(ValidationError, match="not a configured server"):
-            server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "ghost"},
-                   {"web-01", "db-01"})
+class TestAdvancedWakeSettings:
+    """`wol_broadcast` and `wol_relay` are config.yaml-only now; the form neither reads nor owns them."""
 
-    def test_a_server_cannot_relay_for_itself(self):
-        with pytest.raises(ValidationError, match="its own wake relay"):
-            server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "web-01"},
-                   {"web-01"}, original_name="web-01")
+    def test_the_form_does_not_take_them(self):
+        entry = server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_broadcast": "10.0.0.255",
+                                  "wol_relay": "other-01"}, {"other-01"})
+        assert "wol_broadcast" not in entry and "wol_relay" not in entry
 
-    def test_a_valid_relay_is_stored(self):
-        entry = server(MINIMAL | {"wol_mac": "aa:bb:cc:dd:ee:ff", "wol_relay": "db-01"},
-                       {"db-01"})
-        assert entry["wol_relay"] == "db-01"
-
-    def test_relay_without_a_mac_is_rejected(self):
-        """A relay on a machine with no MAC is a setting that can never take effect."""
-        with pytest.raises(ValidationError, match="need a MAC"):
-            server(MINIMAL | {"wol_relay": "db-01"}, {"db-01"})
+    def test_they_are_not_form_fields_so_an_edit_carries_them(self):
+        assert not {"wol_broadcast", "wol_relay"} & SERVER_FIELDS
 
 
 class TestGuestLink:

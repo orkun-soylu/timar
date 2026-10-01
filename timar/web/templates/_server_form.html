@@ -36,25 +36,22 @@
           {% endfor %}
         </select></label>
     </div>
-    <div class="row">
-      <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
-        <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
-               value="{{ values.get('wol_mac', '') }}"></label>
-      <label><span>{{ _("Broadcast address") }} <em class="muted">{{ _("optional") }}</em></span>
-        <input name="wol_broadcast" placeholder="10.0.0.255"
-               value="{{ values.get('wol_broadcast', '') }}"></label>
-    </div>
-    <label><span>{{ _("Wake through") }} <em class="muted">{{ _("optional — another server that sends the packet") }}</em></span>
-      <select name="wol_relay">
-        <option value="">— {{ _("send it from Timar itself") }} —</option>
-        {% for other in servers if other.name != editing %}
-        <option value="{{ other.name }}"
-          {{ "selected" if values.get('wol_relay') == other.name else "" }}>{{ other.name }}</option>
-        {% endfor %}
-      </select></label>
+    <label><span>{{ _("Wake-on-LAN MAC") }} <em class="muted">{{ _("optional") }}</em></span>
+      <input name="wol_mac" placeholder="aa:bb:cc:dd:ee:ff"
+             value="{{ values.get('wol_mac', '') }}"></label>
     <p class="hint">
-      {{ _("With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet? Pick a relay — always on and enrolled.") }}
+      {{ _("With a MAC the machine is on-demand: off reads as <em>asleep</em>, and updates wake it and shut it down again. In another subnet, or Timar on a bridge network? Set a wake relay in <code>config.yaml</code> — see the README.") }}
     </p>
+    {# Advanced settings live only in config.yaml. Shown, not editable, so a hand-written relay
+       is not invisible from the one screen that describes this machine — and the save carries
+       it across untouched (validate.SERVER_FIELDS). #}
+    {% if values.get('wol_relay') or values.get('wol_broadcast') %}
+    <p class="hint">
+      {%- if values.get('wol_relay') %}{{ _("Woken through {relay}.", relay=values.get('wol_relay')) }} {% endif %}
+      {%- if values.get('wol_broadcast') %}{{ _("Broadcast address {address}.", address=values.get('wol_broadcast')) }} {% endif %}
+      {{- _("Set in <code>config.yaml</code>; saving this form keeps it.") }}
+    </p>
+    {% endif %}
     <label class="inline">
       <input type="checkbox" name="on_demand"
              {{ "checked" if values.get('on_demand') else "" }}>
@@ -93,11 +90,30 @@
       {{ _("While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.") }}
     </p>
 
-    <label><span>{{ _("Update command") }} <em class="muted">{{ _("optional — overrides the platform default") }}</em></span>
-      <input name="update_cmd" value="{{ values.get('update_cmd', '') }}"></label>
+    {# The label is not wrapped around the input here: the popover button inside a <label>
+       would forward its click to the input instead of opening. #}
+    <div class="field">
+      <span class="field-label">{{ _("Update command") }} <em class="muted">{{ _("optional") }} —</em>
+        <button type="button" class="linkish" popovertarget="platform-defaults">{{ _("platform default") }}</button></span>
+      <input name="update_cmd" aria-label="{{ _("Update command") }}" value="{{ values.get('update_cmd', '') }}">
+    </div>
     <p class="hint">
-      {{ _("OpenWrt has no default: left empty, it is swept but never updated.") }}
+      {{ _("Left empty, the platform default runs. OpenWrt has none: it is swept but never updated.") }}
     </p>
+    {# A popover, not a second dialog: it opens above the form in the top layer, closes on Esc
+       or a click outside, and needs no script. #}
+    <div id="platform-defaults" popover class="popover">
+      <h3>{{ _("Platform defaults") }}</h3>
+      <p class="muted">{{ _("What an update run executes when the update command is empty.") }}</p>
+      {% for id, label, cmd in platform_defaults %}
+      <div class="default-cmd">
+        <strong>{{ label }}</strong> <span class="muted">({{ id }})</span>
+        {% if cmd %}<pre class="report">{{ cmd }}</pre>
+        {% else %}<p class="muted">{{ _("None — swept, never updated.") }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="button" class="secondary" popovertarget="platform-defaults" popovertargetaction="hide">{{ _("close") }}</button>
+    </div>
 
     <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
       <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"

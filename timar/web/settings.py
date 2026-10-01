@@ -144,6 +144,7 @@ def _server_form(request: Request, *, edit: str | None = None, submitted: dict |
         "editing": editing,
         "values": _server_values(servers, guest_of, editing, submitted),
         "platforms": list(PLATFORMS),
+        "platform_defaults": [(p.id, p.label, p.default_update_cmd) for p in PLATFORMS.values()],
         "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
         "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
         "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,

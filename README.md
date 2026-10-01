@@ -31,7 +31,7 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.19`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.20`) to choose when
 you move.
 
 Add, edit, enrol and remove servers from the dashboard. It all lands in `config.yaml` in the
@@ -64,8 +64,44 @@ If you do not need to wake machines, a bridge is fine — replace `network_mode:
 ```
 
 To wake from a bridge — or to wake a machine in a **different subnet**, which host networking
-cannot do either — give that server a **wake relay**: another enrolled, always-on host that
-sends the packet over SSH. It needs `python3` or `wakeonlan`.
+cannot do either — give that server a **wake relay** (below).
+
+### Advanced wake settings
+
+Two settings are written in `config.yaml` by hand; the server form does not show them as fields.
+It says when one is set, and saving the form keeps it untouched. Most installations need
+neither: with host networking, one LAN and every machine on it, the defaults wake everything.
+
+| Key | Default | Set it when |
+|---|---|---|
+| `wol_relay` | none — Timar sends the packet itself | the machine is in another subnet (a second site, an office VLAN), or Timar runs on a bridge network |
+| `wol_broadcast` | `255.255.255.255` | Timar's host has several networks and the packet leaves through the wrong one |
+
+**`wol_relay`** names another server in the same file. A magic packet is a broadcast, and a
+broadcast stops at the router, so the packet has to start inside the target's own subnet: Timar
+connects to the relay over SSH and sends it from there. The relay must be **always on**,
+**already enrolled**, and have `python3` or `wakeonlan`. If the relay is renamed in the form,
+the reference follows. If it is removed, the wake fails and says the relay "is not configured";
+it doesn't fail silently.
+
+**`wol_broadcast`** is the address the packet is sent to. `255.255.255.255` leaves through the
+interface of the default route, which is right on a single-LAN host. On a host with several
+networks, give the target segment's own broadcast address (`192.168.0.255` for a
+`192.168.0.0/24`) so the kernel picks the interface that reaches it. With a relay it is the
+address the relay sends to.
+
+```yaml
+servers:
+  - name: office-nas
+    host: 10.1.0.20
+    user: deploy
+    wol_mac: "aa:bb:cc:dd:ee:20"
+    wol_relay: office-router      # an always-on, enrolled host in 10.1.0.0/24
+    wol_broadcast: 10.1.0.255     # optional; the relay's own segment
+```
+
+Edit the file inside the volume — `docker exec -it timar vi /data/config.yaml`, or copy it out
+and back with `docker cp`. It is read on every request: no restart.
 
 ## Why
 
@@ -103,6 +139,21 @@ unchecked host healthy is the one thing a status page must not do.
 | Linux (systemd) | `journalctl` | ✅ | Docker | ✅ |
 | Proxmox VE | `journalctl` | ✅ | — (guests via `qm`) | ✅ |
 | OpenWrt | `logread` | ✅ | — | off by default |
+
+Each platform's update command, used when a server's own `update_cmd` is empty (the server
+form shows them under *platform default*):
+
+| Platform | Default update command |
+|---|---|
+| Linux (systemd) | `sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=--force-confold upgrade --with-new-pkgs && sudo apt-get autoremove -y && sudo apt-get clean` |
+| Proxmox VE | `apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y && apt-get autoremove -y` |
+| OpenWrt | none |
+
+`--with-new-pkgs` matters: plain `apt-get upgrade` holds back any update that needs a package
+it does not have yet — a kernel ABI bump, a driver metapackage — so security kernels sit "kept
+back" and are never installed, and nothing says so. Unlike `full-upgrade` it never removes a
+package. `--force-confold` keeps a config file you edited instead of stopping at a prompt no
+one will answer.
 
 OpenWrt has no default update command on purpose: an unattended `apk upgrade` can fill the
 overlay or land a kernel-module mismatch on the machine carrying the SSH session you would
