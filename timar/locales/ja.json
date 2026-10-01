@@ -149,7 +149,6 @@
   "none": "なし",
   "Base URL": "ベース URL",
   "API key": "API キー",
-  "stored — leave blank to keep it": "保存済み — 変更しない場合は空欄のまま",
   "not set": "未設定",
   "Test connection": "接続をテスト",
   "List models": "モデル一覧を取得",
@@ -286,9 +285,7 @@
   "Day": "曜日",
   "Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.": "各マシンの compose プロジェクトはマシンの直後に更新されます。静かな時間帯の週 1 回がよく選ばれます: イメージが変わったコンテナは作り直されます。",
   "Every N hours": "N 時間ごと",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.": "ボット作成時に Telegram の @BotFather から取得します。保存後は再表示されません。保持するには空欄のままにします。",
   "How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.": "スキャンが各マシンのシステムログをどこまでさかのぼってエラーを探すか。2 回のスキャンの間隔より長くして、間に漏れが出ないようにします — 毎日のスキャンなら 25 時間。",
-  "Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.": "保存後は再表示されません。保存済みのキーを保持するには空欄のままにします。プロバイダーを変えるとキーは破棄されます。",
   "Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.": "独自のエンドポイントの場合のみ。例: <code>http://10.0.0.40:11434</code>。空欄ならプロバイダーの公開 API、Ollama は <code>http://localhost:11434</code>。",
   "Sends one message with the saved token and chat ID, so save first.": "保存済みのトークンとチャット ID でメッセージを 1 通送ります。先に保存してください。",
   "The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.": "完了したログスキャンと更新ジョブのレポート。長い場合は複数のメッセージに分けます。送信に失敗してもジョブは失敗になりません: レポートはレポートページに残ります。",
@@ -297,5 +294,8 @@
   "What is sent": "送信される内容",
   "What it sees": "モデルが見るもの",
   "Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.": "レポートの送り先: ボットとの自分のチャット、またはボットが参加しているグループ。まずボットにメッセージを送ってください — ボットからは会話を始められません — その後 <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code> で ID を確認します。",
-  "Saving": "保存"
+  "Saving": "保存",
+  "stored": "保存済み",
+  "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "保存後は再表示されません — 欄には<em>保存済み</em>か<em>未設定</em>だけが表示されます。保存済みのキーを残すなら空欄のまま、置き換えるなら新しいキーを入力します。プロバイダーを変えるとキーは破棄されます。",
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "ボット作成時に Telegram の @BotFather から取得します。保存後は再表示されません — 欄には<em>保存済み</em>か<em>未設定</em>だけが表示されます。保存済みのトークンを残すなら空欄のまま、置き換えるなら新しいトークンを入力します。"
 }

@@ -1090,7 +1090,7 @@ class TestSettings:
         page = client.get("/settings").text
         assert "SECRET-LLM-KEY" not in page
         assert "SECRET-BOT-TOKEN" not in page
-        assert "stored — leave blank to keep it" in page
+        assert 'placeholder="stored"' in page
         assert "123" in page  # the chat id is not a secret and must round-trip
 
     def test_saving_the_form_blank_does_not_wipe_the_key(self, client):

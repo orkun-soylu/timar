@@ -149,7 +149,6 @@
   "none": "yok",
   "Base URL": "Temel URL",
   "API key": "API anahtarı",
-  "stored — leave blank to keep it": "kayıtlı — korumak için boş bırakın",
   "not set": "ayarlanmadı",
   "Test connection": "Bağlantıyı test et",
   "List models": "Modelleri listele",
@@ -286,9 +285,7 @@
   "Day": "Gün",
   "Each machine's compose projects are updated right after it. A weekly slot at a quiet hour is the usual choice: containers are recreated when their image changed.": "Her makinenin compose projeleri makineden hemen sonra güncellenir. Genellikle sakin bir saatte haftalık bir zaman seçilir: imajı değişen container'lar yeniden yaratılır.",
   "Every N hours": "Her N saatte",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved; leave the box empty to keep it.": "Botu oluştururken Telegram'ın @BotFather'ından alınır. Kaydedildikten sonra bir daha gösterilmez; korumak için kutuyu boş bırakın.",
   "How far back the sweep reads each machine's system log for errors. Longer than the gap between two sweeps, so nothing falls between them — 25 hours for a daily sweep.": "Taramanın her makinenin sistem logunda hataları ne kadar geriye kadar okuyacağı. İki tarama arasındaki süreden uzun olsun ki arada bir şey kaçmasın — günlük tarama için 25 saat.",
-  "Never shown again once saved. Leave the box empty to keep the stored key; switching the provider drops it.": "Kaydedildikten sonra bir daha gösterilmez. Kayıtlı anahtarı korumak için kutuyu boş bırakın; sağlayıcıyı değiştirmek onu siler.",
   "Only for an endpoint of your own, such as <code>http://10.0.0.40:11434</code>. Left empty: the provider's public API, or <code>http://localhost:11434</code> for Ollama.": "Yalnız kendi uç noktanız için, örneğin <code>http://10.0.0.40:11434</code>. Boş bırakılırsa: sağlayıcının genel API'si, Ollama için <code>http://localhost:11434</code>.",
   "Sends one message with the saved token and chat ID, so save first.": "Kayıtlı token ve chat ID ile tek bir mesaj gönderir; önce kaydedin.",
   "The report of every finished log sweep and update run, split into several messages when it is long. A delivery that fails does not fail the job: the report is still on the reports page.": "Biten her log taramasının ve güncelleme turunun raporu, uzunsa birkaç mesaja bölünerek. Teslim edilemeyen bir mesaj işi başarısız yapmaz: rapor reports sayfasında yine durur.",
@@ -297,5 +294,8 @@
   "What is sent": "Ne gönderilir",
   "What it sees": "Neyi görür",
   "Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.": "Raporların gideceği yer: botla kendi sohbetiniz ya da botun üyesi olduğu bir grup. Önce bota bir mesaj gönderin — bot sohbet başlatamaz — sonra kimliği <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code> adresinden okuyun.",
-  "Saving": "Kaydetme"
+  "Saving": "Kaydetme",
+  "stored": "kayıtlı",
+  "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "Kaydedildikten sonra bir daha gösterilmez — kutu yalnız <em>kayıtlı</em> ya da <em>ayarlanmadı</em> der. Kayıtlı anahtarı korumak için boş bırakın, değiştirmek için yenisini yazın; sağlayıcıyı değiştirmek onu siler.",
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Botu oluştururken Telegram'ın @BotFather'ından alınır. Kaydedildikten sonra bir daha gösterilmez — kutu yalnız <em>kayıtlı</em> ya da <em>ayarlanmadı</em> der. Kayıtlı token'ı korumak için boş bırakın, değiştirmek için yenisini yazın."
 }
