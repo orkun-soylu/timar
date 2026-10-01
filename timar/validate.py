@@ -12,6 +12,7 @@ import re
 from urllib.parse import urlsplit
 
 from .i18n import gettext as _
+from .network import split_address
 from .platforms import PLATFORMS
 
 MAC = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
@@ -61,6 +62,13 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
 
     if not host:
         errors.append(_("Address is required."))
+    else:
+        try:
+            port = split_address(host)[1]
+        except ValueError:
+            port = 0
+        if not 1 <= port <= 65535:
+            errors.append(_("Address must be a host, optionally with an SSH port: 10.0.0.5 or 10.0.0.5:2222."))
     if not user:
         errors.append(_("SSH user is required."))
     if platform not in PLATFORMS:

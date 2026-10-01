@@ -7,7 +7,7 @@
 servers:
   # An always-on machine. The minimum a server needs is a name, an address and a platform.
   - name: web-01
-    host: 192.0.2.10          # IP or hostname
+    host: 192.0.2.10          # IP or hostname; a non-standard SSH port goes after it: 192.0.2.10:2222
     user: deploy
     platform: linux           # linux | openwrt | proxmox
 

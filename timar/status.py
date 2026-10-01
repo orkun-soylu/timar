@@ -10,13 +10,12 @@ and it keeps a browser tab from generating continuous traffic to every machine i
 """
 from __future__ import annotations
 
-import ipaddress
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 from . import config
-from .network import is_host_up
+from .network import address_key, is_host_up
 
 TTL = 10.0
 MAX_PARALLEL = 16
@@ -97,20 +96,11 @@ def fleet(cfg: dict) -> list[HostStatus]:
 SORT_KEYS = ("name", "address", "platform")
 
 
-def _address_key(host: str):
-    """IPs in numeric order — 10.0.0.9 before 10.0.0.10 — and names after them, alphabetically."""
-    try:
-        address = ipaddress.ip_address(host)
-        return (0, address.version, int(address), "")
-    except ValueError:
-        return (1, 0, 0, host.casefold())
-
-
 def sort_fleet(hosts: list[HostStatus], key: str, descending: bool = False) -> list[HostStatus]:
     """Order the dashboard by one column; ties fall back to the name so the order is stable."""
     by_name = sorted(hosts, key=lambda h: h.name.casefold())
     if key == "address":
-        ordered = sorted(by_name, key=lambda h: _address_key(h.host))
+        ordered = sorted(by_name, key=lambda h: address_key(h.host))
     elif key == "platform":
         ordered = sorted(by_name, key=lambda h: h.platform.casefold())
     else:

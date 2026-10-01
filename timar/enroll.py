@@ -22,6 +22,7 @@ import paramiko
 
 from . import config, keys
 from .i18n import gettext as _
+from .network import split_address
 from .platforms import get as get_platform
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class Result:
         return "; ".join(parts) or _("nothing to do")
 
 
-def _connect(host: str, user: str, password: str, port: int = 22) -> paramiko.SSHClient:
+def _connect(host: str, user: str, password: str) -> paramiko.SSHClient:
     """Password connection for enrolment only, with host keys pinned on first sight.
 
     Trust-on-first-use, persisted to `/data/ssh/known_hosts`: the first connection is taken on
@@ -76,9 +77,10 @@ def _connect(host: str, user: str, password: str, port: int = 22) -> paramiko.SS
     client.load_host_keys(str(known_hosts))     # also tells paramiko where to persist new ones
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+    hostname, port = split_address(host)
     try:
         client.connect(
-            hostname=host, port=port, username=user, password=password,
+            hostname=hostname, port=port, username=user, password=password,
             timeout=CONNECT_TIMEOUT, allow_agent=False, look_for_keys=False,
         )
     except paramiko.BadHostKeyException as e:
@@ -214,9 +216,10 @@ def verify(server: dict) -> str:
     known_hosts.touch(exist_ok=True)
     client.load_host_keys(str(known_hosts))
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    hostname, port = split_address(server["host"])
     try:
         client.connect(
-            hostname=server["host"], username=server["user"],
+            hostname=hostname, port=port, username=server["user"],
             key_filename=config.resolve_ssh_key(server),
             timeout=CONNECT_TIMEOUT, allow_agent=False, look_for_keys=False,
         )

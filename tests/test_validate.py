@@ -95,6 +95,16 @@ class TestServer:
             server(MINIMAL | {"update_timeout": seconds}, set())
 
 
+class TestAddress:
+    def test_a_port_may_follow_the_host(self):
+        assert server(MINIMAL | {"host": "127.0.0.1:2345"}, set())["host"] == "127.0.0.1:2345"
+
+    @pytest.mark.parametrize("host", ["10.0.0.5:ssh", "10.0.0.5:0", "10.0.0.5:70000", "[fd00::5]:x"])
+    def test_a_port_that_is_not_one_is_rejected(self, host):
+        with pytest.raises(ValidationError, match="SSH port"):
+            server(MINIMAL | {"host": host}, set())
+
+
 class TestWebUrl:
     @pytest.mark.parametrize("typed, stored", [
         ("10.0.0.1:8006", "https://10.0.0.1:8006"),

@@ -13,6 +13,7 @@ from contextlib import contextmanager
 import paramiko
 
 from . import config
+from .network import split_address
 
 KNOWN_HOSTS = "ssh/known_hosts"
 
@@ -30,11 +31,13 @@ def _client() -> paramiko.SSHClient:
 
 
 @contextmanager
-def connect(host, user, ssh_key, port=22, timeout=30):
+def connect(host, user, ssh_key, port=None, timeout=30):
+    """`host` may carry its port (`10.0.0.5:2222`); see `network.split_address`."""
+    hostname, own_port = split_address(host)
     client = _client()
     client.connect(
-        hostname=host,
-        port=port,
+        hostname=hostname,
+        port=port or own_port,
         username=user,
         key_filename=ssh_key,
         timeout=timeout,
