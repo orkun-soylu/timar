@@ -7,25 +7,14 @@
    Edit and add are links first — each opens a page of its own without scripting — and
    `hx-get` turns them into the dialog when htmx is there. #}
 {% from "_icons.html" import icon %}
-{# A column heading that sorts by itself. Plain links to the dashboard: the order lives in the
-   URL, so it survives the ten-second poll (which carries it along), a refresh and a bookmark.
-   Clicking the column already in use flips its direction. #}
-{% macro sortable(key, label, extra_class="") -%}
-  {%- set active = sort == key -%}
-  {%- set next_dir = "asc" if active and descending else ("desc" if active else "asc") -%}
-  <th class="sortable {{ extra_class }}"
-      {%- if active %} aria-sort="{{ 'descending' if descending else 'ascending' }}"{% endif %}>
-    <a href="/?sort={{ key }}&amp;dir={{ next_dir }}">{{ label }}
-      {%- if active %} <span aria-hidden="true">{{ "▼" if descending else "▲" }}</span>{% endif %}</a>
-  </th>
-{%- endmacro %}
+{% from "_table.html" import sortable %}
 {# Server hugs the left wall and Actions the right, each only as wide as its content; Address
    and Platform share what is left between them evenly, their text left-aligned. #}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("name", _("Server"), "col-edge") }}{{ sortable("address", _("Address"), "col-mid") }}{{ sortable("platform", _("Platform"), "col-mid wide") }}<th class="col-edge actions-head">
+    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge") }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid") }}{{ sortable("/", sort, descending, "platform", _("Platform"), "col-mid wide") }}<th class="col-edge actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"

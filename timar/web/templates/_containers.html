@@ -2,11 +2,12 @@
    servers table: the light before the name, the name a link to the web interface while it runs,
    the row's own actions on the right and the add button on the heading. #}
 {% from "_icons.html" import icon %}
+{% from "_table.html" import sortable %}
 {% if projects %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr><th class="col-edge">{{ _("Name") }}</th><th class="col-mid">{{ _("Host") }}</th>
+    <tr>{{ sortable("/containers", sort, descending, "name", _("Name"), "col-edge") }}{{ sortable("/containers", sort, descending, "host", _("Host"), "col-mid") }}
       <th class="col-mid wide">{{ _("Images") }}</th>
       <th class="col-edge actions-head"><span>{{ _("Actions") }}</span>
         <a href="/settings/containers/new" class="icon-btn" title="{{ _("Add a container") }}"
