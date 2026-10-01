@@ -280,7 +280,8 @@ class TestUpdateRun:
         from timar import updater
         seen = {}
         monkeypatch.setattr(updater, "update_server",
-                            lambda server, servers_map, by_server: seen.update(by_server) or [])
+                            lambda server, servers_map, by_server, cfg=None: seen.update(by_server) or [])
+        monkeypatch.setattr(updater.membership, "skip_reason", lambda cfg, job, server: None)
         updater.run_updates({"servers": [{"name": "a"}, {"name": "b"}],
                              "containers": [{"name": "x", "server": "a", "path": "/x"},
                                             {"name": "y", "server": "b", "path": "/y"},
@@ -377,7 +378,9 @@ class TestStop:
         from timar import cancel, jobs, updater
         visited = []
 
-        def fake_update_server(server, servers_map, by_server):
+        monkeypatch.setattr(updater.membership, "skip_reason", lambda cfg, job, server: None)
+
+        def fake_update_server(server, servers_map, by_server, cfg=None):
             visited.append(server["name"])
             cancel.request("update")      # the operator presses stop during the first host
             return [updater.UpdateResult(server=server["name"], success=True)]

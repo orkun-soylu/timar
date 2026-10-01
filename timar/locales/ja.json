@@ -296,5 +296,20 @@
   "Saving": "保存",
   "stored": "保存済み",
   "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "保存後は再表示されません — 欄には<em>保存済み</em>か<em>未設定</em>だけが表示されます。保存済みのキーを残すなら空欄のまま、置き換えるなら新しいキーを入力します。プロバイダーを変えるとキーは破棄されます。",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "ボット作成時に Telegram の @BotFather から取得します。保存後は再表示されません — 欄には<em>保存済み</em>か<em>未設定</em>だけが表示されます。保存済みのトークンを残すなら空欄のまま、置き換えるなら新しいトークンを入力します。"
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "ボット作成時に Telegram の @BotFather から取得します。保存後は再表示されません — 欄には<em>保存済み</em>か<em>未設定</em>だけが表示されます。保存済みのトークンを残すなら空欄のまま、置き換えるなら新しいトークンを入力します。",
+  "A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.": "VM はハイパーバイザー経由で更新されます: ハイパーバイザーを更新ジョブから外すと、その VM も外れます。",
+  "Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.": "登録済みですが、このジョブから外されています — 起動も接続もされず、レポートにはスキップとして記載されます。+ で戻せます。あるジョブから外しても、もう一方のジョブには影響しません。",
+  "Leave {name} out of the {job}?": "{name} を {job} から外しますか?",
+  "Left out": "外したサーバー",
+  "No server — this job has nothing to do.": "サーバーがありません — このジョブには何もすることがありません。",
+  "None.": "なし。",
+  "Not enrolled": "未登録",
+  "Runs on": "実行対象",
+  "Servers": "サーバー",
+  "The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.": "このジョブが回るサーバー: 登録済みで、外されていないもの。− は確認後に 1 台を外し、すぐに保存されます。",
+  "Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.": "Timar はこれらに自分の鍵でログインしたことがないため、どのジョブも到達できません。サーバーのカードを開き、SSH アクセスの項目で登録してください — 既存の鍵ならパスワードなしの登録で確認できます — その後、この一覧の最初の項目に移ります。",
+  "Virtual machines": "仮想マシン",
+  "add": "追加",
+  "enrol from its card": "カードから登録",
+  "leave out": "外す"
 }

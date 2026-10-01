@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import NamedTuple
 
-from . import analysis, cancel, config, llm as llm_module, notify, status as fleet_status
+from . import analysis, cancel, config, membership, llm as llm_module, notify, status as fleet_status
 from .log_checker import run_log_checks
 from .updater import run_updates
 
@@ -64,6 +64,9 @@ def run_log_sweep(cfg: dict) -> Outcome:
     with_issues = [r for r in results if r.success and not r.offline and r.has_issues]
 
     summary = f"{len(with_issues)} with findings, {len(unreachable)} unreachable, {len(offline)} asleep"
+    left_out = [s["name"] for s in cfg.get("servers", []) if membership.skip_reason(cfg, LOG_SWEEP, s)]
+    if left_out:
+        summary += f", {len(left_out)} not in the sweep"
     stopped = cancel.requested(LOG_SWEEP)
     if stopped:
         summary += f" — stopped by the operator after {len(results)} hosts"

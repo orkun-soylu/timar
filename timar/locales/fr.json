@@ -296,5 +296,20 @@
   "Saving": "Enregistrement",
   "stored": "enregistré",
   "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "Jamais réaffichée une fois enregistrée — le champ indique seulement <em>enregistré</em> ou <em>non définie</em>. Laissez-le vide pour garder la clé stockée, saisissez-en une nouvelle pour la remplacer ; changer de fournisseur la supprime.",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Fourni par @BotFather de Telegram à la création du bot. Jamais réaffiché une fois enregistré — le champ indique seulement <em>enregistré</em> ou <em>non définie</em>. Laissez-le vide pour garder le jeton stocké, saisissez-en un nouveau pour le remplacer."
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Fourni par @BotFather de Telegram à la création du bot. Jamais réaffiché une fois enregistré — le champ indique seulement <em>enregistré</em> ou <em>non définie</em>. Laissez-le vide pour garder le jeton stocké, saisissez-en un nouveau pour le remplacer.",
+  "A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.": "Une VM est mise à jour via son hyperviseur : retirer l’hyperviseur de la tournée de mises à jour retire aussi ses VM.",
+  "Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.": "Inscrit, mais retiré de cette tâche — pas réveillé, pas contacté, et signalé comme ignoré dans son rapport. + le réintègre. Retirer un serveur d’une tâche ne touche pas l’autre.",
+  "Leave {name} out of the {job}?": "Retirer {name} de la tâche {job} ?",
+  "Left out": "Retirés",
+  "No server — this job has nothing to do.": "Aucun serveur — cette tâche n’a rien à faire.",
+  "None.": "Aucun.",
+  "Not enrolled": "Non inscrits",
+  "Runs on": "S’exécute sur",
+  "Servers": "Serveurs",
+  "The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.": "Les serveurs que visite cette tâche : inscrits et non retirés. − en retire un après confirmation ; c’est enregistré aussitôt.",
+  "Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.": "Timar ne s’est jamais connecté à ceux-ci avec sa clé, aucune tâche ne peut donc les atteindre. Ouvrez la fiche du serveur et inscrivez-le dans sa section Accès SSH — ou vérifiez une clé existante avec Inscrire sans mot de passe — et il passe dans la première section de cette liste.",
+  "Virtual machines": "Machines virtuelles",
+  "add": "ajouter",
+  "enrol from its card": "inscrire depuis sa fiche",
+  "leave out": "retirer"
 }

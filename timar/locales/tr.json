@@ -296,5 +296,20 @@
   "Saving": "Kaydetme",
   "stored": "kayıtlı",
   "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "Kaydedildikten sonra bir daha gösterilmez — kutu yalnız <em>kayıtlı</em> ya da <em>ayarlanmadı</em> der. Kayıtlı anahtarı korumak için boş bırakın, değiştirmek için yenisini yazın; sağlayıcıyı değiştirmek onu siler.",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Botu oluştururken Telegram'ın @BotFather'ından alınır. Kaydedildikten sonra bir daha gösterilmez — kutu yalnız <em>kayıtlı</em> ya da <em>ayarlanmadı</em> der. Kayıtlı token'ı korumak için boş bırakın, değiştirmek için yenisini yazın."
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Botu oluştururken Telegram'ın @BotFather'ından alınır. Kaydedildikten sonra bir daha gösterilmez — kutu yalnız <em>kayıtlı</em> ya da <em>ayarlanmadı</em> der. Kayıtlı token'ı korumak için boş bırakın, değiştirmek için yenisini yazın.",
+  "A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.": "VM, hipervizörü üzerinden güncellenir: hipervizörü güncelleme turundan çıkarmak VM'lerini de çıkarır.",
+  "Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.": "Enrol edilmiş ama bu işten çıkarılmış — uyandırılmaz, bağlanılmaz ve raporunda atlandı olarak yazılır. + onu geri ekler. Bir sunucuyu bir işten çıkarmak diğer işi etkilemez.",
+  "Leave {name} out of the {job}?": "{name}, {job} işinden çıkarılsın mı?",
+  "Left out": "Çıkarılanlar",
+  "No server — this job has nothing to do.": "Sunucu yok — bu işin yapacağı bir şey yok.",
+  "None.": "Yok.",
+  "Not enrolled": "Enrol edilmemiş",
+  "Runs on": "Çalıştığı sunucular",
+  "Servers": "Sunucular",
+  "The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.": "Bu işin gittiği sunucular: enrol edilmiş ve çıkarılmamış olanlar. − sorduktan sonra birini çıkarır; hemen kaydedilir.",
+  "Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.": "Timar bunlara kendi anahtarıyla hiç giriş yapmadı, bu yüzden hiçbir iş onlara ulaşamaz. Sunucunun kartını açın, SSH erişimi bölümünden enrol edin — ya da mevcut bir anahtarı parolasız Enrol ile doğrulayın — sunucu bu listenin ilk bölümüne geçer.",
+  "Virtual machines": "Sanal makineler",
+  "add": "ekle",
+  "enrol from its card": "kartından enrol et",
+  "leave out": "çıkar"
 }

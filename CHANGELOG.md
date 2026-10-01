@@ -9,6 +9,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.15] — 2026-10-02
+
+### Added
+
+- **Choose the servers a job runs on.** A job's dialog (the pencil on its row) lists, above
+  *Save*: **Runs on** — each server with a **−** that asks, then leaves it out; **Left out** —
+  enrolled servers taken out of this job, each with a **+**; **Not enrolled** — servers Timar has
+  never logged in to with its key, each linking to its card's SSH section. Changes are saved at
+  once and re-render only the lists, so a schedule being edited stays as typed. Each job has its
+  own list (`job_exclude` in `config.yaml`); renaming or removing a server follows into it.
+- **Enrolment is recorded.** Every login with Timar's key marks the address as enrolled
+  (`ssh/enrolled`, beside `known_hosts`). An installation upgrading starts from `known_hosts`:
+  every address Timar already pinned counts.
+
+### Changed
+
+- **Jobs run only on servers that are enrolled and not left out.** The others are not woken and
+  not connected to. The update run names them as skipped with the reason — a hypervisor left
+  out takes its VMs with it — and the log sweep's summary counts them ("2 not in the sweep").
+
 ## [0.2.14] — 2026-10-02
 
 ### Added
@@ -545,7 +565,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.14...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.15...HEAD
+[0.2.15]: https://github.com/orkun-soylu/timar/compare/v0.2.14...v0.2.15
 [0.2.14]: https://github.com/orkun-soylu/timar/compare/v0.2.13...v0.2.14
 [0.2.13]: https://github.com/orkun-soylu/timar/compare/v0.2.12...v0.2.13
 [0.2.12]: https://github.com/orkun-soylu/timar/compare/v0.2.11...v0.2.12
