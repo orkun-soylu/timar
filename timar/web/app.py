@@ -11,6 +11,7 @@ that reports the state — see the power routes at the end of this file.
 from __future__ import annotations
 
 import html
+import logging
 from pathlib import Path
 
 import asyncio
@@ -29,6 +30,7 @@ from . import auth, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
+logger = logging.getLogger(__name__)
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
 i18n.install(TEMPLATES.env)
 
@@ -42,10 +44,29 @@ async def lifespan(_: FastAPI):
     and the heartbeats in `scheduler.py` exist to make visible.
     """
     scheduler.start()
+    refresher = asyncio.create_task(_keep_status_fresh())
     try:
         yield
     finally:
+        refresher.cancel()
         await scheduler.stop()
+
+
+async def _keep_status_fresh() -> None:
+    """Probe the fleet and read the containers in the background, so no page waits for either.
+
+    The pages read whatever this found last; see `status` for what happens if it stops.
+    """
+    while True:
+        try:
+            cfg = config.load()
+            await asyncio.to_thread(fleet_status.refresh, cfg)
+            await asyncio.to_thread(container_status.refresh, cfg)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("background status refresh failed")
+        await asyncio.sleep(fleet_status.REFRESH_EVERY)
 
 
 app = FastAPI(title="Timar", docs_url=None, redoc_url=None, lifespan=lifespan)

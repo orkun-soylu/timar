@@ -409,3 +409,52 @@ class TestStop:
             cancel.clear("update")
         assert [r.server for r in results] == ["a (h)"]
         assert any("image prune" in c for c in calls)
+
+
+class TestBackgroundStatus:
+    """Pages read the last answer; the background task is what asks."""
+
+    def test_a_request_reads_the_cached_answer_without_probing(self, monkeypatch):
+        from timar import status
+        calls = []
+        monkeypatch.setattr(status, "is_host_up", lambda host, timeout: calls.append(host) or True)
+        status.invalidate()
+        status.refresh({"servers": [{"name": "a", "host": "10.0.0.1"}]})
+        assert calls == ["10.0.0.1"]
+        assert status._probe("10.0.0.1") is True and calls == ["10.0.0.1"]   # no second probe
+
+    def test_an_answer_older_than_stale_after_is_asked_again(self, monkeypatch):
+        from timar import status
+        calls = []
+        monkeypatch.setattr(status, "is_host_up", lambda host, timeout: calls.append(host) or False)
+        status.invalidate()
+        status._cache["10.0.0.2"] = (status.time.monotonic() - status.STALE_AFTER - 1, True)
+        assert status._probe("10.0.0.2") is False and calls == ["10.0.0.2"]
+
+    def test_refresh_always_asks_again(self, monkeypatch):
+        from timar import status
+        answers = iter([True, False])
+        monkeypatch.setattr(status, "is_host_up", lambda host, timeout: next(answers))
+        status.invalidate()
+        cfg = {"servers": [{"name": "a", "host": "10.0.0.3"}]}
+        status.refresh(cfg)
+        status.refresh(cfg)
+        assert status._probe("10.0.0.3") is False
+
+    def test_the_probe_gives_an_off_machine_one_second(self):
+        from timar import status
+        assert status.PROBE_TIMEOUT == 1.0
+
+    def test_container_refresh_skips_hosts_that_are_off(self, monkeypatch):
+        from timar import status
+        asked = []
+        monkeypatch.setattr(status, "is_host_up", lambda host, timeout: host == "10.0.0.6")
+        monkeypatch.setattr(containers, "_ps", lambda server: asked.append(server["name"]) or containers.HostContainers())
+        monkeypatch.setattr(containers, "_healthy", lambda url, fresh=False: asked.append(url) or True)
+        status.invalidate(); containers.invalidate()
+        cfg = {"servers": [{"name": "on", "host": "10.0.0.6"}, {"name": "off", "host": "10.0.0.7"}],
+               "containers": [{"name": "a", "server": "on", "path": "/a", "health_url": "https://a.lan"},
+                              {"name": "b", "server": "off", "path": "/b", "health_url": "https://b.lan"}]}
+        status.refresh(cfg)
+        containers.refresh(cfg)
+        assert sorted(asked) == ["https://a.lan", "on"]

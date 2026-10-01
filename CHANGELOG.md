@@ -9,6 +9,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.13] — 2026-10-02
+
+### Changed
+
+- **The servers and containers pages open at once.** They waited for the fleet to be asked:
+  every machine that was off cost a three-second connect timeout, and the containers page an
+  SSH `docker ps` plus each health address in turn — measured on a 16-server fleet, 3.0s and
+  0.9s whenever the 10-second cache had lapsed. A background task now asks every host, reads the
+  containers and checks the health addresses every ten seconds, and the pages read what it found
+  last: 0.002s for both. A request asks for itself only when there is no answer yet (right after
+  a restart) or the last one is over a minute old. Waking, shutting down, starting or stopping
+  still drops the cache, so the next refresh shows the truth.
+- The connect probe gives an off machine one second instead of three — a machine that is up
+  answers in milliseconds, through the VPN tunnel too.
+- Health addresses are checked in parallel rather than one after another.
+
 ## [0.2.12] — 2026-10-02
 
 ### Changed
@@ -520,7 +536,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.12...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.13...HEAD
+[0.2.13]: https://github.com/orkun-soylu/timar/compare/v0.2.12...v0.2.13
 [0.2.12]: https://github.com/orkun-soylu/timar/compare/v0.2.11...v0.2.12
 [0.2.11]: https://github.com/orkun-soylu/timar/compare/v0.2.10...v0.2.11
 [0.2.10]: https://github.com/orkun-soylu/timar/compare/v0.2.9...v0.2.10

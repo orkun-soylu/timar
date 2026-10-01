@@ -4,9 +4,12 @@ A single probe is a TCP connect with a timeout, and the timeout is the normal ca
 of the fleet is *supposed* to be asleep. Run serially, a fleet of eight machines with six of
 them off costs `6 x timeout` before the page renders. Run in parallel, it costs one timeout.
 
-The cache exists for a second reason: the dashboard polls, and without it every poll would
-re-probe every host. A few seconds of staleness is invisible to someone watching a status page
-and it keeps a browser tab from generating continuous traffic to every machine in the rack.
+Nobody waits for a probe, either. A background task (`refresh`, started with the app) asks
+every host every `REFRESH_EVERY` seconds and the pages read what it found last — measured, the
+servers page went from three seconds (one probe timeout, for the machines that are off) to
+nothing. A request probes only when there is no answer yet, or the last one is older than
+`STALE_AFTER`: then the background task has stopped, and a stale page would be worse than a
+slow one.
 """
 from __future__ import annotations
 
@@ -17,9 +20,12 @@ from dataclasses import dataclass
 from . import config
 from .network import address_key, is_host_up
 
-TTL = 10.0
+REFRESH_EVERY = 10.0
+STALE_AFTER = 60.0
 MAX_PARALLEL = 16
-PROBE_TIMEOUT = 3.0
+# A machine that is up answers its SSH port in milliseconds — on the LAN and through a tunnel
+# alike — so a second is ample. The timeout is what an *off* machine costs.
+PROBE_TIMEOUT = 1.0
 
 _cache: dict[str, tuple[float, bool]] = {}
 
@@ -51,14 +57,22 @@ class HostStatus:
         return "asleep" if self.on_demand else "down"
 
 
-def _probe(host: str) -> bool:
+def _probe(host: str, fresh: bool = False) -> bool:
     now = time.monotonic()
     cached = _cache.get(host)
-    if cached and now - cached[0] < TTL:
+    if cached and not fresh and now - cached[0] < STALE_AFTER:
         return cached[1]
     up = is_host_up(host, timeout=PROBE_TIMEOUT)
-    _cache[host] = (now, up)
+    _cache[host] = (time.monotonic(), up)
     return up
+
+
+def refresh(cfg: dict) -> None:
+    """Ask every host now and keep the answers — the background task's half of the cache."""
+    hosts = list(dict.fromkeys(s["host"] for s in cfg.get("servers", [])))
+    if hosts:
+        with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(hosts))) as pool:
+            list(pool.map(lambda h: _probe(h, fresh=True), hosts))
 
 
 def invalidate() -> None:
