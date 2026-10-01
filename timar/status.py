@@ -35,6 +35,9 @@ class HostStatus:
     # False when Timar has nothing to start it with — no MAC, no hypervisor. It can still be shut
     # down; it gets no wake button, and its shutdown warns that it will stay off.
     wakeable: bool = True
+    # The machine's own web interface. The name becomes a link to it while the machine is up —
+    # only then, because a link to a panel that is off is a click that ends in a timeout.
+    web_url: str | None = None
 
     @property
     def state(self) -> str:
@@ -84,6 +87,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             on_demand=s["name"] in sleepers,
             platform=s.get("platform", "linux"),
             wakeable=config.can_wake(s["name"], servers),
+            web_url=s.get("web_url"),
         )
         for s, up in zip(servers, results)
     ]

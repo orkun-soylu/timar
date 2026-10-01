@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.1.16] — 2026-10-01
+
+### Added
+
+- **A server's web interface is a link from the dashboard.** An optional *Web interface* field on
+  the server form (`web_url` in `config.yaml`) takes an IP or a hostname, with a port and a
+  scheme if needed — `10.0.0.5:8006`, `https://router.lan`. While the machine is up, its name
+  opens that address in a new tab; asleep or down, the name stays plain text. Without a scheme
+  the address is opened as `https://`; only `http` and `https` are accepted.
+
 ## [0.1.15] — 2026-09-29
 
 ### Changed
@@ -262,7 +272,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.15...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.16...HEAD
+[0.1.16]: https://github.com/orkun-soylu/timar/compare/v0.1.15...v0.1.16
 [0.1.15]: https://github.com/orkun-soylu/timar/compare/v0.1.14...v0.1.15
 [0.1.14]: https://github.com/orkun-soylu/timar/compare/v0.1.13...v0.1.14
 [0.1.13]: https://github.com/orkun-soylu/timar/compare/v0.1.12...v0.1.13

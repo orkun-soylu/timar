@@ -86,6 +86,13 @@
       {{ _("A guest needs no MAC — it is started with <code>qm</code>. It sleeps when its host sleeps; on an always-on host, tick the box above.") }}
     </p>
 
+    <label><span>{{ _("Web interface") }} <em class="muted">{{ _("optional") }}</em></span>
+      <input name="web_url" placeholder="{{ _("10.0.0.5:8006 or https://host.lan") }}"
+             value="{{ values.get('web_url', '') }}"></label>
+    <p class="hint">
+      {{ _("While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.") }}
+    </p>
+
     <label><span>{{ _("Update command") }} <em class="muted">{{ _("optional — overrides the platform default") }}</em></span>
       <input name="update_cmd" value="{{ values.get('update_cmd', '') }}"></label>
     <p class="hint">

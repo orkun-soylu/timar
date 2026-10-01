@@ -156,6 +156,9 @@
   "VM id": "VM kimliği",
   "required with a hypervisor": "hipervizörle birlikte zorunlu",
   "Kept off on purpose": "Bilerek kapalı tutuluyor",
+  "Web interface": "Web arayüzü",
+  "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 veya https://host.lan",
+  "While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.": "Makine açıkken panodaki adı bu adresi açar. Şema yazılmazsa <code>https://</code> ile açılır.",
   "Update command": "Güncelleme komutu",
   "optional — overrides the platform default": "isteğe bağlı — platform varsayılanını geçersiz kılar",
   "Update timeout": "Güncelleme zaman aşımı",
@@ -223,5 +226,6 @@
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "Her 10 saniyede yenilenir. Adın önündeki ışık durumudur — kelime için üzerine gel: yeşil <em>açık</em>, gri <em>uykuda</em> (isteğe bağlı, kapalı olması beklenen), kırmızı <em>erişilemiyor</em> (erişilebilir olmalı ama değil). Güç yalnız isteğe bağlı makinelere sunulur — her zaman açık bir host'u uyandırmanın yolu yoktur, buradan kapatmak onu ortada bırakır.",
   "no Wake-on-LAN; switched on by hand": "Wake-on-LAN yok; elle açılıyor",
   "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "Kapalıyken <em>uykuda</em> görünür, güncellemeler o dönene kadar onu atlar; Timar onu kapatabilir ama uyandıramaz.",
-  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} kapatılsın mı? Timar onu yeniden uyandıramaz — biri elle açana kadar kapalı kalır."
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} kapatılsın mı? Timar onu yeniden uyandıramaz — biri elle açana kadar kapalı kalır.",
+  "Web interface must be an address such as 10.0.0.5:8006 or https://host.lan.": "Web arayüzü 10.0.0.5:8006 veya https://host.lan gibi bir adres olmalı."
 }

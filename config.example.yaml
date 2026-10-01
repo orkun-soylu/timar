@@ -21,6 +21,10 @@ servers:
     # failure, and the host is left powered on rather than shut down mid-upgrade.
     # update_timeout: 3600
 
+    # Optional: the machine's own web interface -- a hypervisor, a router. While the machine is
+    # up, its name on the dashboard links here. Without a scheme it is opened as https://.
+    # web_url: "https://192.0.2.10:8006"
+
     # Optional: a line of context handed to the log analysis, to explain behaviour that looks
     # alarming but is not. This is the cheapest way to stop a recurring false alarm.
     # context: "Runs a nightly batch job that logs connection resets; those are expected."

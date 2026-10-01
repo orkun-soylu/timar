@@ -156,6 +156,9 @@
   "VM id": "VM ID",
   "required with a hypervisor": "ハイパーバイザー指定時は必須",
   "Kept off on purpose": "意図的に停止",
+  "Web interface": "Web 管理画面",
+  "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 または https://host.lan",
+  "While the machine is up, its name on the dashboard opens this address. Without a scheme it is opened as <code>https://</code>.": "マシンの起動中は、ダッシュボードの名前からこのアドレスを開きます。スキームを省略すると <code>https://</code> で開きます。",
   "Update command": "更新コマンド",
   "optional — overrides the platform default": "任意 — プラットフォームの既定値を上書き",
   "Update timeout": "更新のタイムアウト",
@@ -223,5 +226,6 @@
   "Refreshes every 10 seconds. The light before a name is its state — hover for the word: green is <em>up</em>, grey is <em>asleep</em> (on-demand, off as expected), red is <em>down</em> (should be reachable and is not). Power is offered only for on-demand machines — an always-on host has no wake path, so shutting it down from here would strand it.": "10 秒ごとに更新されます。名前の前のランプが状態です — カーソルを重ねると表示されます。緑は<em>稼働中</em>、灰色は<em>スリープ</em>(オンデマンド、停止は想定どおり)、赤は<em>停止</em>(到達できるはずなのにできない)です。電源操作はオンデマンドのマシンにのみ表示されます — 常時稼働のホストには起動手段がなく、ここから停止すると取り残されます。",
   "no Wake-on-LAN; switched on by hand": "Wake-on-LAN なし、手動で電源を入れる",
   "Off reads as <em>asleep</em> and updates skip it until it is back; Timar can shut it down but not wake it.": "電源オフは<em>スリープ</em>と表示され、復帰するまで更新はスキップされます。Timar はシャットダウンできますが、起動はできません。",
-  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} をシャットダウンしますか？Timar は再び起動できません — 誰かが手動で電源を入れるまでオフのままです。"
+  "Shut down {name}? Timar cannot wake it again — it stays off until someone switches it on by hand.": "{name} をシャットダウンしますか？Timar は再び起動できません — 誰かが手動で電源を入れるまでオフのままです。",
+  "Web interface must be an address such as 10.0.0.5:8006 or https://host.lan.": "Web 管理画面は 10.0.0.5:8006 や https://host.lan のようなアドレスにしてください。"
 }

@@ -275,10 +275,30 @@ class TestActionsColumn:
         assert cell.rstrip().endswith("gpu-02")
         assert 'title="up"' in rows
 
+    def test_a_web_interface_makes_the_name_a_link_while_up(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "hv-up", "host": "10.0.0.1", "user": "root", "web_url": "https://10.0.0.1:8006"},
+            {"name": "hv-off", "host": "10.0.0.2", "user": "root", "web_url": "https://10.0.0.2:8006",
+             "wol_mac": "aa:bb:cc:dd:ee:ff"},
+            {"name": "plain", "host": "10.0.0.3", "user": "op"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.2")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        cell = rows.split('<tr class="up">', 1)[1].split("</td>", 1)[0]
+        assert '<a href="https://10.0.0.1:8006" target="_blank" rel="noopener noreferrer"' in cell
+        assert cell.rstrip().endswith(">hv-up</a>")
+        # Asleep: the panel would not answer, so no link — the name is plain text.
+        assert "10.0.0.2:8006" not in rows
+        # The sort helper still finds every name, linked or not.
+        assert self.order(rows) == ["hv-off", "hv-up", "plain"]
+
     @staticmethod
     def order(html):
         import re
-        return re.findall(r'<span class="dot"[^>]*></span> ([\w-]+)</td>', html)
+        return re.findall(r'<span class="dot"[^>]*></span> (?:<a [^>]*>)?([\w-]+)(?:</a>)?</td>', html)
 
     def test_sorts_by_address_numerically(self, fleet):
         from timar import config
@@ -698,6 +718,21 @@ class TestSettings:
             "user": "deploy", "platform": "openwrt"})
         names = [s["name"] for s in config.load()["servers"]]
         assert names == ["a", "b2", "c"]
+
+    def test_a_web_interface_is_saved_and_shown_again_in_the_edit_form(self, client):
+        complete_setup(client)
+        from timar import config
+        client.post("/settings/servers", data={
+            "name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+            "web_url": "10.0.0.1:8006"})
+        assert config.load()["servers"][0]["web_url"] == "https://10.0.0.1:8006"
+        form = client.get("/settings/servers/hv/edit").text
+        assert 'value="https://10.0.0.1:8006"' in form
+        # Cleared in the form, it is gone — not carried over as if it were hand-written.
+        client.post("/settings/servers", data={
+            "original_name": "hv", "name": "hv", "host": "10.0.0.1", "user": "root",
+            "platform": "proxmox", "web_url": ""})
+        assert "web_url" not in config.load()["servers"][0]
 
     def test_edit_keeps_the_fields_the_form_does_not_show(self, client):
         """The form is not the whole entry. `job_logs`, `watch_logs` and `ssh_key` are written by

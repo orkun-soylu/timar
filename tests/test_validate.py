@@ -25,7 +25,7 @@ class TestServer:
         """
         maximal = server({**MINIMAL, "wol_mac": "aa:bb:cc:dd:ee:ff", "wol_broadcast": "10.0.0.255",
                           "wol_relay": "other-01", "update_cmd": "true", "context": "a note",
-                          "update_timeout": "3600"},
+                          "update_timeout": "3600", "web_url": "10.0.0.1:8006"},
                          {"other-01"})
         # `on_demand` is the one field a MAC excludes, so it cannot be in the same entry.
         assert set(maximal) == SERVER_FIELDS - {"on_demand"}
@@ -93,6 +93,33 @@ class TestServer:
     def test_update_timeout_outside_the_bounds_is_rejected(self, seconds):
         with pytest.raises(ValidationError, match="between"):
             server(MINIMAL | {"update_timeout": seconds}, set())
+
+
+class TestWebUrl:
+    @pytest.mark.parametrize("typed, stored", [
+        ("10.0.0.1:8006", "https://10.0.0.1:8006"),
+        ("pve.example.lan", "https://pve.example.lan"),
+        ("https://pve.example.lan/", "https://pve.example.lan/"),
+        ("http://10.0.0.1", "http://10.0.0.1"),       # a typed scheme is kept, not upgraded
+        ("  router.lan  ", "https://router.lan"),
+    ])
+    def test_ip_or_hostname_becomes_an_address(self, typed, stored):
+        assert server(MINIMAL | {"web_url": typed}, set())["web_url"] == stored
+
+    @pytest.mark.parametrize("typed", [
+        "javascript:alert(1)//",      # it lands in an href
+        "javascript://x/%0aalert(1)",
+        "ftp://host.lan",
+        "https://",
+        "host.lan:port",
+        "two words.lan",
+    ])
+    def test_anything_but_an_http_address_is_rejected(self, typed):
+        with pytest.raises(ValidationError, match="Web interface"):
+            server(MINIMAL | {"web_url": typed}, set())
+
+    def test_blank_means_no_link(self):
+        assert "web_url" not in server(MINIMAL | {"web_url": "  "}, set())
 
 
 class TestLogCheck:
