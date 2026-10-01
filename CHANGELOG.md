@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.5] — 2026-10-01
+
+### Changed
+
+- **One heading style across the content area.** Panel titles (*Scheduled work*, *Reports*,
+  the settings sections, a report's title, the add/edit dialog's title), form section titles
+  and popover titles used three different sizes, weights and cases. They now all match the
+  tables' column heads: small, upper case, muted. A titled panel's heading row has the same
+  padding as a table's, so the two start alike.
+
 ## [0.2.4] — 2026-10-01
 
 ### Changed
@@ -425,7 +435,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/orkun-soylu/timar/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/orkun-soylu/timar/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/orkun-soylu/timar/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/orkun-soylu/timar/compare/v0.2.1...v0.2.2

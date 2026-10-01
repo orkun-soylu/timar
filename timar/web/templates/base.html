@@ -48,7 +48,12 @@
     }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
-    th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+    /* One heading style for the whole content area: a table's column heads, a panel's title, a
+       form section's title and a popover's all read alike — small, upper case, muted. */
+    th, section.panel h2, section.panel h3, .form-section-head h3, .popover h3 {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+      font-weight: 600;
+    }
     tr:last-child td { border-bottom: none; }
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: 0.05em; }
     .up .dot { background: var(--up); }
@@ -117,9 +122,9 @@
     .empty { padding: 2rem 1rem; text-align: center; color: var(--muted); }
 
     section.panel { margin-bottom: 1.25rem; padding: 0 0 1.25rem; }
-    section.panel h2 { font-size: 1rem; margin: 0; padding: 1rem; border-bottom: 1px solid var(--line); }
-    section.panel h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;
-                       color: var(--muted); margin: 0 0 0.25rem; }
+    /* The same padding as a table's heading row, so a titled panel and a table start alike. */
+    section.panel h2 { margin: 0; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
+    section.panel h3 { margin: 0 0 0.25rem; }
     .stack { padding: 1.25rem 1rem 0; }
     .stack + .stack { border-top: 1px solid var(--line); margin-top: 1rem; }
     .row { display: flex; gap: 1rem; flex-wrap: wrap; }
@@ -210,10 +215,7 @@
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; margin-bottom: 1rem;
     }
-    .form-section-head h3 {
-      margin: 0; font-size: 0.85rem; font-weight: 600; text-transform: none; letter-spacing: 0;
-      color: var(--text);
-    }
+    .form-section-head h3 { margin: 0; }
     button.help {
       width: 1.5rem; height: 1.5rem; padding: 0; border-radius: 50%;
       border: 1px solid var(--line); background: none; color: var(--muted);
@@ -242,7 +244,7 @@
       background: var(--panel); color: var(--text); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
     }
     .popover::backdrop { background: rgba(0, 0, 0, 0.35); }
-    .popover h3 { font-size: 1rem; margin: 0 0 0.25rem; }
+    .popover h3 { margin: 0 0 0.25rem; }
     .popover .default-cmd { margin: 1rem 0; }
     .popover .default-cmd pre.report { margin: 0.35rem 0 0; }
     .popover .default-cmd p { margin: 0.35rem 0 0; }
