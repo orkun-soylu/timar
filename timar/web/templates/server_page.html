@@ -3,6 +3,6 @@
 {% extends "base.html" %}
 {% block title %}{{ page_title }} — Timar{% endblock %}
 {% block body %}
-{% from "_nav.html" import nav with context %}{{ nav("servers") }}
+{% from "_nav.html" import nav with context %}{{ nav(section | default("servers")) }}
 {% include body_template %}
 {% endblock %}

@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .. import config, i18n, jobs, power, reports, state, status as fleet_status
+from .. import containers as container_status
 from ..i18n import gettext as _
 from ..scheduler import scheduler
 from . import auth, settings
@@ -409,3 +410,36 @@ async def archived_report(request: Request, report_id: str,
         "summary": entry.get("summary"),
         "error": entry.get("error"),
     })
+
+
+# -- containers ----------------------------------------------------------------------------
+
+@app.get("/containers", response_class=HTMLResponse)
+async def containers_page(request: Request, operator: str = Depends(current_operator)):
+    projects = await asyncio.to_thread(container_status.projects, config.load())
+    return TEMPLATES.TemplateResponse(request, "containers.html", {"projects": projects})
+
+
+@app.get("/fragments/containers", response_class=HTMLResponse)
+async def containers_fragment(request: Request, operator: str = Depends(current_operator)):
+    """The table alone, polled by HTMX. In a thread: it may open an SSH session per host."""
+    projects = await asyncio.to_thread(container_status.projects, config.load())
+    return TEMPLATES.TemplateResponse(request, "_containers.html", {"projects": projects})
+
+
+@app.post("/containers/{name}/{action}", response_class=HTMLResponse)
+async def container_action(name: str, action: str, operator: str = Depends(current_operator)):
+    """Start, stop or restart one project, answered as a sentence like the power buttons."""
+    if action not in container_status.ACTIONS:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    cfg = config.load()
+    entry = next((c for c in cfg.get("containers") or [] if c["name"] == name), None)
+    if entry is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    try:
+        message = await asyncio.to_thread(container_status.act, entry, cfg.get("servers", []), action)
+    except container_status.ContainerError as e:
+        return HTMLResponse(f'<span class="error">{html.escape(str(e))}</span>')
+    container_status.invalidate()
+    return HTMLResponse(
+        f'<span class="ok">{html.escape(_("{message} — the table follows.", message=message))}</span>')

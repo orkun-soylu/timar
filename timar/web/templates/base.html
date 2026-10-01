@@ -14,7 +14,7 @@
     :root {
       --bg: #14161a; --panel: #1c1f26; --line: #2c313b;
       --text: #e6e8ec; --muted: #8b93a3;
-      --up: #4ade80; --asleep: #64748b; --down: #f87171;
+      --up: #4ade80; --asleep: #64748b; --down: #f87171; --warn: #fbbf24;
       /* The mark's amber, as on timar.tools: the name and the page you are on. */
       --accent: #e0a458;
     }
@@ -22,7 +22,7 @@
       :root {
         --bg: #f6f7f9; --panel: #ffffff; --line: #e2e5ea;
         --text: #1a1d23; --muted: #6b7280;
-        --up: #16a34a; --asleep: #94a3b8; --down: #dc2626;
+        --up: #16a34a; --asleep: #94a3b8; --down: #dc2626; --warn: #d97706;
         /* The mark's amber is too faint on white to read as text; timar.tools uses this
            darker step of it in its light theme. */
         --accent: #9a5f0d;
@@ -50,6 +50,8 @@
     .up .dot { background: var(--up); }
     .asleep .dot { background: var(--asleep); }
     .down .dot { background: var(--down); }
+    .warn .dot { background: var(--warn); }
+    .unknown .dot { background: var(--asleep); opacity: 0.45; }
     .down td:first-child { font-weight: 600; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: var(--muted); }
     form.card { max-width: 24rem; margin: 3rem auto; }

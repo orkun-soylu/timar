@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Containers") }} — Timar{% endblock %}
+{% block body %}
+{% from "_nav.html" import nav with context %}{{ nav("containers") }}
+
+<div class="panel" hx-get="/fragments/containers" hx-trigger="every 15s" hx-swap="innerHTML">
+  {% include "_containers.html" %}
+</div>
+
+{# Outside the polled panel, for the same reason as on the servers page: a message written inside
+   it would be swept away by the next refresh. #}
+<div id="container-result" class="result" style="margin-top:0.75rem"></div>
+
+<dialog id="server-dialog" aria-label="{{ _("Container") }}">
+  <div id="dialog-body"></div>
+</dialog>
+<script>
+  (function () {
+    var dialog = document.getElementById("server-dialog");
+    document.body.addEventListener("htmx:afterSwap", function (e) {
+      if (e.detail.target.id === "dialog-body" && !dialog.open) dialog.showModal();
+    });
+    dialog.addEventListener("click", function (e) {
+      if (e.target === dialog || e.target.closest("[data-close-dialog]")) dialog.close();
+    });
+    dialog.addEventListener("close", function () {
+      document.getElementById("dialog-body").innerHTML = "";
+    });
+  })();
+</script>
+{% endblock %}

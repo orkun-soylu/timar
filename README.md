@@ -31,10 +31,10 @@ docker compose up -d
 Open `http://<host>:8080` and create the operator account — nothing else answers until you do.
 
 The image is built for **amd64 and arm64**; a Raspberry Pi is a first-class host. `:latest`
-follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.1.22`) to choose when
+follows the newest release; pin a version (`ghcr.io/orkun-soylu/timar:0.2.0`) to choose when
 you move.
 
-Add, edit and remove servers from the dashboard; a server is enrolled from its form's *SSH access*
+Add, edit and remove servers and containers from their pages; a server is enrolled from its form's *SSH access*
 section. It all lands in `config.yaml` in the
 `timar-data` volume, which you can also edit by hand — see
 [`config.example.yaml`](config.example.yaml).
@@ -132,6 +132,26 @@ first step of the job, and shutting it back down is the last.
 The written assessment sits above the findings it came from, never instead of them. A machine
 that was asleep is *not checked*, not clean — a sweep does not wake the fleet, and calling an
 unchecked host healthy is the one thing a status page must not do.
+
+## Containers
+
+The **containers** page lists Docker Compose projects — one row per project directory, however
+many containers it starts. Add one with **+**: a name, the server it runs on, and the absolute
+path of the directory holding its `docker-compose.yml`.
+
+- **State** comes from one `docker ps -a` per host over SSH, grouped by the compose
+  working-directory label, cached for ten seconds. Green is running; yellow is running but a
+  container's healthcheck fails, a container exited with an error (a one-shot that exited 0 does
+  not count), or the optional *health check* address does not answer below HTTP 500; grey is
+  stopped and marked on-demand, or the host is not up and was not asked; red should run and
+  does not.
+- **Start, stop, restart** run `docker compose up -d`, `stop` and `restart` in the project's
+  directory. Start uses `up -d` because after a `down` the containers no longer exist.
+- **Timar's own project** gets no stop or restart button: it finds its container id in
+  `/proc/self/mountinfo` and refuses to take the page down with it.
+- The account needs to be in the `docker` group or have passwordless sudo; Timar tries plain
+  `docker` first and falls back to `sudo -n docker`.
+- Removing an entry only forgets it. Nothing on the host is touched.
 
 ## Supported platforms
 

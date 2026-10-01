@@ -142,6 +142,52 @@ def web_url(raw: str) -> str | None:
     return url
 
 
+CONTAINER_FIELDS = frozenset({"name", "server", "path", "on_demand", "web_url", "health_url"})
+
+
+def container(form: dict, existing_names: set[str], servers: list[dict],
+              original_name: str | None = None) -> dict:
+    """Validate one compose project entry. Same rules as `server` where the two overlap."""
+    errors: list[str] = []
+    name = (form.get("name") or "").strip()
+    server_name = (form.get("server") or "").strip()
+    path = (form.get("path") or "").strip()
+
+    if not name:
+        errors.append(_("Name is required."))
+    elif not NAME.match(name):
+        errors.append(_("Name may contain only letters, digits, dot, dash and underscore."))
+    elif name != original_name and name in existing_names:
+        errors.append(_("A container named {name!r} already exists.", name=name))
+
+    host = next((s for s in servers if s["name"] == server_name), None)
+    if host is None:
+        errors.append(_("Host must be one of the configured servers."))
+    elif not PLATFORMS[host.get("platform", "linux")].supports_docker:
+        errors.append(_("{host!r} does not run Docker.", host=server_name))
+
+    # Absolute, because it is where `docker compose` runs over SSH and is matched against the
+    # working-directory label Docker records — which is always absolute. A `~` would be
+    # neither expanded nor matched.
+    if not path.startswith("/") or any(c in path for c in "\n\r\0"):
+        errors.append(_("Compose directory must be an absolute path, such as /srv/immich."))
+    path = path.rstrip("/") or "/"
+
+    entry: dict = {"name": name, "server": server_name, "path": path}
+    if form.get("on_demand"):
+        entry["on_demand"] = True
+    for key, label in (("web_url", _("Web interface")), ("health_url", _("Health check"))):
+        if raw := (form.get(key) or "").strip():
+            if url := web_url(raw):
+                entry[key] = url
+            else:
+                errors.append(_("{field} must be an address such as 10.0.0.5:8080 or https://host.lan.", field=label))
+
+    if errors:
+        raise ValidationError(errors)
+    return entry
+
+
 def guest_link(form: dict, servers: list[dict], name: str,
                original_name: str | None = None) -> tuple[str, int] | None:
     """Which hypervisor starts this server, and as which VM id. `None` when it is standalone.

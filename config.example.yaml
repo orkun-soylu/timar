@@ -107,6 +107,21 @@ servers:
     user: deploy
     platform: linux
 
+# Docker Compose projects on those servers -- the containers page. One entry per project
+# directory; Timar reads the state over SSH (`docker ps`, grouped by the compose working-directory
+# label) and starts, stops and restarts it with `docker compose` there. The account needs to be in
+# the `docker` group or have passwordless sudo.
+containers:
+  - name: immich
+    server: web-01                      # a configured server whose platform runs Docker
+    path: /srv/immich                   # absolute: the directory with docker-compose.yml
+    web_url: "https://photos.example.lan"          # optional: the name links here while it runs
+    health_url: "http://192.0.2.10:2283/api/server/ping"   # optional: must answer below HTTP 500
+  - name: batch-tools
+    server: web-01
+    path: /srv/batch-tools
+    on_demand: true                     # stopped on purpose: reads as asleep, not down
+
 log_check:
   journal_hours: 6      # how far back to read the system log
   disk_threshold: 85    # percent full before a filesystem is reported

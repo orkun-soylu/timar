@@ -24,6 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from .. import containers as container_status
 from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_module, notify,
                 state, status as fleet_status, updater, validate)
 from ..i18n import gettext as _
@@ -82,7 +83,7 @@ def _htmx(request: Request) -> bool:
 
 
 def _panel(request: Request, template: str, context: dict, *, title: str,
-           status_code: int = 200):
+           status_code: int = 200, section: str = "servers"):
     """The panel alone for the dashboard's dialog, or wrapped in a page without scripting.
 
     Inside the dialog a rejected form comes back as **200**: htmx does not swap an error
@@ -93,16 +94,17 @@ def _panel(request: Request, template: str, context: dict, *, title: str,
         return TEMPLATES.TemplateResponse(request, template, {**context, "in_dialog": True})
     return TEMPLATES.TemplateResponse(request, "server_page.html", {
         **context, "in_dialog": False, "body_template": template, "page_title": title,
+        "section": section,
     }, status_code=status_code)
 
 
-def _done(request: Request):
-    """Back to the dashboard after a save or a removal, whichever way the request came."""
+def _done(request: Request, to: str = "/"):
+    """Back to the list after a save or a removal, whichever way the request came."""
     if _htmx(request):
-        # A full reload rather than closing the dialog in place: the fleet list behind it has
-        # to show the change, and it is the only thing on the page that would.
-        return HTMLResponse("", headers={"HX-Redirect": "/"})
-    return RedirectResponse("/", status_code=SEE_OTHER)
+        # A full reload rather than closing the dialog in place: the list behind it has to show
+        # the change, and it is the only thing on the page that would.
+        return HTMLResponse("", headers={"HX-Redirect": to})
+    return RedirectResponse(to, status_code=SEE_OTHER)
 
 
 def _guest_of(servers: list[dict]) -> dict:
@@ -292,6 +294,9 @@ async def save_server(request: Request):
         servers = [entry if s["name"] == original else s for s in servers]
         if entry["name"] != original:
             _rename_references(servers, original, entry["name"])
+            for project in cfg.get("containers") or []:
+                if project.get("server") == original:
+                    project["server"] = entry["name"]
     else:
         servers.append(entry)
 
@@ -487,3 +492,82 @@ def _find_server(name: str) -> dict:
     if server is None:
         raise HTTPException(404)
     return server
+
+
+# -- containers ----------------------------------------------------------------------------
+# The same shape as the server routes above: one form for add and edit, opened in the containers
+# page's dialog or as a page of its own, and a removal that only forgets the entry.
+
+def _container_form(request: Request, *, edit: str | None = None, submitted: dict | None = None,
+                    errors: list[str] | None = None, status_code: int = 200):
+    cfg = config.load()
+    entries = cfg.get("containers") or []
+    editing = (submitted or {}).get("original_name") or edit
+    if editing and not any(c["name"] == editing for c in entries):
+        editing = None
+    if submitted is not None:
+        values = dict(submitted)
+    else:
+        values = next((dict(c) for c in entries if c["name"] == editing), {})
+    hosts = [s for s in cfg.get("servers", [])
+             if get_platform(s.get("platform")).supports_docker]
+    return _panel(request, "_container_form.html", {
+        "editing": editing, "values": values, "hosts": hosts, "errors": errors or [],
+    }, title=_("Edit {name}", name=editing) if editing else _("Add a container"),
+       status_code=status_code, section="containers")
+
+
+def _find_container(name: str) -> dict:
+    entry = next((c for c in config.load().get("containers") or [] if c["name"] == name), None)
+    if entry is None:
+        raise HTTPException(404)
+    return entry
+
+
+@router.get("/containers/new", response_class=HTMLResponse)
+async def new_container(request: Request):
+    return _container_form(request)
+
+
+@router.get("/containers/{name}/edit", response_class=HTMLResponse)
+async def edit_container(request: Request, name: str):
+    _find_container(name)
+    return _container_form(request, edit=name)
+
+
+@router.post("/containers")
+async def save_container(request: Request):
+    form = dict(await request.form())
+    cfg = config.load()
+    entries = cfg.get("containers") or []
+    original = form.get("original_name") or None
+    try:
+        entry = validate.container(form, {c["name"] for c in entries}, cfg.get("servers", []),
+                                   original_name=original)
+    except validate.ValidationError as e:
+        return _container_form(request, errors=e.errors, submitted=form, status_code=400)
+    if original:
+        previous = next((c for c in entries if c["name"] == original), None)
+        if previous:
+            # Keys the form does not own — later releases' update settings, hand-written ones —
+            # are carried across, as for servers.
+            for key, value in previous.items():
+                if key not in validate.CONTAINER_FIELDS:
+                    entry.setdefault(key, value)
+        entries = [entry if c["name"] == original else c for c in entries]
+    else:
+        entries.append(entry)
+    cfg["containers"] = entries
+    config.save(cfg)
+    container_status.invalidate()
+    return _done(request, "/containers")
+
+
+@router.post("/containers/{name}/delete")
+async def delete_container(request: Request, name: str):
+    """Forget the entry. The project on the host is not touched."""
+    cfg = config.load()
+    cfg["containers"] = [c for c in cfg.get("containers") or [] if c["name"] != name]
+    config.save(cfg)
+    container_status.invalidate()
+    return _done(request, "/containers")

@@ -1203,6 +1203,7 @@ class TestTopNav:
     @pytest.mark.parametrize("path, current", [
         ("/", "servers"), ("/reports", "reports"), ("/settings", "settings"),
         ("/settings/servers/new", "servers"), ("/jobs/update/report", "reports"),
+        ("/containers", "containers"), ("/settings/containers/new", "containers"),
     ])
     def test_every_page_carries_it_with_its_own_place_highlighted(self, client, path, current):
         complete_setup(client)
@@ -1211,7 +1212,7 @@ class TestTopNav:
         assert header.count('aria-current="page"') == 1
         import re
         order = re.findall(r'<a href="([^"]+)"', header)
-        assert order == ["/", "/", "/reports", "/settings"]          # brand, then the three
+        assert order == ["/", "/", "/containers", "/reports", "/settings"]   # brand, then the four
         assert header.index('action="/lang"') < header.index('action="/logout"')
 
     def test_the_name_is_lowercase_and_nothing_else_names_the_operator(self, client):

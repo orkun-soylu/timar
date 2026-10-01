@@ -1,0 +1,8 @@
+{# Pieces shared by the add/edit forms. Imported `with context` for `_`. #}
+{% macro section_head(title, help_id) -%}
+  <div class="form-section-head">
+    <h3>{{ title }}</h3>
+    <button type="button" class="help" popovertarget="{{ help_id }}"
+            aria-label="{{ _("About {section}", section=title) }}">?</button>
+  </div>
+{%- endmacro %}
