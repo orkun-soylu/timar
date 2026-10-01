@@ -13,7 +13,7 @@ from contextlib import contextmanager
 
 import paramiko
 
-from . import config
+from . import config, membership
 from .network import split_address
 
 KNOWN_HOSTS = "ssh/known_hosts"
@@ -66,6 +66,9 @@ def connect(host, user, ssh_key, port=None, timeout=30):
         allow_agent=False,     # nothing on this container's side should supply a key but us
         look_for_keys=False,
     )
+    # A login with Timar's key just worked: the address is enrolled. Recorded here, where every
+    # key login passes, rather than by each caller.
+    membership.mark_enrolled(host)
     try:
         yield client
     finally:

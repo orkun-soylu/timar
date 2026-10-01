@@ -126,6 +126,13 @@ containers:
     on_demand: true                     # stopped on purpose: reads as asleep, not down; an
                                         # update pulls it and leaves it stopped
 
+# Optional: servers left out of a job, by name -- set from the pencil on a job's row (reports
+# page). A job runs on every server that is enrolled (Timar has logged in to it with its key) and
+# not listed here; the others are not woken, not connected to, and named as skipped.
+# job_exclude:
+#   update: [pen-kali-01]
+#   log_sweep: []
+
 log_check:
   journal_hours: 6      # how far back to read the system log
   disk_threshold: 85    # percent full before a filesystem is reported

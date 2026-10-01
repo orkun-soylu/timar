@@ -229,6 +229,11 @@
     button.help:hover { color: var(--text); border-color: var(--muted); }
     .form-actions { margin-top: 1.5rem; }
     .actions .push-right { margin-left: auto; }
+    /* A server in a job's lists: its name and address, its one action on the right. */
+    .host-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+                padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+    .host-row:last-child { border-bottom: none; }
+    .linkish-link { font-size: 0.875rem; color: var(--muted); }
     table.discover td { padding: 0.4rem 0.5rem; vertical-align: middle; }
     table.discover input:not([type=checkbox]) { padding: 0.35rem 0.5rem; }
     button.danger { color: var(--down); border-color: var(--down); }

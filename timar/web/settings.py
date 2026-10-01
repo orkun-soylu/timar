@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from .. import containers as container_status
+from .. import containers as container_status, membership
 from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_module, notify,
                 state, status as fleet_status, updater, validate)
 from ..i18n import gettext as _
@@ -292,6 +292,7 @@ async def save_server(request: Request):
             for project in cfg.get("containers") or []:
                 if project.get("server") == original:
                     project["server"] = entry["name"]
+            membership.rename(cfg, original, entry["name"])
     else:
         servers.append(entry)
 
@@ -342,6 +343,7 @@ async def delete_server(request: Request, name: str):
     # leaving guests that nothing will ever start.
     removed = next((s for s in servers if s["name"] == name), None)
     cfg["servers"] = [s for s in servers if s["name"] != name]
+    membership.forget(cfg, name)
     if removed:
         for host in cfg["servers"]:
             if guests := host.get("manages_vms"):
@@ -465,9 +467,32 @@ def _job_form(request: Request, name: str, *, errors: list[str] | None = None,
                      "disk_threshold": submitted.get("disk_threshold")}
     job = {"name": name, "title": _(jobs.TITLES[name])}
     return _panel(request, "_job_form.html", {
+        **_hosts_context(cfg, name),
         "job": job, "schedules": {name: schedule}, "log_check": log_check,
         "days": list(_DAYS), "kinds": list(_KINDS), "errors": errors or [],
     }, title=_("Edit {name}", name=job["title"]), status_code=status_code, section="reports")
+
+
+def _hosts_context(cfg: dict, name: str) -> dict:
+    runs, left, unenrolled = membership.lists(cfg, name)
+    return {"job": {"name": name, "title": _(jobs.TITLES[name])},
+            "runs_on": runs, "left_out": left, "not_enrolled": unenrolled}
+
+
+@router.post("/jobs/{name}/hosts/{server}/{action}", response_class=HTMLResponse)
+async def job_host(request: Request, name: str, server: str, action: str):
+    """Leave a server out of a job, or take it back in. Saved at once; answers with the lists.
+
+    Only the lists are re-rendered, so a schedule being edited in the same dialog is not lost.
+    """
+    if name not in jobs.JOBS or action not in ("leave", "join"):
+        raise HTTPException(404)
+    cfg = config.load()
+    if not any(s["name"] == server for s in cfg.get("servers", [])):
+        raise HTTPException(404)
+    membership.set_excluded(cfg, name, server, leave_out=action == "leave")
+    config.save(cfg)
+    return TEMPLATES.TemplateResponse(request, "_job_hosts.html", _hosts_context(cfg, name))
 
 
 @router.get("/jobs/{name}/edit", response_class=HTMLResponse)

@@ -296,5 +296,20 @@
   "Saving": "保存",
   "stored": "已保存",
   "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "保存后不再显示 — 输入框只显示<em>已保存</em>或<em>未设置</em>。留空即保留已存的密钥，输入新密钥即替换；切换提供方会丢弃它。",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "创建机器人时由 Telegram 的 @BotFather 提供。保存后不再显示 — 输入框只显示<em>已保存</em>或<em>未设置</em>。留空即保留已存的令牌，输入新令牌即替换。"
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "创建机器人时由 Telegram 的 @BotFather 提供。保存后不再显示 — 输入框只显示<em>已保存</em>或<em>未设置</em>。留空即保留已存的令牌，输入新令牌即替换。",
+  "A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.": "虚拟机通过其虚拟化主机更新：把虚拟化主机移出更新任务，它的虚拟机也会被移出。",
+  "Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.": "已注册，但被移出此任务 — 不会被唤醒，也不会被连接，在报告中标为跳过。+ 可将其加回。从一个任务中移出不影响另一个任务。",
+  "Leave {name} out of the {job}?": "将 {name} 移出“{job}”？",
+  "Left out": "已移出",
+  "No server — this job has nothing to do.": "没有服务器 — 此任务无事可做。",
+  "None.": "无。",
+  "Not enrolled": "未注册",
+  "Runs on": "运行于",
+  "Servers": "服务器",
+  "The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.": "此任务访问的服务器：已注册且未被移出。− 经确认后移出一台，立即保存。",
+  "Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.": "Timar 从未用自己的密钥登录过这些服务器，所以任何任务都无法到达它们。打开服务器的卡片，在 SSH 访问部分注册它 — 或用不填密码的注册来检查已有密钥 — 之后它会出现在此列表的第一部分。",
+  "Virtual machines": "虚拟机",
+  "add": "添加",
+  "enrol from its card": "从卡片注册",
+  "leave out": "移出"
 }

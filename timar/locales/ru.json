@@ -296,5 +296,20 @@
   "Saving": "Сохранение",
   "stored": "сохранён",
   "Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored key, type a new one to replace it; switching the provider drops it.": "После сохранения больше не показывается — в поле только <em>сохранён</em> или <em>не задан</em>. Оставьте пустым, чтобы сохранить ключ, введите новый, чтобы заменить; смена провайдера его сбрасывает.",
-  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Выдаётся @BotFather в Telegram при создании бота. После сохранения больше не показывается — в поле только <em>сохранён</em> или <em>не задан</em>. Оставьте пустым, чтобы сохранить токен, введите новый, чтобы заменить."
+  "From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.": "Выдаётся @BotFather в Telegram при создании бота. После сохранения больше не показывается — в поле только <em>сохранён</em> или <em>не задан</em>. Оставьте пустым, чтобы сохранить токен, введите новый, чтобы заменить.",
+  "A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.": "ВМ обновляется через свой гипервизор: исключение гипервизора из прогона обновлений исключает и его ВМ.",
+  "Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.": "Подключён, но исключён из этой задачи — не будится, к нему не подключаются, в отчёте он отмечен как пропущенный. + возвращает его. Исключение из одной задачи не затрагивает другую.",
+  "Leave {name} out of the {job}?": "Исключить {name} из задачи «{job}»?",
+  "Left out": "Исключённые",
+  "No server — this job has nothing to do.": "Нет серверов — этой задаче нечего делать.",
+  "None.": "Нет.",
+  "Not enrolled": "Не подключены",
+  "Runs on": "Выполняется на",
+  "Servers": "Серверы",
+  "The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.": "Серверы, которые обходит эта задача: подключённые и не исключённые. − исключает один после подтверждения; сохраняется сразу.",
+  "Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.": "Timar ни разу не входил на них своим ключом, поэтому ни одна задача до них не дотянется. Откройте карточку сервера и подключите его в разделе «Доступ по SSH» — или проверьте существующий ключ кнопкой «Подключить» без пароля, — и он перейдёт в первый раздел этого списка.",
+  "Virtual machines": "Виртуальные машины",
+  "add": "добавить",
+  "enrol from its card": "подключить из карточки",
+  "leave out": "исключить"
 }

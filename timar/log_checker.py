@@ -12,7 +12,7 @@ from .network import is_host_up
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run
-from . import cancel
+from . import cancel, membership
 from .containers import parse_ps
 
 logger = logging.getLogger(__name__)
@@ -188,6 +188,9 @@ def run_log_checks(cfg: dict) -> list[LogResult]:
 
     results = []
     for server in cfg.get("servers", []):
+        # Left out, or not enrolled: not part of the sweep at all — `run_log_sweep` counts them.
+        if membership.skip_reason(cfg, "log_sweep", server):
+            continue
         if cancel.requested("log_sweep"):
             logger.info("log sweep stopped by the operator before %s", server["name"])
             break

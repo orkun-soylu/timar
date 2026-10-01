@@ -1,0 +1,57 @@
+{# The servers a job runs on, and the ones it does not: swapped on its own by − and +, so a schedule
+   being edited in the same dialog stays as typed. #}
+{% from "_icons.html" import icon %}
+{% from "_form.html" import section_head with context %}
+<div id="job-hosts">
+  <div class="form-section">
+    {{ section_head(_("Runs on"), "help-job-hosts") }}
+    {% for s in runs_on %}
+    <div class="host-row">
+      <span>{{ s.name }} <code>{{ s.host }}</code></span>
+      <button type="button" class="icon-btn" title="{{ _("leave out") }}" aria-label="{{ _("leave out") }}"
+              hx-post="/settings/jobs/{{ job.name }}/hosts/{{ s.name }}/leave"
+              hx-target="#job-hosts" hx-swap="outerHTML"
+              hx-confirm="{{ _("Leave {name} out of the {job}?", name=s.name, job=job.title) }}">{{ icon("minus") }}</button>
+    </div>
+    {% else %}<p class="muted">{{ _("No server — this job has nothing to do.") }}</p>{% endfor %}
+  </div>
+
+  <div class="form-section">
+    {{ section_head(_("Left out"), "help-job-hosts") }}
+    {% for s in left_out %}
+    <div class="host-row">
+      <span>{{ s.name }} <code>{{ s.host }}</code></span>
+      <button type="button" class="icon-btn" title="{{ _("add") }}" aria-label="{{ _("add") }}"
+              hx-post="/settings/jobs/{{ job.name }}/hosts/{{ s.name }}/join"
+              hx-target="#job-hosts" hx-swap="outerHTML">{{ icon("add") }}</button>
+    </div>
+    {% else %}<p class="muted">{{ _("None.") }}</p>{% endfor %}
+  </div>
+
+  <div class="form-section">
+    {{ section_head(_("Not enrolled"), "help-job-hosts") }}
+    {% for s in not_enrolled %}
+    <div class="host-row">
+      <span>{{ s.name }} <code>{{ s.host }}</code></span>
+      <a href="/settings/servers/{{ s.name }}/edit#ssh-access" class="linkish-link"
+         hx-get="/settings/servers/{{ s.name }}/edit" hx-target="#dialog-body"
+         hx-swap="innerHTML">{{ _("enrol from its card") }}</a>
+    </div>
+    {% else %}<p class="muted">{{ _("None.") }}</p>{% endfor %}
+  </div>
+
+  <div id="help-job-hosts" popover class="popover">
+    <h3>{{ _("Servers") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("Runs on") }}</dt>
+      <dd>{{ _("The servers this job visits: enrolled, and not left out. − leaves one out after asking; it is saved at once.") }}</dd>
+      <dt>{{ _("Left out") }}</dt>
+      <dd>{{ _("Enrolled, but taken out of this job — not woken, not connected to, and named as skipped in its report. + takes one back in. Leaving a server out of one job does not touch the other.") }}</dd>
+      <dt>{{ _("Not enrolled") }}</dt>
+      <dd>{{ _("Timar has never logged in to these with its key, so no job can reach them. Open the server's card, enrol it in its SSH access section — or check an existing key with Enrol and no password — and it joins this list's first section.") }}</dd>
+      <dt>{{ _("Virtual machines") }}</dt>
+      <dd>{{ _("A VM is updated through its hypervisor: leaving the hypervisor out of the update run leaves its VMs out too.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-job-hosts" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+</div>

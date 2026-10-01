@@ -7,7 +7,7 @@ import logging
 import time
 from dataclasses import dataclass
 
-from . import cancel, containers as container_module
+from . import cancel, containers as container_module, membership
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -162,7 +162,7 @@ def _update_containers(ssh, server_cfg: dict, entries: list[dict]) -> list[Updat
 
 
 def update_server(server_cfg: dict, servers_map: dict,
-                  containers_by_server: dict | None = None) -> list[UpdateResult]:
+                  containers_by_server: dict | None = None, cfg: dict | None = None) -> list[UpdateResult]:
     name = server_cfg["name"]
     host = server_cfg["host"]
     platform = get_platform(server_cfg.get("platform"))
@@ -213,6 +213,10 @@ def update_server(server_cfg: dict, servers_map: dict,
         vm_cfg = servers_map.get(vm_name)
         if not vm_cfg:
             logger.warning("VM %s not found in servers config", vm_name)
+            continue
+        if cfg is not None and (reason := membership.skip_reason(cfg, "update", vm_cfg)):
+            results.append(UpdateResult(server=vm_name, success=True, skipped=True,
+                                        was_running=False, error=reason))
             continue
 
         vm_host = vm_cfg["host"]
@@ -302,6 +306,15 @@ def run_updates(cfg) -> list[UpdateResult]:
         if cancel.requested("update"):
             logger.info("update run stopped by the operator before %s", server["name"])
             break
-        all_results.extend(update_server(server, servers_map, containers_by_server))
+        # Not in the run: not woken, not connected to — and neither are the VMs it starts.
+        if reason := membership.skip_reason(cfg, "update", server):
+            all_results.append(UpdateResult(server=server["name"], success=True, skipped=True,
+                                            was_running=False, error=reason))
+            for vm in server.get("manages_vms", []):
+                all_results.append(UpdateResult(server=vm["server_name"], success=True, skipped=True,
+                                                was_running=False,
+                                                error=f"its hypervisor {server['name']} is not in this run"))
+            continue
+        all_results.extend(update_server(server, servers_map, containers_by_server, cfg))
 
     return all_results
