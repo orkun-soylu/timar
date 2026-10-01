@@ -1,0 +1,66 @@
+{# Polled on its own by HTMX, so it must render standalone — no `extends`. The same shape as the
+   servers table: the light before the name, the name a link to the web interface while it runs,
+   the row's own actions on the right and the add button on the heading. #}
+{% from "_icons.html" import icon %}
+{% if projects %}
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th class="col-edge">{{ _("Name") }}</th><th class="col-mid">{{ _("Host") }}</th>
+      <th class="col-mid wide">{{ _("Images") }}</th>
+      <th class="col-edge actions-head"><span>{{ _("Actions") }}</span>
+        <a href="/settings/containers/new" class="icon-btn" title="{{ _("Add a container") }}"
+           aria-label="{{ _("Add a container") }}"
+           hx-get="/settings/containers/new" hx-target="#dialog-body" hx-swap="innerHTML">{{ icon("add") }}</a>
+      </th></tr>
+  </thead>
+  <tbody>
+  {% for p in projects %}
+    {%- set words = {"running": _("running"), "starting": _("starting"), "stopped": _("stopped"),
+                     "not created": _("not created"), "host is not up": _("host is not up"),
+                     "host not configured": _("host not configured"),
+                     "running, but the health check does not answer": _("running, but the health check does not answer")} %}
+    {%- set word = words.get(p.detail, p.detail) %}
+    <tr class="{{ p.state }}">
+      <td class="col-edge" title="{{ word }}"><span class="dot" role="img" aria-label="{{ word }}"></span>
+        {% if p.web_url and p.running -%}
+        <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
+        {%- else %}{{ p.name }}{% endif %}</td>
+      <td class="col-mid">{{ p.server }} <code class="wide">{{ p.path }}</code></td>
+      <td class="col-mid wide muted">{% for image in p.images %}<div><code>{{ image.split('@')[0] }}</code></div>{% else %}—{% endfor %}</td>
+      <td class="col-edge"><div class="icon-row">
+        {%- if p.is_self %}
+          <span class="icon-slot" title="{{ _("Timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
+        {%- elif p.running %}
+          <button type="button" class="icon-btn" title="{{ _("stop") }}" aria-label="{{ _("stop") }}"
+                  hx-post="/containers/{{ p.name }}/stop" hx-target="#container-result" hx-swap="innerHTML"
+                  hx-indicator="#container-result" hx-disabled-elt="this"
+                  hx-confirm="{{ _("Stop {name}?", name=p.name) }}">{{ icon("stop") }}</button>
+          <button type="button" class="icon-btn" title="{{ _("restart") }}" aria-label="{{ _("restart") }}"
+                  hx-post="/containers/{{ p.name }}/restart" hx-target="#container-result" hx-swap="innerHTML"
+                  hx-indicator="#container-result" hx-disabled-elt="this">{{ icon("restart") }}</button>
+        {%- elif p.state in ("asleep", "down") and p.detail != "host not configured" %}
+          <button type="button" class="icon-btn" title="{{ _("start") }}" aria-label="{{ _("start") }}"
+                  hx-post="/containers/{{ p.name }}/start" hx-target="#container-result" hx-swap="innerHTML"
+                  hx-indicator="#container-result" hx-disabled-elt="this">{{ icon("play") }}</button>
+          <span class="icon-slot"></span>
+        {%- else %}
+          <span class="icon-slot"></span><span class="icon-slot"></span>
+        {%- endif %}
+        <a href="/settings/containers/{{ p.name }}/edit" class="icon-btn"
+           title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
+           hx-get="/settings/containers/{{ p.name }}/edit" hx-target="#dialog-body"
+           hx-swap="innerHTML">{{ icon("edit") }}</a>
+      </div></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">
+  {{ _("No containers yet.") }}<br>
+  <a href="/settings/containers/new" hx-get="/settings/containers/new" hx-target="#dialog-body"
+     hx-swap="innerHTML">{{ _("Add a container") }}</a>
+</p>
+{% endif %}

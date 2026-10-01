@@ -5,13 +5,7 @@
    it. The fields carry only their name and whether they are optional; the explanations live in
    the popovers so the form itself stays short. #}
 {% from "_icons.html" import close_dialog with context %}
-{% macro section_head(title, help_id) -%}
-  <div class="form-section-head">
-    <h3>{{ title }}</h3>
-    <button type="button" class="help" popovertarget="{{ help_id }}"
-            aria-label="{{ _("About {section}", section=title) }}">?</button>
-  </div>
-{%- endmacro %}
+{% from "_form.html" import section_head with context %}
 <section class="panel" id="server-form">
   <h2 class="with-action">{{ _("Edit {name}", name=editing) if editing else _("Add a server") }}
     {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>

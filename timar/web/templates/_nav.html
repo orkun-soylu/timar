@@ -8,6 +8,7 @@
   <span class="spacer"></span>
   <nav aria-label="{{ _("Main") }}">
     {%- for key, href, label in [("servers", "/", _("servers")),
+                                 ("containers", "/containers", _("containers")),
                                  ("reports", "/reports", _("reports")),
                                  ("settings", "/settings", _("settings"))] %}
     {% if key == section %}<a href="{{ href }}" class="current" aria-current="page">{{ label }}</a>

@@ -1,0 +1,101 @@
+{# The add/edit form for a compose project — the server form's shape: sections with a "?" each,
+   one form in two modes, remove kept apart on the right. #}
+{% from "_icons.html" import close_dialog with context %}
+{% from "_form.html" import section_head with context %}
+<section class="panel" id="container-form">
+  <h2 class="with-action">{{ _("Edit {name}", name=editing) if editing else _("Add a container") }}
+    {%- if in_dialog %}{{ close_dialog() }}{% endif %}</h2>
+
+  {% if errors %}
+    <div class="notice bad" style="margin:0">
+      {% for message in errors %}<div>{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/settings/containers" class="stack"
+        {% if in_dialog %}hx-post="/settings/containers" hx-target="#dialog-body" hx-swap="innerHTML"{% endif %}>
+    {% if editing %}<input type="hidden" name="original_name" value="{{ editing }}">{% endif %}
+
+    <div class="form-section">
+      {{ section_head(_("Container info"), "help-container") }}
+      <div class="row">
+        <label><span>{{ _("Name") }}</span>
+          <input name="name" required value="{{ values.get('name', '') }}"></label>
+        <label><span>{{ _("Host") }}</span>
+          <select name="server" required>
+            {% for host in hosts %}
+            <option value="{{ host.name }}" {{ "selected" if values.get('server') == host.name else "" }}>{{ host.name }}</option>
+            {% endfor %}
+          </select></label>
+      </div>
+      <label><span>{{ _("Compose directory") }}</span>
+        <input name="path" required placeholder="/srv/immich" value="{{ values.get('path', '') }}"></label>
+      <label class="inline">
+        <input type="checkbox" name="on_demand" {{ "checked" if values.get('on_demand') else "" }}>
+        <span>{{ _("On-demand") }}</span>
+      </label>
+      <label><span>{{ _("Web interface") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="web_url" placeholder="{{ _("10.0.0.5:8006 or https://host.lan") }}"
+               value="{{ values.get('web_url', '') }}"></label>
+    </div>
+
+    <div class="form-section">
+      {{ section_head(_("Health check"), "help-health") }}
+      <label><span>{{ _("Health check") }} <em class="muted">{{ _("optional") }}</em></span>
+        <input name="health_url" placeholder="https://photos.host.lan/api/server/ping"
+               value="{{ values.get('health_url', '') }}"></label>
+    </div>
+
+    <div class="actions form-actions">
+      <button type="submit">{{ _("Save changes") if editing else _("Add container") }}</button>
+      {% if in_dialog %}
+        <button type="button" class="secondary" data-close-dialog>{{ _("cancel") }}</button>
+      {% else %}
+        <a href="/containers" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
+      {% endif %}
+      {% if editing %}
+        {% set confirm_remove = _("Remove {name} from Timar? The containers are not touched.", name=editing) %}
+        {% if in_dialog %}
+        <button type="button" class="secondary danger push-right"
+                hx-post="/settings/containers/{{ editing }}/delete" hx-confirm="{{ confirm_remove }}"
+                >{{ _("remove") }}</button>
+        {% else %}
+        <button type="submit" class="secondary danger push-right" formnovalidate
+                formaction="/settings/containers/{{ editing }}/delete"
+                onclick='return confirm({{ confirm_remove | tojson }})'>{{ _("remove") }}</button>
+        {% endif %}
+      {% endif %}
+    </div>
+  </form>
+
+  <div id="help-container" popover class="popover">
+    <h3>{{ _("Container info") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("Name") }}</dt>
+      <dd>{{ _("What this page calls the project. Letters, digits, dot, dash and underscore.") }}</dd>
+      <dt>{{ _("Host") }}</dt>
+      <dd>{{ _("The server it runs on — any configured server with Docker. Timar reaches it over the same SSH access as everything else; the account needs to be in the <code>docker</code> group or have passwordless sudo.") }}</dd>
+      <dt>{{ _("Compose directory") }}</dt>
+      <dd>{{ _("The absolute path of the directory with its <code>docker-compose.yml</code>. Timar matches it against the working directory Docker records for each container, and runs <code>docker compose</code> there to start, stop and restart.") }}</dd>
+      <dt>{{ _("On-demand") }}</dt>
+      <dd>{{ _("Stopped on purpose most of the time. Stopped reads as <em>asleep</em> rather than <em>down</em>.") }}</dd>
+      <dt>{{ _("Web interface") }}</dt>
+      <dd>{{ _("While it runs, its name on this page opens this address. Without a scheme it is opened as <code>https://</code>.") }}</dd>
+      <dt>{{ _("The light") }}</dt>
+      <dd>{{ _("Green: running. Yellow: running, but a healthcheck fails, a container exited with an error, or the health check does not answer. Grey: stopped and on-demand, or its host is not up. Red: should run and does not.") }}</dd>
+      <dt>{{ _("Remove") }}</dt>
+      <dd>{{ _("Forgets the entry. The containers on the host are not touched.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-container" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+
+  <div id="help-health" popover class="popover">
+    <h3>{{ _("Health check") }}</h3>
+    <dl class="help-list">
+      <dt>{{ _("Health check") }}</dt>
+      <dd>{{ _("An address Timar asks while the project runs. Anything below HTTP 500 counts as an answer — a login page is a live service. Certificates are not checked: this asks whether something answers, not whether it can be trusted.") }}</dd>
+      <dd>{{ _("Catches what the container state cannot: every container up and the application behind them returning 502.") }}</dd>
+    </dl>
+    <button type="button" class="secondary" popovertarget="help-health" popovertargetaction="hide">{{ _("close") }}</button>
+  </div>
+</section>

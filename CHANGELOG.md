@@ -9,6 +9,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-01
+
+### Added
+
+- **A containers page**, between *servers* and *reports*: Docker Compose projects on the fleet's
+  servers, one row per project directory. The same shape as the servers page — a light before
+  the name, the name a link to the web interface while it runs, the images it runs, and **start**,
+  **stop**, **restart** and **edit** on the row, **+** on the heading.
+  - State is one `docker ps -a` per host over SSH, grouped by the compose working-directory
+    label, in parallel and cached; a host that is not up is not asked and its projects read as
+    unknown. A finished one-shot (exit 0) does not degrade a project; a failed container, a
+    failing healthcheck or an optional *health check* address that stops answering does.
+  - Start, stop and restart are `docker compose up -d` / `stop` / `restart` in the project's
+    directory, with `sudo -n docker` when the account is not in the `docker` group.
+  - Timar's own project gets no stop or restart: it recognises its container by the id in
+    `/proc/self/mountinfo`, and the action route refuses it too.
+  - The add/edit form has the server form's shape: *Container info* and *Health check*
+    sections with a **?** each, and *remove* — which forgets the entry, nothing more.
+  - `containers:` in `config.yaml`; renaming a server carries into its containers.
+
 ## [0.1.22] — 2026-10-01
 
 ### Changed
@@ -357,7 +377,8 @@ this tag; it marks a point someone can install and stay on instead of tracking `
   operator's password used once, optional passwordless sudo written only after `visudo`
   accepts the file, and host keys pinned on first sight.
 
-[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.1.22...HEAD
+[Unreleased]: https://github.com/orkun-soylu/timar/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/orkun-soylu/timar/compare/v0.1.22...v0.2.0
 [0.1.22]: https://github.com/orkun-soylu/timar/compare/v0.1.21...v0.1.22
 [0.1.21]: https://github.com/orkun-soylu/timar/compare/v0.1.20...v0.1.21
 [0.1.20]: https://github.com/orkun-soylu/timar/compare/v0.1.19...v0.1.20
