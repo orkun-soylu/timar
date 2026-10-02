@@ -276,7 +276,8 @@ async def save_server(request: Request):
     original = form.get("original_name") or None
 
     try:
-        entry = validate.server(form, {s["name"] for s in servers}, original_name=original)
+        entry = validate.server(form, {s["name"] for s in servers}, original_name=original,
+                                schemes=validate.link_schemes(cfg))
         link = validate.guest_link(form, servers, entry["name"], original_name=original)
     except validate.ValidationError as e:
         # `submitted` carries the typed values back into the form; `original` alone would

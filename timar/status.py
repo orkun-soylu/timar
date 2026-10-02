@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from . import config
+from . import config, validate
 from .network import address_key, is_host_up
 
 REFRESH_EVERY = 10.0
@@ -80,12 +80,24 @@ def invalidate() -> None:
     _cache.clear()
 
 
+def _link(url: str | None, schemes: frozenset[str]) -> str | None:
+    """The stored web interface, checked again where it is drawn.
+
+    `config.yaml` is edited by hand as well as through the form, and the form's check is the
+    only one a hand-written value would otherwise skip. It is cheap, and it is what keeps a
+    `javascript:` typed into the file — or a scheme since removed from `link_schemes` — out of
+    the page.
+    """
+    return validate.web_url(url, schemes) if url else None
+
+
 def fleet(cfg: dict) -> list[HostStatus]:
     servers = cfg.get("servers", [])
     if not servers:
         return []
 
     sleepers = config.on_demand(servers)
+    schemes = validate.link_schemes(cfg)
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
@@ -100,7 +112,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             on_demand=s["name"] in sleepers,
             platform=s.get("platform", "linux"),
             wakeable=config.can_wake(s["name"], servers),
-            web_url=s.get("web_url"),
+            web_url=_link(s.get("web_url"), schemes),
         )
         for s, up in zip(servers, results)
     ]

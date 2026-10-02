@@ -38,7 +38,8 @@ Add, edit and remove servers and containers from their pages. A server's form ha
 sections — *Server info*, *Update*, *SSH access* — each with a **?** that explains it; the SSH
 section is also where the server is enrolled: timar installs its own key with your password once
 (never stored) and proves the key works on its own. An address may carry an SSH port
-(`10.0.0.5:2222`), and a *web interface* turns the server's name into a link while it is up.
+(`10.0.0.5:2222`), and a *web interface* turns the server's name into a link while it is up —
+a panel, or a program on your own machine through a scheme you allow ([below](#links-to-programs)).
 It all lands in `config.yaml` in the `timar-data` volume, which you can also edit by hand — see
 [`config.example.yaml`](config.example.yaml).
 
@@ -107,6 +108,32 @@ servers:
 Edit the file inside the volume — `docker exec -it timar vi /data/config.yaml`, or copy it out
 and back with `docker cp`. It is read on every request: no restart.
 
+### Links to programs
+
+A server's *web interface* is normally a panel: `https://` (added if you leave it out) or
+`http://`. It can also be a link that opens a program on the machine you are looking from: a
+handler registered for its own scheme, like `claude://open` for a terminal. timar draws that link
+only if its scheme is listed in `config.yaml`:
+
+```yaml
+link_schemes: [claude, pi]
+
+servers:
+  - name: workstation
+    host: 10.0.0.8
+    user: deploy
+    web_url: "claude://open"   # the form accepts it once claude is in link_schemes
+```
+
+The list lives only in the file, and the form cannot change it. Allowing a scheme decides what
+this page may launch, and the page sits in front of a key that reaches every machine. Anything
+not listed is refused, and the error names `link_schemes`. `javascript`, `data`, `vbscript`,
+`file` and `blob` are refused even when listed: they run inside the page, not in another
+program. A link to a program opens in place, with no new tab, because a new tab would be left
+behind empty. The value is checked again every time the page is drawn. A hand-edited
+`javascript:` therefore never reaches it, and removing a scheme from the list removes its links.
+Container links stay `http(s)` only, because a container's address is also its health check.
+
 ## Why
 
 Homelab machines are mostly *off*. Tools built for always-on fleets assume an agent that phones
@@ -117,6 +144,8 @@ first step of the job, and shutting it back down is the last.
 
 - **Update** — wake if asleep, run the platform's update command, update the machine's compose
   projects, shut down again if it started off. Proxmox hosts bring their guests along, in order.
+  The machine timar itself runs on goes last. Its package update is handed to that machine's
+  systemd, so upgrading Docker under timar no longer cuts the run short.
 - **Power** — wake an on-demand machine or shut it down from its row. Guests go through their
   hypervisor with `qm`. Any running machine can be shut down; one timar cannot wake again —
   always-on, or switched on by hand — gets a confirmation that says it will stay off.

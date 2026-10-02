@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Server links to programs.** A server's web interface can be a link such as `claude://open`
+  (a terminal handler on your own machine) once its scheme is listed in `link_schemes` in
+  `config.yaml`. The form names that setting when it refuses an unlisted scheme. Schemes that
+  run inside the page (`javascript`, `data`, `vbscript`, `file`, `blob`) are refused even when
+  listed. Such a link opens in place, not in an empty new tab.
+
+### Fixed
+
+- **A hand-edited web interface is checked where it is drawn,** not only when the form saves it.
+  A `javascript:` written into `config.yaml` no longer reaches the page.
+
 ## [0.2.19] — 2026-10-02
 
 ### Fixed

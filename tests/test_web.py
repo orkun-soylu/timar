@@ -300,6 +300,24 @@ class TestActionsColumn:
         # The sort helper still finds every name, linked or not.
         assert self.order(rows) == ["hv-off", "hv-up", "plain"]
 
+    def test_a_program_link_opens_no_tab_and_a_hand_written_script_is_dropped(self, client, monkeypatch):
+        """`claude://open` hands off to a program; a new tab would be left behind empty. And the
+        file is edited by hand too, so a value the form would refuse must not reach the page."""
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"link_schemes": ["claude"], "servers": [
+            {"name": "term", "host": "10.0.0.1", "user": "op", "web_url": "claude://open"},
+            {"name": "evil", "host": "10.0.0.2", "user": "op", "web_url": "javascript:alert(1)"},
+            {"name": "gone", "host": "10.0.0.3", "user": "op", "web_url": "pi://open"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: True)
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert '<a href="claude://open" rel="noopener noreferrer"' in rows
+        assert "javascript" not in rows
+        # Not in link_schemes (any more): no link, just the name.
+        assert "pi://open" not in rows
+
     @staticmethod
     def order(html):
         import re
@@ -842,6 +860,20 @@ class TestSettings:
             "original_name": "hv", "name": "hv", "host": "10.0.0.1", "user": "root",
             "platform": "proxmox", "web_url": ""})
         assert "web_url" not in config.load()["servers"][0]
+
+    def test_a_program_link_is_saved_only_once_the_file_allows_its_scheme(self, client):
+        complete_setup(client)
+        from timar import config
+        form = {"name": "term", "host": "10.0.0.1", "user": "op", "platform": "linux",
+                "web_url": "claude://open"}
+        page = client.post("/settings/servers", data=form)
+        assert page.status_code == 400 and "link_schemes" in page.text
+        assert config.load().get("servers", []) == []
+        cfg = config.load()
+        cfg["link_schemes"] = ["claude"]
+        config.save(cfg)
+        client.post("/settings/servers", data=form)
+        assert config.load()["servers"][0]["web_url"] == "claude://open"
 
     def test_an_edit_keeps_hand_written_wake_settings_and_shows_them(self, client):
         complete_setup(client)

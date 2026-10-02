@@ -311,5 +311,6 @@
   "add": "hinzufügen",
   "enrol from its card": "über seine Karte einbinden",
   "leave out": "herausnehmen",
-  "Set up timar": "timar einrichten"
+  "Set up timar": "timar einrichten",
+  "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Weboberfläche: {scheme}://-Links sind nicht erlaubt. Um sie zu erlauben, fügen Sie {scheme} zu link_schemes in config.yaml hinzu."
 }

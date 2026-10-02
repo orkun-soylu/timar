@@ -127,6 +127,45 @@ class TestWebUrl:
         assert "web_url" not in server(MINIMAL | {"web_url": "  "}, set())
 
 
+class TestLinkSchemes:
+    """`claude://open` as a server's link: a terminal handler on the operator's machine. Opened
+    to the schemes `config.yaml` names, never to the ones that run inside the page itself."""
+
+    def test_the_file_s_list_is_normalised(self):
+        from timar.validate import link_schemes
+        assert link_schemes({"link_schemes": ["Claude", "pi://", "ssh:"]}) == {"claude", "pi", "ssh"}
+        assert link_schemes({"link_schemes": "claude"}) == {"claude"}
+        assert link_schemes({}) == frozenset()
+
+    @pytest.mark.parametrize("dangerous", ["javascript", "JavaScript", "data", "vbscript", "file", "blob"])
+    def test_a_scheme_that_runs_in_the_page_cannot_be_allowed(self, dangerous):
+        """Listing it in the file must not open the door: the page holds the fleet's key."""
+        from timar.validate import link_schemes, web_url
+        schemes = link_schemes({"link_schemes": [dangerous]})
+        assert schemes == frozenset()
+        assert web_url(f"{dangerous}://x/%0aalert(1)", frozenset({dangerous.lower()})) is None
+
+    def test_a_listed_scheme_is_kept_as_typed_with_or_without_a_host(self):
+        schemes = frozenset({"claude"})
+        assert server(MINIMAL | {"web_url": "claude://open"}, set(), schemes=schemes)["web_url"] == "claude://open"
+        assert server(MINIMAL | {"web_url": "claude://"}, set(), schemes=schemes)["web_url"] == "claude://"
+
+    def test_a_listed_scheme_still_rejects_whitespace(self):
+        with pytest.raises(ValidationError):
+            server(MINIMAL | {"web_url": "claude://open now"}, set(), schemes=frozenset({"claude"}))
+
+    def test_an_unlisted_scheme_says_where_to_allow_it(self):
+        """The fix is in a file the form does not show; the error has to name it."""
+        with pytest.raises(ValidationError, match="link_schemes") as e:
+            server(MINIMAL | {"web_url": "claude://open"}, set())
+        assert "claude://" in str(e.value.errors)
+
+    def test_javascript_is_not_told_how_to_be_allowed(self):
+        with pytest.raises(ValidationError) as e:
+            server(MINIMAL | {"web_url": "javascript://x"}, set())
+        assert "link_schemes" not in str(e.value.errors)
+
+
 class TestLogCheck:
     def test_defaults_round_trip(self):
         assert log_check({"journal_hours": "6", "disk_threshold": "85"}) == \
