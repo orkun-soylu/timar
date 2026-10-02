@@ -9,12 +9,13 @@
 {% from "_icons.html" import icon %}
 {% from "_table.html" import sortable %}
 {# Server hugs the left wall and Actions the right, each only as wide as its content; Address
-   and Platform share what is left between them evenly, their text left-aligned. #}
+   and System share what is left between them evenly, their text left-aligned. System is what
+   osinfo read ("Debian 13"), or the platform until a connection has read it. #}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge") }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid") }}{{ sortable("/", sort, descending, "platform", _("Platform"), "col-mid wide") }}<th class="col-edge actions-head">
+    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge") }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid") }}{{ sortable("/", sort, descending, "platform", _("System"), "col-mid wide") }}<th class="col-edge actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
@@ -40,7 +41,7 @@
              title="{{ host.web_url }}">{{ host.name }}</a>
         {%- else %}{{ host.name }}{% endif %}</td>
       <td class="col-mid"><code>{{ host.host }}</code></td>
-      <td class="col-mid muted wide">{{ host.platform }}</td>
+      <td class="col-mid muted wide">{{ host.system }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so edit sits in the same place on every row. Enrolment and removal are in the
          edit form. #}

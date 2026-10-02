@@ -313,5 +313,6 @@
   "leave out": "移出",
   "Set up timar": "设置 timar",
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Web 界面：不允许 {scheme}:// 链接。如需允许，请将 {scheme} 添加到 config.yaml 的 link_schemes 中。",
-  "Host / Path": "主机 / 路径"
+  "Host / Path": "主机 / 路径",
+  "System": "系统"
 }

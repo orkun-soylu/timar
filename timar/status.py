@@ -45,6 +45,8 @@ class HostStatus:
     web_url: str | None = None
     # The logo before the name — what the machine is, coloured by its state. See `osinfo`.
     logo: str = "linux"
+    # "Debian 13", "Proxmox VE 9.2.21" — read with the logo; the platform until it has been.
+    system: str = ""
 
     @property
     def logo_name(self) -> str:
@@ -105,6 +107,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
     sleepers = config.on_demand(servers)
     schemes = validate.link_schemes(cfg)
     known = osinfo.seen()
+    systems = osinfo.versions()
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
@@ -121,6 +124,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             wakeable=config.can_wake(s["name"], servers),
             web_url=_link(s.get("web_url"), schemes),
             logo=osinfo.logo(s, known),
+            system=osinfo.system(s, systems),
         )
         for s, up in zip(servers, results)
     ]
@@ -135,8 +139,8 @@ def sort_fleet(hosts: list[HostStatus], key: str, descending: bool = False) -> l
     by_name = sorted(hosts, key=lambda h: h.name.casefold())
     if key == "address":
         ordered = sorted(by_name, key=lambda h: address_key(h.host))
-    elif key == "platform":
-        ordered = sorted(by_name, key=lambda h: h.platform.casefold())
+    elif key == "platform":     # the column is *System* now; the key stays so old links work
+        ordered = sorted(by_name, key=lambda h: h.system.casefold())
     else:
         ordered = by_name
     return ordered[::-1] if descending else ordered

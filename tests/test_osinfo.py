@@ -60,6 +60,39 @@ class TestLogo:
         assert osinfo.logo({"name": "x", "host": "10.0.0.2"}, {}) == "linux"
 
 
+class TestVersion:
+    @pytest.mark.parametrize("printed, slug, shown", [
+        ("proxmox\nlabel:Proxmox VE 9.2.21\n", "proxmox", "Proxmox VE 9.2.21"),
+        ("proxmox\nlabel:Datacenter Manager 1.1.7\n", "proxmox", "Datacenter Manager 1.1.7"),
+        ("debian \nversion:13\n", "debian", "Debian 13"),
+        ("ubuntu debian\nversion:26.04\n", "ubuntu", "Ubuntu 26.04"),
+        ("openwrt lede openwrt\nversion:25.12.5\n", "openwrt", "OpenWrt 25.12.5"),
+        ("kali debian\nversion:2026.3\n", "kalilinux", "Kali Linux 2026.3"),
+        ("octoprint\nlabel:OctoPi 1.1.0\n", "octoprint", "OctoPi 1.1.0"),
+        ("arch\nversion:\n", "archlinux", "Arch Linux"),            # rolling: no VERSION_ID
+    ])
+    def test_real_outputs(self, printed, slug, shown):
+        assert osinfo.parse(printed) == slug
+        assert osinfo.parse_version(printed, slug) == shown
+
+    def test_an_appliance_whose_version_could_not_be_read_says_nothing_rather_than_half(self):
+        assert osinfo.parse_version("proxmox\nlabel:Proxmox VE \n", "proxmox") is None
+
+    def test_the_cell_is_looked_up_the_way_the_file_is_keyed(self):
+        """By `known_hosts`' address form — a port in brackets — not by a sort key."""
+        known = {"[127.0.0.1]:2345": "Debian 13", "10.0.0.5": "Proxmox VE 9.2.21"}
+        assert osinfo.system({"host": "127.0.0.1:2345", "platform": "linux"}, known) == "Debian 13"
+        assert osinfo.system({"host": "10.0.0.5", "platform": "proxmox"}, known) == "Proxmox VE 9.2.21"
+        assert osinfo.system({"host": "10.0.0.9", "platform": "openwrt"}, known) == "openwrt"
+
+    def test_the_old_file_with_slugs_alone_still_reads(self, data_dir):
+        path = data_dir / osinfo.OS_FILE
+        path.parent.mkdir(parents=True)
+        path.write_text('{"10.0.0.5": "proxmox"}')
+        assert osinfo.seen() == {"10.0.0.5": "proxmox"}
+        assert osinfo.versions() == {}
+
+
 class TestRemembering:
     def fake(self, monkeypatch, output):
         calls = []
@@ -70,6 +103,7 @@ class TestRemembering:
         self.fake(monkeypatch, "ubuntu debian\n")
         osinfo.note(object(), "10.0.0.41")
         assert osinfo.seen() == {"10.0.0.41": "ubuntu"}
+        assert osinfo.versions() == {}
         assert (data_dir / osinfo.OS_FILE).stat().st_mode & 0o777 == 0o600
 
     def test_a_failure_to_read_costs_the_logo_and_nothing_else(self, data_dir, monkeypatch):

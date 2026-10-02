@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Servers: *System* instead of *Platform*.** The column shows what the machine runs, read with
+  its logo: "Debian 13", "Ubuntu 26.04", "Proxmox VE 9.2.21", "OpenWrt 25.12.5", "OctoPi
+  1.1.0". A machine timar has not connected to yet shows its platform, as before.
+
 ## [0.2.24] — 2026-10-02
 
 ### Changed

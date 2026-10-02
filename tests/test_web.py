@@ -331,13 +331,16 @@ class TestActionsColumn:
         ]})
         path = config.path(osinfo.OS_FILE)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"10.0.0.5": "debian", "10.0.0.41": "ubuntu"}))
+        path.write_text(json.dumps({"10.0.0.5": "debian",
+                                    "10.0.0.41": {"logo": "ubuntu", "version": "Ubuntu 26.04"}}))
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.41")
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
         assert 'title="up · Proxmox"' in rows and 'logos.svg#proxmox' in rows
         assert 'title="down · Ubuntu"' in rows and 'logos.svg#ubuntu' in rows
         assert 'title="up · OpenWrt"' in rows and 'logos.svg#openwrt' in rows
+        # System: what was read, else the platform.
+        assert ">Ubuntu 26.04<" in rows and ">openwrt<" in rows
         # The colour comes from the row's state class, which the logo inherits.
         down = rows.split('<tr class="down">', 1)[1].split("</td>", 1)[0]
         assert 'class="os"' in down and "ubuntu" in down
