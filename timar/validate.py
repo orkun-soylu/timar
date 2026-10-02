@@ -43,10 +43,12 @@ SERVER_FIELDS = frozenset({
 })
 
 
-def server(form: dict, existing_names: set[str], original_name: str | None = None) -> dict:
+def server(form: dict, existing_names: set[str], original_name: str | None = None,
+           schemes: frozenset[str] = frozenset()) -> dict:
     """Validate and normalise one server entry.
 
     `original_name` is the name being edited, so renaming a server to itself is not a clash.
+    `schemes` are the extra link schemes `config.yaml` allows; see `link_schemes`.
     """
     errors: list[str] = []
     name = (form.get("name") or "").strip()
@@ -96,8 +98,12 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
             entry[optional] = value
 
     if raw_url := (form.get("web_url") or "").strip():
-        if url := web_url(raw_url):
+        if url := web_url(raw_url, schemes):
             entry["web_url"] = url
+        elif scheme := _unlisted_scheme(raw_url):
+            # The one rejection with a fix the operator cannot guess: it is not in the form.
+            errors.append(_("Web interface: {scheme}:// links are not allowed. To allow them, add "
+                            "{scheme} to link_schemes in config.yaml.", scheme=scheme))
         else:
             errors.append(_("Web interface must be an address such as 10.0.0.5:8006 or https://host.lan."))
 
@@ -108,14 +114,52 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     return entry
 
 
-def web_url(raw: str) -> str | None:
+# Never a link, whatever `link_schemes` says. Each of these runs or reads something inside the
+# page's own session instead of handing the address to another program, and this page sits in
+# front of a key that reaches every machine in the fleet.
+NEVER_LINK = frozenset({"javascript", "vbscript", "data", "file", "blob", "about", "filesystem"})
+_SCHEME = re.compile(r"^[a-z][a-z0-9+.-]*$")
+
+
+def link_schemes(cfg: dict) -> frozenset[str]:
+    """The extra schemes a server's web interface may use: `link_schemes` in `config.yaml`.
+
+    For a link that opens a program rather than a page — a terminal handler registered on the
+    operator's machine, say `claude://open`. Only from the file, not the form: allowing a scheme
+    is a decision about what this page may launch, and it is made once, deliberately, by whoever
+    owns the installation. Entries are lower-cased and a trailing `:` or `://` is forgiven.
+    """
+    raw = cfg.get("link_schemes") or []
+    if isinstance(raw, str):
+        raw = [raw]
+    found = {str(s).strip().lower().rstrip(":/") for s in raw}
+    return frozenset(s for s in found if _SCHEME.match(s)) - NEVER_LINK - {"http", "https"}
+
+
+def _unlisted_scheme(raw: str) -> str | None:
+    """The scheme of a `name://...` value that is neither http(s) nor ruled out for good."""
+    scheme = raw.split("://", 1)[0].lower() if "://" in raw else ""
+    if _SCHEME.match(scheme) and scheme not in NEVER_LINK | {"http", "https"}:
+        return scheme
+    return None
+
+
+def web_url(raw: str, schemes: frozenset[str] = frozenset()) -> str | None:
     """The address a server's own web interface answers on, or `None` when it is not one.
 
     A bare address gets `https://`: the panels this is for — a hypervisor, a router, anything
     behind a reverse proxy — answer on https, and one that answers on plain http says so by
-    being typed with its scheme. Only http and https are let through, because the value ends
-    up in an `href`, where `javascript:` would run in the operator's session.
+    being typed with its scheme. Only http and https are let through by default, because the
+    value ends up in an `href`, where `javascript:` would run in the operator's session.
+    `schemes` adds the ones `config.yaml` allows (see `link_schemes`); those need no host —
+    `claude://` alone is a whole link to a program.
     """
+    raw = raw.strip()
+    if "://" in raw:
+        scheme = raw.split("://", 1)[0].lower()
+        if scheme in schemes and scheme not in NEVER_LINK:
+            # No whitespace or control characters: a link that is not one string is not a link.
+            return raw if not any(c.isspace() or ord(c) < 32 for c in raw) else None
     url = raw if "://" in raw else f"https://{raw}"
     try:
         parts = urlsplit(url)

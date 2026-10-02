@@ -25,6 +25,8 @@ servers:
     # Optional: the machine's own web interface -- a hypervisor, a router. While the machine is
     # up, its name on the dashboard links here. Without a scheme it is opened as https://.
     # web_url: "https://192.0.2.10:8006"
+    # A link to a program instead -- a terminal handler such as claude://open -- needs its
+    # scheme listed in link_schemes at the top level (see the end of this file).
 
     # Optional: a line of context handed to the log analysis, to explain behaviour that looks
     # alarming but is not. This is the cheapest way to stop a recurring false alarm.
@@ -149,3 +151,9 @@ log_check:
 #   provider: ollama
 #   base_url: http://192.0.2.40:11434
 #   model: <the model you have pulled>
+
+# Optional: extra schemes a server's web_url may use, for links that open a program rather than
+# a page -- a handler registered on the operator's machine, such as claude://open. http and https
+# are always allowed. javascript, data, vbscript, file and blob can never be: they would run inside
+# timar's own page. Without this list, the server form refuses anything but http(s).
+# link_schemes: [claude, pi]

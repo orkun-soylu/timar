@@ -34,7 +34,9 @@
          web interface has its name as a link to it, in a new tab — the dashboard stays put. #}
       <td class="col-edge" title="{{ state_label }}"><span class="dot" role="img"
           aria-label="{{ state_label }}"></span> {% if host.web_url and host.state == "up" -%}
-          <a href="{{ host.web_url }}" target="_blank" rel="noopener noreferrer"
+          {#- A link to a program (`link_schemes`) opens no page, so no new tab: one would be
+              left behind, empty, every time. -#}
+          <a href="{{ host.web_url }}" {% if host.web_url.startswith(('http://', 'https://')) %}target="_blank" {% endif %}rel="noopener noreferrer"
              title="{{ host.web_url }}">{{ host.name }}</a>
         {%- else %}{{ host.name }}{% endif %}</td>
       <td class="col-mid"><code>{{ host.host }}</code></td>

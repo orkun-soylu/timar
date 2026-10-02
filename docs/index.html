@@ -285,6 +285,10 @@
       <li><strong>Shut down whatever started off</strong>
         <span>Guests first, then their hypervisor, in order. Anything that was already running
         is left running.</span></li>
+      <li><strong>Its own machine last</strong>
+        <span>The host timar runs on is updated after every other machine: its containers first,
+        then its packages, handed to that host's systemd. If upgrading Docker restarts timar, the
+        new process finishes the same run and reports every machine in it.</span></li>
     </ol>
 
     <figure class="shot">
@@ -434,6 +438,11 @@
         updated, and SSH access — where it is enrolled with your password once, never stored —
         each with a <strong>?</strong> that explains it. Underneath it is still just
         <code>config.yaml</code>, which you can edit by hand.
+        <br><br>
+        The name links to the machine's own panel while it is up. It can also link to a program
+        on your machine, such as <code>claude://open</code> for a terminal, once that scheme is
+        listed in <code>link_schemes</code> in the file. The form cannot add one, and schemes
+        that would run inside the page are refused even when listed.
         <br><br>
         A VM has no wake address of its own, so it names the hypervisor that starts it and
         inherits <em>on-demand</em> from it — otherwise every night it spends off would be

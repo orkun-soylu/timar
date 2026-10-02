@@ -242,6 +242,27 @@ Four decisions worth keeping:
 - **A cookie whose username is no longer the operator's is rejected.** A restored volume can
   carry an old session into a fleet that now has a different account.
 
+### Links: http(s), plus what the file allows
+
+A server's web interface is drawn into an `href`, so the scheme is an allow-list: `http` and
+`https`, plus whatever `link_schemes` in `config.yaml` names, for links that open a program on
+the operator's machine (`claude://open`, a terminal handler). Three decisions:
+
+- **Only the file can allow a scheme.** It decides what this page may launch, and the page is
+  in front of a key that reaches every machine. A form field would make that one more value a
+  borrowed session could change.
+- **Some schemes are never allowed** (`javascript`, `data`, `vbscript`, `file`, `blob`, `about`,
+  `filesystem`), even when listed. They run or read inside the page's own session instead of
+  handing the address to another program. The form names `link_schemes` when it refuses a
+  scheme that *could* be allowed, and stays silent about these.
+- **Checked again where it is drawn** (`status._link`). The file is edited by hand, and a
+  check only on save would let a hand-written `javascript:` reach the page. It also makes
+  removing a scheme from the list remove its links.
+
+A link to a program has no `target="_blank"`: the program opens, and a new tab would be left
+behind empty. Containers stay `http(s)` only, because their address doubles as a health check
+that timar fetches.
+
 ### Languages — the reader's for the page, English for the record
 
 The interface is translated; what Timar *writes down* is not. The language lives in a context

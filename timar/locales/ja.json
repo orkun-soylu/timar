@@ -311,5 +311,6 @@
   "add": "追加",
   "enrol from its card": "カードから登録",
   "leave out": "外す",
-  "Set up timar": "timar のセットアップ"
+  "Set up timar": "timar のセットアップ",
+  "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Web インターフェース: {scheme}:// のリンクは許可されていません。許可するには、config.yaml の link_schemes に {scheme} を追加してください。"
 }
