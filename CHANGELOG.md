@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **The images column is shorter:** `immich-server:v2` instead of
+  `ghcr.io/immich-app/immich-server:v2`. The registry and owner are dropped from the cell, and
+  the full reference is the tooltip. An image known only by its id shows twelve characters of
+  it.
+
 ### Added
 
 - **Each container project's light is its application's logo,** in the same state colours

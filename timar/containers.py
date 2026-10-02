@@ -84,8 +84,27 @@ class ProjectStatus:
         return APP_LOGOS.get(self.logo, "Docker")
 
     @property
+    def image_rows(self) -> list[tuple[str, str]]:
+        """(shown, full) per image: the table shows the short name, the tooltip the whole one."""
+        return [(short_image(i), i.split("@")[0]) for i in self.images]
+
+
+    @property
     def running(self) -> bool:
         return self.state in ("up", "warn")
+
+
+def short_image(image: str) -> str:
+    """`ghcr.io/immich-app/immich-server:v2@sha256:…` → `immich-server:v2`.
+
+    The registry and the owner are dropped: the column is read for *what* runs and at which tag,
+    and the full reference, three times as long, pushed every row onto two lines. An image known
+    only by its id keeps twelve characters of it, as `docker ps` does.
+    """
+    ref = image.split("@")[0]
+    if ref.startswith("sha256:"):
+        return ref[:19]
+    return ref.rsplit("/", 1)[-1]
 
 
 # Slug → name, for each application symbol in `web/static/logos.svg` (Simple Icons, CC0).

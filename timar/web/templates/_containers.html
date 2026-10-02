@@ -29,7 +29,7 @@
         <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
         {%- else %}{{ p.name }}{% endif %}</td>
       <td class="col-mid">{{ p.server }} <code class="wide">{{ p.path }}</code></td>
-      <td class="col-mid wide muted">{% for image in p.images %}<div><code>{{ image.split('@')[0] }}</code></div>{% else %}—{% endfor %}</td>
+      <td class="col-mid wide muted">{% for shown, full in p.image_rows %}<div><code title="{{ full }}">{{ shown }}</code></div>{% else %}—{% endfor %}</td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
           <span class="icon-slot" title="{{ _("timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
