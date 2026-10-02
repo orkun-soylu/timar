@@ -114,6 +114,17 @@ def resolve_ssh_key(server: dict) -> str:
 MANUAL = "(manual)"
 
 
+def has_ssh(server: dict) -> bool:
+    """False for a device timar only watches and links to — an access point, a NAS appliance.
+
+    `ssh: false` in its entry. Such a device is probed on its web port, drawn with its link and
+    the logo its entry names, and left out of everything that logs in: enrolment, the log sweep,
+    the update run, shutdown. It is not "not enrolled" — there is nothing to enrol — so it is not
+    counted or listed as such either.
+    """
+    return server.get("ssh", True) is not False
+
+
 def can_wake(name: str, servers: list[dict]) -> bool:
     """Whether Timar has a way to power `name` on: a wake address, or a hypervisor that starts it.
 

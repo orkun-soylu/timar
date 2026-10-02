@@ -242,6 +242,20 @@ Four decisions worth keeping:
 - **A cookie whose username is no longer the operator's is rejected.** A restored volume can
   carry an old session into a fleet that now has a different account.
 
+### Devices that are only watched
+
+`ssh: false` (`config.has_ssh`) marks an entry timar never logs in to: an access point, a NAS
+appliance. It is still a server entry, because the servers page is where it belongs, but every
+path that would connect turns it away at the start:
+- `membership.skip_reason` and `lists` leave it out of the jobs entirely, so it is neither run
+  nor shown as "not enrolled";
+- the update run skips it without a report row;
+- `power.shutdown` refuses it.
+
+The probe asks its web port instead of 22. An access point answered on 80 and 443 and not at all
+on 22, so an SSH probe would have painted it permanently red. Its logo comes from its entry,
+restricted to the sprite's names because the value lands in an `href` fragment.
+
 ### Links: http(s), plus what the file allows
 
 A server's web interface is drawn into an `href`, so the scheme is an allow-list: `http` and

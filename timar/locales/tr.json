@@ -320,5 +320,10 @@
   "seconds, default {seconds}": "saniye, varsayılan {seconds}",
   "More settings": "Daha fazla ayar",
   "optional — seconds, default {seconds}": "isteğe bağlı — saniye, varsayılan {seconds}",
-  "a floating tag: each update run moves it to the newest image": "kayan etiket: her güncelleme turu onu en yeni imaja taşır"
+  "a floating tag: each update run moves it to the newest image": "kayan etiket: her güncelleme turu onu en yeni imaja taşır",
+  "{name} is watched only — timar has no SSH to it": "{name} yalnız izleniyor — timar'ın ona SSH erişimi yok",
+  "No SSH — only watch it and link to it": "SSH yok — yalnız izle ve linkle",
+  "Logo": "Logo",
+  "Logo must be one of the listed ones.": "Logo listedekilerden biri olmalı.",
+  "{name} is watched only — there is nothing to enrol.": "{name} yalnız izleniyor — enrol edilecek bir şey yok."
 }

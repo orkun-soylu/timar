@@ -396,6 +396,17 @@ class TestActionsColumn:
         down = client.get("/fragments/fleet?state=down").text
         assert self.order(down) == ["zeta"] and " guest" not in down
 
+    def test_a_watched_only_device_has_no_shutdown_and_names_its_logo(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [{"name": "ap", "host": "10.0.0.2", "user": "", "platform": "linux",
+                                  "ssh": False, "logo": "tplink", "web_url": "https://ap.lan"}]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: True)
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert 'logos.svg#tplink' in rows and 'title="up · TP-Link"' in rows and ">TP-Link<" in rows
+        assert "/servers/ap/shutdown" not in rows and '<a href="https://ap.lan"' in rows
+
     @staticmethod
     def order(html):
         import re
@@ -966,6 +977,23 @@ class TestSettings:
         # Enrol sits beside the password it uses.
         field = plain.split('class="field-with-action"', 1)[1].split("</div>", 1)[0]
         assert 'name="password"' in field and 'value="enrol"' in field
+
+    def test_a_device_without_ssh_saves_without_a_user_and_cannot_be_enrolled(self, client):
+        complete_setup(client)
+        from timar import config
+        form = {"name": "nas", "host": "10.0.0.3", "user": "", "platform": "linux",
+                "no_ssh": "on", "logo": "synology"}
+        client.post("/settings/servers", data=form)
+        saved = config.load()["servers"][0]
+        assert saved["ssh"] is False and saved["logo"] == "synology"
+        page = client.get("/settings/servers/nas/edit").text
+        assert 'name="no_ssh" checked' in page and '<option value="synology" selected' in page
+        refused = client.post("/settings/servers", data={**form, "original_name": "nas", "action": "enrol"})
+        assert refused.status_code == 400 and "nothing to enrol" in refused.text
+        # Unticked again, it is an ordinary server: the flag goes, and a user is required again.
+        client.post("/settings/servers", data={"original_name": "nas", "name": "nas", "host": "10.0.0.3",
+                                               "user": "op", "platform": "linux"})
+        assert "ssh" not in config.load()["servers"][0]
 
     def test_an_edit_keeps_hand_written_wake_settings_and_shows_them(self, client):
         complete_setup(client)

@@ -39,7 +39,7 @@ class ValidationError(ValueError):
 # the form carry them across untouched instead of dropping them.
 SERVER_FIELDS = frozenset({
     "name", "host", "user", "platform", "wol_mac",
-    "update_cmd", "context", "update_timeout", "on_demand", "web_url",
+    "update_cmd", "context", "update_timeout", "on_demand", "web_url", "ssh", "logo",
 })
 
 
@@ -74,12 +74,23 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
             port = 0
         if not 1 <= port <= 65535:
             errors.append(_("Address must be a host, optionally with an SSH port: 10.0.0.5 or 10.0.0.5:2222."))
-    if not user:
+    # A device that is only watched (`ssh: false`) has no account to log in to.
+    watched_only = bool(form.get("no_ssh"))
+    if not user and not watched_only:
         errors.append(_("SSH user is required."))
     if platform not in PLATFORMS:
         errors.append(_("Platform must be one of: {options}.", options=", ".join(PLATFORMS)))
 
     entry: dict = {"name": name, "host": host, "user": user, "platform": platform}
+    if watched_only:
+        entry["ssh"] = False
+        # Nothing can be read from it, so the form says what it is. Only from the sprite's list:
+        # the value becomes a fragment in the page's `href`.
+        from .osinfo import DEVICE_LOGOS, LOGOS
+        if (logo := (form.get("logo") or "").strip()) in (LOGOS | DEVICE_LOGOS):
+            entry["logo"] = logo
+        elif logo:
+            errors.append(_("Logo must be one of the listed ones."))
 
     if mac := (form.get("wol_mac") or "").strip():
         if not MAC.match(mac):

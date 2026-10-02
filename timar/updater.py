@@ -9,7 +9,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
-from . import cancel, containers as container_module, membership, osinfo
+from . import cancel, config, containers as container_module, membership, osinfo
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -470,6 +470,8 @@ def run_updates(cfg, on_handoff=None) -> list[UpdateResult]:
     for server in servers:
         if server["name"] in managed_vms or server["name"] == self_name:
             continue
+        if not config.has_ssh(server):
+            continue    # watched only: never part of a run, so not listed in its report either
         if cancel.requested("update"):
             logger.info("update run stopped by the operator before %s", server["name"])
             break

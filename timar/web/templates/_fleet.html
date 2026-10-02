@@ -61,7 +61,10 @@
          empty, so edit sits in the same place on every row. Enrolment and removal are in the
          edit form. #}
       <td class="col-edge"><div class="icon-row">
-        {%- if host.state == "up" %}
+        {%- if host.state == "up" and not host.ssh %}
+          {# Watched only (`ssh: false`): nothing to shut it down with. #}
+          <span class="icon-slot"></span>
+        {%- elif host.state == "up" %}
           {# Every running machine can be shut down. The confirmation is where the difference
              between them lives: one timar cannot wake again needs a person to bring it back. #}
           {%- if host.wakeable %}{% set confirm = _("Shut down {name}? It stays off until something wakes it.", name=host.name) %}

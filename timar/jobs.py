@@ -64,7 +64,9 @@ def run_log_sweep(cfg: dict) -> Outcome:
     with_issues = [r for r in results if r.success and not r.offline and r.has_issues]
 
     summary = f"{len(with_issues)} with findings, {len(unreachable)} unreachable, {len(offline)} asleep"
-    left_out = [s["name"] for s in cfg.get("servers", []) if membership.skip_reason(cfg, LOG_SWEEP, s)]
+    # Devices that are only watched (`ssh: false`) were never in the sweep; they are not counted.
+    left_out = [s["name"] for s in cfg.get("servers", [])
+                if config.has_ssh(s) and membership.skip_reason(cfg, LOG_SWEEP, s)]
     if left_out:
         summary += f", {len(left_out)} not in the sweep"
     stopped = cancel.requested(LOG_SWEEP)

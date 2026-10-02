@@ -104,13 +104,28 @@
       </details>
     </div>
 
-    <div class="form-section" id="ssh-access">
+    <div class="form-section ssh-section" id="ssh-access">
       {{ section_head(_("SSH access"), "help-ssh") }}
       {% if enrol_result %}<div class="notice good">{{ enrol_result }}</div>
       {% elif enrol_error %}<div class="notice bad">{{ enrol_error }}</div>{% endif %}
+      {# An access point, a NAS appliance: watched on its web port and linked, never logged in to.
+         Ticking it swaps the SSH fields for the logo the device is drawn with — CSS `:has()`, no
+         script, so the form still works as a plain page. #}
+      <label class="inline">
+        <input type="checkbox" name="no_ssh" {{ "checked" if values.get('no_ssh') else "" }}>
+        <span>{{ _("No SSH — only watch it and link to it") }}</span>
+      </label>
+      <label class="watched-only"><span>{{ _("Logo") }}</span>
+        <select name="logo">
+          <option value="">—</option>
+          {% for slug, label in device_logos %}
+          <option value="{{ slug }}" {{ "selected" if values.get('logo') == slug else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select></label>
+      <div class="ssh-fields">
       <div class="row">
         <label><span>{{ _("SSH user") }}</span>
-          <input name="user" required value="{{ values.get('user', '') }}"></label>
+          <input name="user" value="{{ values.get('user', '') }}"></label>
         {# The button beside the field it uses, on the inputs' baseline: enrolling is "this password,
            now", not a step of its own at the bottom of the section. #}
         <div class="field-with-action">
@@ -123,6 +138,7 @@
         <input type="checkbox" name="grant_sudo">
         <span>{{ _("Also grant passwordless sudo") }}</span>
       </label>
+      </div>
     </div>
 
     <div class="actions form-actions">

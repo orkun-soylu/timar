@@ -50,9 +50,12 @@ class HostStatus:
     # The hypervisor that starts this machine (`manages_vms`), for nesting it under that row.
     parent: str | None = None
 
+    # False for a device that is only watched and linked (`ssh: false`): no shutdown, no jobs.
+    ssh: bool = True
+
     @property
     def logo_name(self) -> str:
-        return osinfo.LOGOS.get(self.logo, "Linux")
+        return osinfo.logo_name(self.logo)
 
     @property
     def state(self) -> str:
@@ -67,19 +70,37 @@ class HostStatus:
         return "asleep" if self.on_demand else "down"
 
 
+# A device without SSH (`ssh: false`) answers on its web interface instead. 443 first, then 80;
+# an address with its own port is asked on that port alone. Measured on an access point and a
+# NAS appliance: both answer on 80 and 443, and the access point not at all on 22.
+WEB_PORTS = (443, 80)
+
+
+def _probe_key(server: dict) -> str:
+    """The cache key and the target: the address itself, or `web:<address>` for a web probe."""
+    return server["host"] if config.has_ssh(server) else "web:" + server["host"]
+
+
 def _probe(host: str, fresh: bool = False) -> bool:
     now = time.monotonic()
     cached = _cache.get(host)
     if cached and not fresh and now - cached[0] < STALE_AFTER:
         return cached[1]
-    up = is_host_up(host, timeout=PROBE_TIMEOUT)
+    if host.startswith("web:"):
+        address = host[4:]
+        # The same rule as split_address: a port after `]` for IPv6, or one colon otherwise.
+        explicit = "]:" in address if address.startswith("[") else address.count(":") == 1
+        ports = [None] if explicit else list(WEB_PORTS)
+        up = any(is_host_up(address, port=port, timeout=PROBE_TIMEOUT) for port in ports)
+    else:
+        up = is_host_up(host, timeout=PROBE_TIMEOUT)
     _cache[host] = (time.monotonic(), up)
     return up
 
 
 def refresh(cfg: dict) -> None:
     """Ask every host now and keep the answers — the background task's half of the cache."""
-    hosts = list(dict.fromkeys(s["host"] for s in cfg.get("servers", [])))
+    hosts = list(dict.fromkeys(_probe_key(s) for s in cfg.get("servers", [])))
     if hosts:
         with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(hosts))) as pool:
             list(pool.map(lambda h: _probe(h, fresh=True), hosts))
@@ -113,7 +134,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
     systems = osinfo.versions()
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
-        results = list(pool.map(lambda s: _probe(s["host"]), servers))
+        results = list(pool.map(lambda s: _probe(_probe_key(s)), servers))
 
     # By name, not config order: the order hosts were enrolled in means nothing to the reader,
     # and a host is found faster in an alphabetical list.
@@ -129,6 +150,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             logo=osinfo.logo(s, known),
             system=osinfo.system(s, systems),
             parent=parents.get(s["name"]),
+            ssh=config.has_ssh(s),
         )
         for s, up in zip(servers, results)
     ]

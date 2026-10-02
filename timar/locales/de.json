@@ -320,5 +320,10 @@
   "seconds, default {seconds}": "Sekunden, Standard {seconds}",
   "More settings": "Weitere Einstellungen",
   "optional — seconds, default {seconds}": "optional — Sekunden, Standard {seconds}",
-  "a floating tag: each update run moves it to the newest image": "ein beweglicher Tag: jeder Update-Lauf setzt ihn auf das neueste Image"
+  "a floating tag: each update run moves it to the newest image": "ein beweglicher Tag: jeder Update-Lauf setzt ihn auf das neueste Image",
+  "{name} is watched only — timar has no SSH to it": "{name} wird nur beobachtet — timar hat keinen SSH-Zugang",
+  "No SSH — only watch it and link to it": "Kein SSH — nur beobachten und verlinken",
+  "Logo": "Logo",
+  "Logo must be one of the listed ones.": "Das Logo muss eines der aufgeführten sein.",
+  "{name} is watched only — there is nothing to enrol.": "{name} wird nur beobachtet — es gibt nichts einzurichten."
 }

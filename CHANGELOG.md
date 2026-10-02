@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Devices without SSH.** An access point or a NAS appliance can be on the servers page with its
+  link and state. Tick *No SSH — only watch it and link to it*, or write `ssh: false`. timar
+  probes it on its web port (443, then 80), draws the logo its entry names (nine device logos
+  were added: Synology, QNAP, TrueNAS, Unraid, TP-Link, Ubiquiti, MikroTik, NETGEAR, ASUS), and
+  never enrols, sweeps, updates or shuts it down. It is left out of the job lists and reports
+  rather than counted as "not enrolled".
+
 ## [0.2.25] — 2026-10-03
 
 ### Added
