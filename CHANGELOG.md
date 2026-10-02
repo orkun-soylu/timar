@@ -9,12 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
-### Changed
-
-- **The images column is shorter:** `immich-server:v2` instead of
-  `ghcr.io/immich-app/immich-server:v2`. The registry and owner are dropped from the cell, and
-  the full reference is the tooltip. An image known only by its id shows twelve characters of
-  it.
+## [0.2.23] — 2026-10-02
 
 ### Added
 
@@ -26,6 +21,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
   recognised, shows Docker's whale. The last logo seen is kept, so a project whose host is
   asleep keeps its look. 36 application logos (Simple Icons, CC0) were added to the sprite,
   which is now `static/logos.svg`.
+
+### Changed
+
+- **The images column is shorter:** `immich-server:v2` instead of
+  `ghcr.io/immich-app/immich-server:v2`. The registry and owner are dropped from the cell, and
+  the full reference is the tooltip. An image known only by its id shows twelve characters of
+  it.
 
 ## [0.2.22] — 2026-10-02
 
