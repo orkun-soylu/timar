@@ -165,6 +165,14 @@
     .stack + .stack { border-top: 1px solid var(--line); margin-top: 1rem; }
     .row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .row > label { flex: 1 1 14rem; }
+    .field-with-action { flex: 1 1 14rem; display: flex; gap: 0.6rem; align-items: flex-end; }
+    .field-with-action > label { flex: 1; }
+    .field-with-action > button { margin-bottom: 1rem; white-space: nowrap; }
+    /* Folded settings: a quiet line that opens to the fields under it. */
+    details.more { margin: 0 0 0.5rem; }
+    details.more > summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.8rem; }
+    details.more > summary:hover { color: var(--text); }
+    details.more:not([open]) > summary { margin-bottom: 0; }
     select {
       width: 100%; padding: 0.55rem 0.7rem; border-radius: 7px;
       border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;

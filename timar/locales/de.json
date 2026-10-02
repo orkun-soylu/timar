@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 oder https://host.lan",
   "Update command": "Update-Befehl",
   "Update timeout": "Update-Timeout",
-  "optional — seconds, default {seconds}": "optional — Sekunden, Standard {seconds}",
   "Context for the log analysis": "Kontext für die Log-Analyse",
   "Nightly batch job logs connection resets; expected.": "Nächtlicher Batch-Job protokolliert Verbindungsabbrüche; erwartet.",
   "Save changes": "Änderungen speichern",
@@ -317,5 +316,8 @@
   "Filter by state": "Nach Zustand filtern",
   "No machine is in this state right now.": "Derzeit ist kein Rechner in diesem Zustand.",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Die Chips über der Liste beschränken sie auf einen Job; die Auswahl steht in der Adresse, eine gefilterte Liste lässt sich also als Lesezeichen speichern. Das Ergebnis jedes Laufs sind seine Zahlen in Farbe — rot für Fehlgeschlagenes, gelb für Befunde, grün für Aktualisiertes, grau für Übersprungenes oder Schlafendes — und roter Text kennzeichnet einen Lauf, der ganz fehlgeschlagen ist. Die Schaltfläche am Zeilenende öffnet den ganzen Bericht.",
-  "Filter by job": "Nach Job filtern"
+  "Filter by job": "Nach Job filtern",
+  "seconds, default {seconds}": "Sekunden, Standard {seconds}",
+  "More settings": "Weitere Einstellungen",
+  "optional — seconds, default {seconds}": "optional — Sekunden, Standard {seconds}"
 }

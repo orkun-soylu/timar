@@ -18,6 +18,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **A shorter server dialog.** The update timeout and the log-analysis context fold under
+  *More settings*, which opens by itself when either holds a value. They no longer repeat
+  "optional". *Enrol* sits beside the password field it uses.
 - **A quieter menu:** no underlines. The page you are on is amber with a bar under it, and the
   others show a bar on hover.
 - **Servers: guests sit under their hypervisor.** Sorted by name (the default), each VM in a

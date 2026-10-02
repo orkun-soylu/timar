@@ -953,6 +953,20 @@ class TestSettings:
         client.post("/settings/servers", data=form)
         assert config.load()["servers"][0]["web_url"] == "claude://open"
 
+    def test_rarely_used_settings_are_folded_unless_one_is_set(self, client):
+        """Folded away by default, but never hiding a value: set, the fold opens by itself."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "10.0.0.1", "user": "op", "platform": "linux"},
+                                 {"name": "b", "host": "10.0.0.2", "user": "op", "platform": "linux",
+                                  "context": "Batch job resets are expected."}]})
+        plain = client.get("/settings/servers/a/edit").text
+        assert '<details class="more">' in plain and 'name="update_timeout"' in plain
+        assert '<details class="more" open>' in client.get("/settings/servers/b/edit").text
+        # Enrol sits beside the password it uses.
+        field = plain.split('class="field-with-action"', 1)[1].split("</div>", 1)[0]
+        assert 'name="password"' in field and 'value="enrol"' in field
+
     def test_an_edit_keeps_hand_written_wake_settings_and_shows_them(self, client):
         complete_setup(client)
         from timar import config

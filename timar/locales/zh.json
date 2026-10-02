@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 或 https://host.lan",
   "Update command": "更新命令",
   "Update timeout": "更新超时",
-  "optional — seconds, default {seconds}": "可选 — 单位为秒，默认 {seconds}",
   "Context for the log analysis": "日志分析的背景说明",
   "Nightly batch job logs connection resets; expected.": "夜间批处理任务会记录连接重置；属于预期情况。",
   "Save changes": "保存更改",
@@ -317,5 +316,8 @@
   "Filter by state": "按状态筛选",
   "No machine is in this state right now.": "目前没有处于此状态的机器。",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "列表上方的标签可将其缩小到某一个任务；所选内容在地址中，因此筛选后的列表可以加入书签。每次运行的结果是彩色的计数——红色表示失败，黄色表示发现的问题，绿色表示已更新，灰色表示已跳过或处于休眠——红色文字表示整个运行失败。行末的按钮打开完整报告。",
-  "Filter by job": "按任务筛选"
+  "Filter by job": "按任务筛选",
+  "seconds, default {seconds}": "单位为秒，默认 {seconds}",
+  "More settings": "更多设置",
+  "optional — seconds, default {seconds}": "可选 — 单位为秒，默认 {seconds}"
 }

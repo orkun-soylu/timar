@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 または https://host.lan",
   "Update command": "更新コマンド",
   "Update timeout": "更新のタイムアウト",
-  "optional — seconds, default {seconds}": "任意 — 秒、既定値 {seconds}",
   "Context for the log analysis": "ログ分析のための補足情報",
   "Nightly batch job logs connection resets; expected.": "夜間バッチジョブが接続リセットをログに記録する。想定内。",
   "Save changes": "変更を保存",
@@ -317,5 +316,8 @@
   "Filter by state": "状態で絞り込む",
   "No machine is in this state right now.": "現在この状態のマシンはありません。",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "リストの上のチップで 1 つのジョブに絞り込めます。選択はアドレスに入るので、絞り込んだリストをブックマークできます。各実行の結果は色付きの件数で示されます — 赤は失敗、黄は検出事項、緑は更新、灰はスキップまたはスリープ中 — 赤い文字は実行全体が失敗したことを示します。行末のボタンでレポート全体を開きます。",
-  "Filter by job": "ジョブで絞り込む"
+  "Filter by job": "ジョブで絞り込む",
+  "seconds, default {seconds}": "秒、既定値 {seconds}",
+  "More settings": "その他の設定",
+  "optional — seconds, default {seconds}": "任意 — 秒、既定値 {seconds}"
 }

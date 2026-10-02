@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 veya https://host.lan",
   "Update command": "Güncelleme komutu",
   "Update timeout": "Güncelleme zaman aşımı",
-  "optional — seconds, default {seconds}": "isteğe bağlı — saniye, varsayılan {seconds}",
   "Context for the log analysis": "Log analizi için bağlam",
   "Nightly batch job logs connection resets; expected.": "Gece çalışan toplu iş bağlantı sıfırlamaları loglar; beklenen durum.",
   "Save changes": "Değişiklikleri kaydet",
@@ -317,5 +316,8 @@
   "Filter by state": "Duruma göre süz",
   "No machine is in this state right now.": "Şu an bu durumda makine yok.",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Listenin üstündeki rozetler onu tek bir işe daraltır; seçim adreste durur, böylece süzülmüş liste yer imlerine eklenebilir. Her koşunun sonucu renkli sayılardır — kırmızı başarısız olanlar, sarı bulgular, yeşil güncellenenler, gri atlanan ya da uykuda olanlar — ve kırmızı metin tümden başarısız olmuş bir koşuyu gösterir. Satırın sonundaki düğme raporun tamamını açar.",
-  "Filter by job": "İşe göre süz"
+  "Filter by job": "İşe göre süz",
+  "seconds, default {seconds}": "saniye, varsayılan {seconds}",
+  "More settings": "Daha fazla ayar",
+  "optional — seconds, default {seconds}": "isteğe bağlı — saniye, varsayılan {seconds}"
 }

@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 ou https://host.lan",
   "Update command": "Commande de mise à jour",
   "Update timeout": "Délai de mise à jour",
-  "optional — seconds, default {seconds}": "facultatif — secondes, {seconds} par défaut",
   "Context for the log analysis": "Contexte pour l’analyse des journaux",
   "Nightly batch job logs connection resets; expected.": "La tâche batch nocturne journalise des réinitialisations de connexion ; c’est attendu.",
   "Save changes": "Enregistrer les modifications",
@@ -317,5 +316,8 @@
   "Filter by state": "Filtrer par état",
   "No machine is in this state right now.": "Aucune machine n’est dans cet état pour le moment.",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Les pastilles au-dessus de la liste la limitent à une tâche ; le choix est dans l’adresse, une liste filtrée peut donc être mise en favori. Le résultat de chaque exécution, ce sont ses comptes en couleur — rouge pour ce qui a échoué, jaune pour les constats, vert pour ce qui a été mis à jour, gris pour ce qui a été ignoré ou était en veille — et un texte rouge signale une exécution qui a échoué entièrement. Le bouton en fin de ligne ouvre le rapport complet.",
-  "Filter by job": "Filtrer par tâche"
+  "Filter by job": "Filtrer par tâche",
+  "seconds, default {seconds}": "secondes, {seconds} par défaut",
+  "More settings": "Plus de réglages",
+  "optional — seconds, default {seconds}": "facultatif — secondes, {seconds} par défaut"
 }

@@ -127,7 +127,6 @@
   "10.0.0.5:8006 or https://host.lan": "10.0.0.5:8006 или https://host.lan",
   "Update command": "Команда обновления",
   "Update timeout": "Тайм-аут обновления",
-  "optional — seconds, default {seconds}": "необязательно — в секундах, по умолчанию {seconds}",
   "Context for the log analysis": "Контекст для анализа логов",
   "Nightly batch job logs connection resets; expected.": "Ночная пакетная задача пишет в лог сбросы соединения; это ожидаемо.",
   "Save changes": "Сохранить изменения",
@@ -317,5 +316,8 @@
   "Filter by state": "Фильтр по состоянию",
   "No machine is in this state right now.": "Сейчас нет машин в этом состоянии.",
   "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Метки над списком сужают его до одной задачи; выбор хранится в адресе, поэтому отфильтрованный список можно добавить в закладки. Итог каждого запуска — его счётчики в цвете: красный — что не удалось, жёлтый — находки, зелёный — что обновлено, серый — что пропущено или спит; красный текст означает запуск, который не удался целиком. Кнопка в конце строки открывает весь отчёт.",
-  "Filter by job": "Фильтр по задаче"
+  "Filter by job": "Фильтр по задаче",
+  "seconds, default {seconds}": "в секундах, по умолчанию {seconds}",
+  "More settings": "Другие настройки",
+  "optional — seconds, default {seconds}": "необязательно — в секундах, по умолчанию {seconds}"
 }
