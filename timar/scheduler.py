@@ -49,13 +49,15 @@ class Scheduler:
     # -- lifecycle -----------------------------------------------------------
 
     def start(self) -> None:
-        self._reconcile_interrupted()
+        handed_off = self._reconcile_interrupted()
+        if handed_off:
+            self._tasks.append(asyncio.create_task(self._finish_handed_off(handed_off)))
         for name in jobs.JOBS:
             self._tasks.append(asyncio.create_task(
                 self._supervise(f"job:{name}", lambda n=name: self._job_loop(n))
             ))
 
-    def _reconcile_interrupted(self) -> None:
+    def _reconcile_interrupted(self) -> dict | None:
         """Close out any run the last process died in the middle of.
 
         A job marked `running` in a process that has only just started cannot be running: the
@@ -68,9 +70,17 @@ class Scheduler:
         the operator finding an unexpectedly awake fleet deserves the entry that explains it.
         The archive gets a copy dated to when that run started, so the series shows a gap with a
         reason in it instead of an unexplained absence.
+
+        The one exception is an update run that had handed its last step — timar's own host —
+        off and was then restarted by it. That run is not interrupted, only unfinished; it is
+        returned so `start` can finish it, and stays `running` until then.
         """
+        handed_off = None
         for name in jobs.JOBS:
             if state.job(name).get("status") != state.RUNNING:
+                continue
+            if name == jobs.UPDATE and (handed_off := state.handoff(name)):
+                logger.info("update run was handed off to %s; finishing it", handed_off.get("unit"))
                 continue
             # None when the record carries no usable start time; the archive then falls back to
             # stamping now, which is worse than the truth but better than dropping the entry.
@@ -79,6 +89,26 @@ class Scheduler:
                            name, started or "unknown")
             reports.archive(name, title=jobs.TITLES.get(name, name), ok=False,
                             error=state.job(name).get("last_error", ""), when=started)
+        return handed_off
+
+    async def _finish_handed_off(self, handoff: dict) -> None:
+        """Wait out the update of timar's own host and record the run it belonged to.
+
+        Under the update lock, so neither a scheduled nor a manual run can start while the host's
+        packages are still being written — it would meet the dpkg lock and report that instead.
+        """
+        name = jobs.UPDATE
+        async with self._locks[name]:
+            self._running.add(name)
+            try:
+                outcome = await asyncio.to_thread(jobs.finish_handed_off_update, config.load(), handoff)
+                self._record(name, ok=True, summary=outcome.summary, report=outcome.report)
+                logger.info("%s finished after the restart: %s", name, outcome.summary)
+            except Exception as e:
+                logger.exception("finishing the handed-off update failed")
+                self._record(name, ok=False, error=f"{type(e).__name__}: {e}")
+            finally:
+                self._running.discard(name)
 
     async def stop(self) -> None:
         for task in self._tasks:

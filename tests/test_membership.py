@@ -85,7 +85,7 @@ class TestJobsHonourIt:
         write_known_hosts(data_dir, "10.0.0.1", "10.0.0.2", "10.0.0.3")
         visited = []
         monkeypatch.setattr(updater, "update_server",
-                            lambda server, m, b, cfg=None: visited.append(server["name"]) or [])
+                            lambda server, m, b, cfg=None, **kw: visited.append(server["name"]) or [])
         results = updater.run_updates({
             "servers": [{"name": "hv", "host": "10.0.0.1", "manages_vms": [{"vm_id": 1, "server_name": "vm"}]},
                         {"name": "vm", "host": "10.0.0.2"},

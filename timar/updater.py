@@ -4,8 +4,10 @@ The "as it was found" half is the point. A host that was off before the run is s
 it, so a weekly update sweep does not quietly leave a rack of on-demand machines running.
 """
 import logging
+import shlex
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime
 
 from . import cancel, containers as container_module, membership
 from .network import is_host_up, wait_for_host
@@ -25,6 +27,9 @@ class UpdateResult:
     skipped: bool = False
     error: str = ""
     note: str = ""      # a word about how it went, shown after the name — "left stopped"
+
+    def to_dict(self) -> dict:
+        return asdict(self)
 
 
 # How long one host's update command may take. The old value was 300s, which is shorter than
@@ -162,7 +167,9 @@ def _update_containers(ssh, server_cfg: dict, entries: list[dict]) -> list[Updat
 
 
 def update_server(server_cfg: dict, servers_map: dict,
-                  containers_by_server: dict | None = None, cfg: dict | None = None) -> list[UpdateResult]:
+                  containers_by_server: dict | None = None, cfg: dict | None = None,
+                  defer: str | None = None) -> list[UpdateResult]:
+    """Update one host and the VMs it starts. `defer` is a guest left for later: timar's own."""
     name = server_cfg["name"]
     host = server_cfg["host"]
     platform = get_platform(server_cfg.get("platform"))
@@ -210,6 +217,8 @@ def update_server(server_cfg: dict, servers_map: dict,
             break       # still falls through to shutting this host down if it was woken
         vm_id = vm_entry["vm_id"]
         vm_name = vm_entry["server_name"]
+        if vm_name == defer:
+            continue    # timar's own host; `run_updates` does it last, see `update_self`
         vm_cfg = servers_map.get(vm_name)
         if not vm_cfg:
             logger.warning("VM %s not found in servers config", vm_name)
@@ -285,7 +294,156 @@ def update_server(server_cfg: dict, servers_map: dict,
     return results
 
 
-def run_updates(cfg) -> list[UpdateResult]:
+# -- the host timar runs on --------------------------------------------------------------------
+#
+# Updating it from inside is how a run killed itself: the 2026-10-02 run upgraded docker-ce on
+# that host as its first step, dockerd restarted, took this container with it twenty seconds in,
+# and the run was recorded as "Interrupted" with the rest of the fleet untouched. Worse than the
+# lost run, apt was a child of the SSH session the dying container held, so a dpkg run could be
+# cut off half-way through by its own update. It finished that time; nothing made it.
+#
+# So the host goes last, its containers before its packages, and the package update is handed to
+# the host's own systemd, started with a delay long enough for the run to be recorded first.
+
+SELF_UNIT = "timar-self-update"
+SELF_LOG = "/var/log/timar-self-update.log"
+SELF_RC = "/var/log/timar-self-update.rc"
+
+# Long enough to archive the report and send the notification before dockerd might restart.
+# `AccuracySec=1s` matters as much as the number: a transient timer's default accuracy is one
+# minute, and a 3-second timer measured on Debian 13 had not fired after six.
+HANDOFF_DELAY = 60
+POLL_INTERVAL = 15
+
+_AS_ROOT = 'if [ "$(id -u)" = 0 ]; then S=; else S="sudo -n"; fi; '
+
+
+def find_self_host(cfg: dict) -> str | None:
+    """The configured server whose Docker runs this process, or None.
+
+    Asked of the servers that have container projects registered, which is where timar's own
+    project is listed: a host with no Docker on it cannot be running this container, and asking
+    every machine would wake nothing but would still cost a connection to each of them.
+    """
+    me = container_module.self_container_id()
+    if not me:
+        return None
+    servers_map = {s["name"]: s for s in cfg.get("servers", [])}
+    candidates = dict.fromkeys(e.get("server") for e in cfg.get("containers") or [])
+    for name in candidates:
+        server = servers_map.get(name)
+        if not server or not is_host_up(server["host"]):
+            continue
+        try:
+            with connect(server["host"], server["user"], resolve_ssh_key(server)) as ssh:
+                out, _, code = run(ssh, container_module.DOCKER
+                                   + f"$D inspect --format '{{{{.Id}}}}' {me}", timeout=30)
+        except Exception as e:
+            logger.warning("could not ask %s whether timar runs there: %s", name, e)
+            continue
+        if code == 0 and out.strip() == me:
+            return name
+    logger.info("timar's own host was not found among the container hosts; config order is kept")
+    return None
+
+
+def self_update_command(update_cmd: str, unit: str) -> str:
+    """The update command, wrapped to run under the host's systemd instead of this session.
+
+    The exit status is written to a file rather than read back from systemd: `--collect` unloads
+    the unit once it finishes (without it, a failed unit stays loaded and the next run cannot
+    reuse the name), so there is nothing left to ask. Measured on Debian 13: nothing remains.
+    """
+    inner = (f"umask 022; ( {update_cmd} ) > {SELF_LOG} 2>&1; "
+             f"echo $? > {SELF_RC}.tmp && mv {SELF_RC}.tmp {SELF_RC}")
+    return (_AS_ROOT + f"$S rm -f {SELF_RC} && $S systemd-run --quiet --collect --unit={unit} "
+            f"--on-active={HANDOFF_DELAY} --timer-property=AccuracySec=1s "
+            f"/bin/sh -c {shlex.quote(inner)}")
+
+
+def _self_update_status(ssh, unit: str) -> tuple[str, int | None, str]:
+    """("done", rc, log tail), ("pending", None, "") or ("gone", None, "")."""
+    out, _, _ = run(ssh, _AS_ROOT
+                    + f"if [ -f {SELF_RC} ]; then echo done $(cat {SELF_RC}); $S tail -c 4000 {SELF_LOG}; "
+                    f"elif systemctl list-units --all --plain --no-legend '{unit}.*' | grep -q .; "
+                    f"then echo pending; else echo gone; fi", timeout=30)
+    first, _, rest = out.partition("\n")
+    word, _, code = first.strip().partition(" ")
+    if word == "done":
+        try:
+            return "done", int(code), rest
+        except ValueError:
+            return "done", 1, rest
+    return (word if word == "pending" else "gone"), None, ""
+
+
+def wait_for_self_update(server_cfg: dict, unit: str, deadline: float,
+                         note: str = "") -> UpdateResult:
+    """Wait for the handed-off update to finish and report it like any other host.
+
+    Each check is its own connection: the one the run started on may not survive what the
+    update does, and the process asking may itself be a fresh one after a restart.
+    """
+    name = server_cfg["name"]
+    while True:
+        try:
+            with connect(server_cfg["host"], server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
+                status, rc, log = _self_update_status(ssh, unit)
+        except Exception as e:
+            logger.warning("%s: could not check the update yet: %s", name, e)
+            status, rc, log = "pending", None, ""
+        if status == "done":
+            if rc == 0:
+                return UpdateResult(server=name, success=True, note=note)
+            return UpdateResult(server=name, success=False,
+                                error=f"exit {rc}: {_tail(log) or 'no output'} (full log: {SELF_LOG})")
+        if status == "gone":
+            # Not started and not finished: the host restarted, or someone stopped the unit.
+            return UpdateResult(server=name, success=False,
+                                error=f"the update was handed to {unit} and never reported back")
+        if time.time() > deadline:
+            # Not killed, for the reason any other host's update is not: see DEFAULT_UPDATE_TIMEOUT.
+            return UpdateResult(server=name, success=False,
+                                error=f"still running when the time ran out — see {SELF_LOG}")
+        time.sleep(POLL_INTERVAL)
+
+
+def update_self(server_cfg: dict, entries: list[dict], done: list[UpdateResult],
+                on_handoff=None) -> list[UpdateResult]:
+    """Update timar's own host: its containers first, then its packages, handed off.
+
+    `on_handoff(results, host, unit, deadline)` is told once the update is out of this
+    process's hands, with everything finished so far, so that a restart that kills the run from
+    here on can still finish its report instead of calling the whole run interrupted.
+    """
+    name = server_cfg["name"]
+    platform = get_platform(server_cfg.get("platform"))
+    update_cmd = server_cfg.get("update_cmd") or platform.default_update_cmd
+    results: list[UpdateResult] = []
+    try:
+        with connect(server_cfg["host"], server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
+            # Before the packages: a dockerd restart stops this process, and a container project
+            # updated afterwards would be updated by nobody.
+            results.extend(_update_containers(ssh, server_cfg, entries))
+            if not update_cmd:
+                return results + [UpdateResult(server=name, success=True, skipped=True,
+                                               error=f"no update command configured for {platform.label}")]
+            unit = f"{SELF_UNIT}-{datetime.now():%Y%m%d%H%M%S}"
+            out, err, code = run(ssh, self_update_command(update_cmd, unit), timeout=60)
+    except Exception as e:
+        logger.exception("update %s", name)
+        return results + [UpdateResult(server=name, success=False, error=str(e))]
+    if code != 0:
+        return results + [UpdateResult(server=name, success=False, error=failure_detail(out, err))]
+
+    deadline = time.time() + HANDOFF_DELAY + _timeout_for(server_cfg)
+    logger.info("Updating %s (timar's own host) through %s ...", name, unit)
+    if on_handoff:
+        on_handoff(done + results, name, unit, deadline)
+    return results + [wait_for_self_update(server_cfg, unit, deadline)]
+
+
+def run_updates(cfg, on_handoff=None) -> list[UpdateResult]:
     servers = cfg.get("servers", [])
     servers_map = {s["name"]: s for s in servers}
 
@@ -299,9 +457,15 @@ def run_updates(cfg) -> list[UpdateResult]:
     for entry in cfg.get("containers") or []:
         containers_by_server.setdefault(entry.get("server"), []).append(entry)
 
+    # Last, after everything that is woken and shut down again: the step that may restart this
+    # process is then the only one left. Its hypervisor goes before it in the ordinary order,
+    # which is safe because timar never reboots a host — upgraded hypervisor packages take effect
+    # on a running VM only when it restarts. Rebooting hypervisors would change that.
+    self_name = find_self_host(cfg)
+
     all_results = []
     for server in servers:
-        if server["name"] in managed_vms:
+        if server["name"] in managed_vms or server["name"] == self_name:
             continue
         if cancel.requested("update"):
             logger.info("update run stopped by the operator before %s", server["name"])
@@ -311,10 +475,21 @@ def run_updates(cfg) -> list[UpdateResult]:
             all_results.append(UpdateResult(server=server["name"], success=True, skipped=True,
                                             was_running=False, error=reason))
             for vm in server.get("manages_vms", []):
+                if vm["server_name"] == self_name:
+                    continue    # reported once, below
                 all_results.append(UpdateResult(server=vm["server_name"], success=True, skipped=True,
                                                 was_running=False,
                                                 error=f"its hypervisor {server['name']} is not in this run"))
             continue
-        all_results.extend(update_server(server, servers_map, containers_by_server, cfg))
+        all_results.extend(update_server(server, servers_map, containers_by_server, cfg,
+                                         defer=self_name))
+
+    if self_name and not cancel.requested("update"):
+        server = servers_map[self_name]
+        if reason := membership.skip_reason(cfg, "update", server):
+            all_results.append(UpdateResult(server=self_name, success=True, skipped=True, error=reason))
+        else:
+            all_results.extend(update_self(server, containers_by_server.get(self_name, []),
+                                           all_results, on_handoff))
 
     return all_results

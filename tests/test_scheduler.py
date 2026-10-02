@@ -272,6 +272,38 @@ class TestInterruptedRuns:
         assert reports.listing(jobs.UPDATE)[0]["ok"] is False
 
     @pytest.mark.asyncio
+    async def test_a_handed_off_update_is_finished_not_called_interrupted(self, data_dir, monkeypatch):
+        """The restart was the update of timar's own host doing what it was handed off to do.
+        The hosts already finished must reach the report, not vanish behind "Interrupted"."""
+        from timar import jobs, reports, scheduler as scheduler_module, state
+
+        state.mark_started(jobs.UPDATE)
+        handoff = {"results": [{"server": "web-01", "success": True}], "host": "docker-01",
+                   "unit": "u", "deadline": 0}
+        state.set_handoff(jobs.UPDATE, handoff)
+
+        sched = scheduler_module.Scheduler()
+        assert sched._reconcile_interrupted() == handoff
+        assert state.job(jobs.UPDATE)["status"] == state.RUNNING
+        assert reports.listing(jobs.UPDATE) == []
+
+        monkeypatch.setattr(jobs, "finish_handed_off_update",
+                            lambda cfg, h: jobs.Outcome("2 updated, 0 failed, 0 skipped", "report"))
+        await sched._finish_handed_off(handoff)
+        record = state.job(jobs.UPDATE)
+        assert record["status"] == state.OK and record["last_summary"].startswith("2 updated")
+        # Cleared with the run, so it cannot be mistaken for next week's.
+        assert state.handoff(jobs.UPDATE) is None
+
+    @pytest.mark.asyncio
+    async def test_a_new_run_forgets_an_old_hand_off(self, data_dir):
+        from timar import jobs, state
+
+        state.set_handoff(jobs.UPDATE, {"host": "docker-01", "unit": "u", "deadline": 0})
+        state.mark_started(jobs.UPDATE)
+        assert state.handoff(jobs.UPDATE) is None
+
+    @pytest.mark.asyncio
     async def test_a_finished_run_is_left_alone(self, data_dir):
         from timar import jobs, reports, scheduler as scheduler_module, state
 

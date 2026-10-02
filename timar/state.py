@@ -62,7 +62,7 @@ def _update_job(name: str, **fields: Any) -> dict:
 
 
 def mark_started(name: str) -> None:
-    _update_job(name, status=RUNNING, started_at=_now(), last_error="")
+    _update_job(name, status=RUNNING, started_at=_now(), last_error="", handoff=None)
 
 
 def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "",
@@ -82,7 +82,23 @@ def mark_finished(name: str, *, ok: bool, summary: str = "", error: str = "",
         last_summary=summary,
         last_error=error,
         last_report=report,
+        handoff=None,
     )
+
+
+def set_handoff(name: str, handoff: dict) -> None:
+    """Record that a running job has handed its last step to a process it may not outlive.
+
+    The update of timar's own host can restart this process. Without this record the restart
+    looks like any other — "Interrupted", the finished hosts' results gone — when the run had
+    done everything but wait. With it, the next process picks the wait up and finishes the run.
+    Cleared by `mark_started` and `mark_finished`, so it can only describe the run in progress.
+    """
+    _update_job(name, handoff=handoff)
+
+
+def handoff(name: str) -> dict | None:
+    return job(name).get("handoff") or None
 
 
 def mark_interrupted(name: str) -> datetime | None:
