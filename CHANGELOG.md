@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.19] — 2026-10-02
+
 ### Fixed
 
 - **An update run no longer stops itself.** Updating Docker on the host timar runs on
