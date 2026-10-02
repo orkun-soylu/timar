@@ -1479,6 +1479,15 @@ class TestReportArchive:
         body = client.get("/reports?job=update").text
         assert "3 updated" in body and "1 with findings" not in body
 
+    def test_a_finished_time_is_marked_for_the_relative_form_and_reads_without_it(self, client):
+        """The script turns it into "2 hours ago"; without scripting it is the minute it ended."""
+        import re
+        complete_setup(client)
+        self.archive("update", title="Update run", summary="3 updated")
+        body = client.get("/reports").text
+        stamp = re.search(r'<time datetime="(\d{4}-\d\d-\d\dT\d\d:\d\d[^"]*)" data-rel>([^<]+)</time>', body)
+        assert stamp and stamp.group(2) == stamp.group(1)[:16].replace("T", " ")
+
     def test_an_unknown_job_shows_an_empty_list_rather_than_an_error(self, client):
         """The value can come from a stale bookmark naming a job that no longer exists."""
         complete_setup(client)

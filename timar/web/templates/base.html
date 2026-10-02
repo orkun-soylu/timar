@@ -305,6 +305,38 @@
       timer = setTimeout(function () { toast.classList.remove("shown"); }, 3000);
     });
   })();
+
+  // Relative times (_when.html): "in 9 hours", "2 days ago", in the page's language through the
+  // browser's own Intl, so no catalog has to carry them. A week or more away is a date again —
+  // "23 days ago" makes the reader do arithmetic the date would not. Redrawn after every swap
+  // and once a minute, so "in 3 minutes" does not go stale on a page left open.
+  // Under a day is minutes or hours; from a day on, calendar days.
+  (function () {
+    var lang = document.documentElement.lang || undefined;
+    var rtf = window.Intl && Intl.RelativeTimeFormat ? new Intl.RelativeTimeFormat(lang, {numeric: "auto"}) : null;
+    var STEPS = [[60, "second", 1], [3600, "minute", 60], [86400, "hour", 3600], [604800, "day", 86400]];
+    function draw(root) {
+      if (!rtf) return;
+      (root || document).querySelectorAll("time[data-rel]").forEach(function (el) {
+        if (!el.dataset.abs) el.dataset.abs = el.textContent.trim();
+        var t = new Date(el.getAttribute("datetime")), s = (t - Date.now()) / 1000, a = Math.abs(s);
+        el.title = el.dataset.abs;
+        if (isNaN(t) || a >= 604800) { el.textContent = el.dataset.abs.slice(0, 10); return; }
+        if (a < 45) { el.textContent = rtf.format(0, "second"); return; }
+        for (var i = 1; i < STEPS.length - 1; i++) {
+          if (a < STEPS[i][0]) { el.textContent = rtf.format(Math.round(s / STEPS[i][2]), STEPS[i][1]); return; }
+        }
+        // Days count calendar days, not 24-hour blocks: 04:00 the day after tomorrow is 28 hours
+        // from 23:49 tonight, and rounding hours would call it "tomorrow".
+        var d0 = new Date(), d1 = new Date(t);
+        d0.setHours(0, 0, 0, 0); d1.setHours(0, 0, 0, 0);
+        el.textContent = rtf.format(Math.round((d1 - d0) / 86400000), "day");
+      });
+    }
+    draw();
+    document.body.addEventListener("htmx:afterSwap", function (e) { draw(e.detail.target); });
+    setInterval(draw, 60000);
+  })();
 </script>
 </body>
 </html>

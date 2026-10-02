@@ -18,6 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Times read relatively:** "2 hours ago", "in 8 hours", "yesterday", "in 2 days", in the page's
+  language through the browser's own `Intl`. A week or more away is shown as the date. The exact
+  minute is the tooltip, and also the text when scripting is off. Seconds are gone. Relative
+  times assume the browser and timar share a time zone, since timar stores local times.
 - **Reports: outcomes are coloured chips.** "9 updated, 1 failed, 3 skipped" becomes a green, a
   red and a grey pill, and counts of zero are left out. A clean sweep starts with a green "all
   clear". This applies to the reports list and to each job's row under *Scheduled work*. The stored

@@ -1,6 +1,7 @@
 {# Polled standalone, so no `extends`. #}
 {% from "_icons.html" import icon %}
 {% from "_outcome.html" import outcome %}
+{% from "_when.html" import when %}
 <div class="table-scroll">
 <table>
   <thead>
@@ -24,12 +25,12 @@
         {% elif job.last_run %}
           {# The load-bearing field. A job that stops being scheduled writes no error
              anywhere; a stale timestamp here is the only thing that reveals it. #}
-          <span class="{{ 'ok' if job.status == 'ok' else 'error' }}">{{ job.last_run | replace("T", " ") }}</span>
+          <span class="{{ 'ok' if job.status == 'ok' else 'error' }}">{{ when(job.last_run) }}</span>
         {% else %}
           <span class="muted">{{ _("never") }}</span>
         {% endif %}
       </td>
-      <td class="muted">{{ job.next_run | replace("T", " ") if job.next_run else "—" }}</td>
+      <td class="muted">{{ when(job.next_run) }}</td>
       <td style="text-align:right; white-space:nowrap">
         <div class="icon-row">
         {# The full history is the list below this panel, so the row carries what changes the
