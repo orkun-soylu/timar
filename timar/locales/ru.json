@@ -320,5 +320,10 @@
   "seconds, default {seconds}": "в секундах, по умолчанию {seconds}",
   "More settings": "Другие настройки",
   "optional — seconds, default {seconds}": "необязательно — в секундах, по умолчанию {seconds}",
-  "a floating tag: each update run moves it to the newest image": "плавающий тег: каждый запуск обновления переносит его на самый новый образ"
+  "a floating tag: each update run moves it to the newest image": "плавающий тег: каждый запуск обновления переносит его на самый новый образ",
+  "{name} is watched only — timar has no SSH to it": "{name} только наблюдается — у timar нет к нему доступа по SSH",
+  "No SSH — only watch it and link to it": "Без SSH — только наблюдать и ссылаться",
+  "Logo": "Логотип",
+  "Logo must be one of the listed ones.": "Логотип должен быть одним из перечисленных.",
+  "{name} is watched only — there is nothing to enrol.": "{name} только наблюдается — подключать нечего."
 }

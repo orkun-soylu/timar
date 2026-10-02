@@ -31,6 +31,7 @@ from ..i18n import gettext as _
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
 from . import outcome
+from .. import osinfo as osinfo_module
 from .auth import require_operator
 
 # Every route in this file is behind the session guard. Declared once on the router rather than
@@ -74,6 +75,7 @@ def _server_values(servers: list[dict], guest_of: dict, edit: str | None,
             # The box shows what Timar will *do*, not which flag was written: a machine with a
             # MAC, or a guest of an on-demand host, is on-demand without one.
             return {**server,
+                    "no_ssh": not config.has_ssh(server),
                     "hypervisor": link.get("hypervisor", ""),
                     "vm_id": link.get("vm_id", ""),
                     "on_demand": edit in config.on_demand(servers)}
@@ -133,6 +135,7 @@ def _server_form(request: Request, *, edit: str | None = None, submitted: dict |
         "editing": editing,
         "values": _server_values(servers, guest_of, editing, submitted),
         "platforms": list(PLATFORMS),
+        "device_logos": sorted({**osinfo_module.DEVICE_LOGOS, **osinfo_module.LOGOS}.items(), key=lambda kv: kv[1].casefold()),
         "platform_defaults": [(p.id, p.label, p.default_update_cmd) for p in PLATFORMS.values()],
         "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
         "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
@@ -309,6 +312,9 @@ async def save_server(request: Request):
     fleet_status.invalidate()  # the dashboard must not show a stale probe for a changed address
     if not enrolling:
         return _done(request)
+    if not config.has_ssh(entry):
+        return _server_form(request, edit=entry["name"], status_code=400,
+                            enrol_error=_("{name} is watched only — there is nothing to enrol.", name=entry["name"]))
 
     result, error = await asyncio.to_thread(
         _enrol, entry, password, form.get("grant_sudo") in ("on", "true", "1"))

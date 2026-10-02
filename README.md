@@ -108,6 +108,29 @@ servers:
 Edit the file inside the volume — `docker exec -it timar vi /data/config.yaml`, or copy it out
 and back with `docker cp`. It is read on every request: no restart.
 
+### Devices without SSH
+
+An access point or a NAS appliance belongs on the servers page too, with its link, even though
+timar cannot log in to it. Tick **No SSH — only watch it and link to it** in its form, or write
+`ssh: false` in `config.yaml`:
+
+```yaml
+servers:
+  - name: access-point
+    host: 10.0.0.2
+    platform: linux          # required by the form, otherwise unused
+    ssh: false
+    logo: tplink             # synology, qnap, truenas, unraid, tplink, ubiquiti, mikrotik, …
+    web_url: "https://10.0.0.2"
+```
+
+Such a device:
+- is probed on its web port (443, then 80) instead of SSH, or on the port its address carries;
+- is drawn with the logo its entry names, since nothing can be read from it, and its *System*
+  cell names that logo;
+- is never enrolled, swept, updated or shut down, and is left out of the job lists and reports.
+  A Wake-on-LAN MAC still works.
+
 ### Links to programs
 
 A server's *web interface* is normally a panel: `https://` (added if you leave it out) or

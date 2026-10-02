@@ -86,6 +86,8 @@ def excluded(cfg: dict, job: str) -> set[str]:
 
 def skip_reason(cfg: dict, job: str, server: dict) -> str | None:
     """Why a job does not run on this server, or None when it does."""
+    if not config.has_ssh(server):
+        return "watched only, no SSH"
     if server["name"] in excluded(cfg, job):
         return "left out of this job"
     if not is_enrolled(server):
@@ -98,6 +100,8 @@ def lists(cfg: dict, job: str) -> tuple[list[dict], list[dict], list[dict]]:
     out = excluded(cfg, job)
     runs, left, unenrolled = [], [], []
     for server in sorted(cfg.get("servers", []), key=lambda s: s["name"].casefold()):
+        if not config.has_ssh(server):
+            continue    # not a member of any job, and nothing to enrol: not listed at all
         if not is_enrolled(server):
             unenrolled.append(server)
         elif server["name"] in out:

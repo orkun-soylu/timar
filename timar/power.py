@@ -98,6 +98,9 @@ def shutdown(server: dict, servers: list[dict]) -> str:
                        timeout=GUEST_SHUTDOWN_TIMEOUT + 15)
         logger.info("shut down %s (vm %s) via %s", name, vm_id, hypervisor["name"])
         return _("{name} shut down via {hypervisor}", name=name, hypervisor=hypervisor["name"])
+    if not config.has_ssh(server):
+        # The page offers no button for it; this refuses a hand-made request the same way.
+        raise PowerError(_("{name} is watched only — timar has no SSH to it", name=name))
 
     platform = get_platform(server.get("platform"))
     user = server["user"]

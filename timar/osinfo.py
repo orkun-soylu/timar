@@ -35,6 +35,19 @@ LOGOS = {
     "opensuse": "openSUSE", "nixos": "NixOS", "linuxmint": "Linux Mint",
 }
 
+# For a device timar does not log in to (`ssh: false`), whose system cannot be read: its entry
+# names one of these as `logo`, or any OS logo above. Also in the sprite.
+DEVICE_LOGOS = {
+    "synology": "Synology", "qnap": "QNAP", "truenas": "TrueNAS", "unraid": "Unraid",
+    "tplink": "TP-Link", "ubiquiti": "Ubiquiti", "mikrotik": "MikroTik", "netgear": "NETGEAR",
+    "asus": "ASUS",
+}
+
+
+def logo_name(slug: str) -> str:
+    return LOGOS.get(slug) or DEVICE_LOGOS.get(slug) or "Linux"
+
+
 # `os-release` IDs whose logo is named differently. Everything else is looked up as itself.
 _BY_ID = {
     "kali": "kalilinux", "raspbian": "raspberrypi", "alpine": "alpinelinux", "arch": "archlinux",
@@ -135,12 +148,18 @@ def note(ssh, address: str) -> None:
 
 
 def system(server: dict, known: dict[str, str]) -> str:
-    """The servers table's *System* cell: what was read, else the platform."""
+    """The servers table's *System* cell: what was read, else the platform. A device timar does
+    not log in to has nothing read; its cell names the logo it was given, if any."""
+    if not config.has_ssh(server):
+        return logo_name(server["logo"]) if server.get("logo") in (LOGOS | DEVICE_LOGOS) else "—"
     return known.get(address_key(server["host"])) or server.get("platform", "linux")
 
 
 def logo(server: dict, known: dict[str, str] | None = None) -> str:
     """The slug drawn before a server's name."""
+    if not config.has_ssh(server):
+        # Nothing can be read without logging in: the entry says what it is.
+        return server["logo"] if server.get("logo") in (LOGOS | DEVICE_LOGOS) else "linux"
     platform = server.get("platform", "linux")
     if platform == "proxmox":
         return "proxmox"    # its os-release says Debian; the platform says what it is

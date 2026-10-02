@@ -173,6 +173,10 @@
     .field-with-action > button { margin-bottom: 1rem; white-space: nowrap; }
     /* Folded settings: a quiet line that opens to the fields under it. */
     details.more { margin: 0 0 0.5rem; }
+    /* The server form's "No SSH" box: ticked, the SSH fields give way to the logo picker. */
+    .ssh-section .watched-only { display: none; }
+    .ssh-section:has(input[name=no_ssh]:checked) .watched-only { display: block; }
+    .ssh-section:has(input[name=no_ssh]:checked) .ssh-fields { display: none; }
     details.more > summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.8rem; }
     details.more > summary:hover { color: var(--text); }
     details.more:not([open]) > summary { margin-bottom: 0; }

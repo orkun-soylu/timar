@@ -320,5 +320,10 @@
   "seconds, default {seconds}": "单位为秒，默认 {seconds}",
   "More settings": "更多设置",
   "optional — seconds, default {seconds}": "可选 — 单位为秒，默认 {seconds}",
-  "a floating tag: each update run moves it to the newest image": "浮动标签：每次更新运行都会将其移到最新的镜像"
+  "a floating tag: each update run moves it to the newest image": "浮动标签：每次更新运行都会将其移到最新的镜像",
+  "{name} is watched only — timar has no SSH to it": "{name} 仅被监视——timar 没有它的 SSH 访问",
+  "No SSH — only watch it and link to it": "无 SSH — 仅监视并链接",
+  "Logo": "图标",
+  "Logo must be one of the listed ones.": "图标必须是列表中的一个。",
+  "{name} is watched only — there is nothing to enrol.": "{name} 仅被监视——没有可注册的内容。"
 }

@@ -25,7 +25,8 @@ class TestServer:
         """
         maximal = server({**MINIMAL, "wol_mac": "aa:bb:cc:dd:ee:ff",
                           "update_cmd": "true", "context": "a note",
-                          "update_timeout": "3600", "web_url": "10.0.0.1:8006"},
+                          "update_timeout": "3600", "web_url": "10.0.0.1:8006",
+                          "no_ssh": "on", "logo": "synology"},
                          {"other-01"})
         # `on_demand` is the one field a MAC excludes, so it cannot be in the same entry.
         assert set(maximal) == SERVER_FIELDS - {"on_demand"}
@@ -164,6 +165,25 @@ class TestLinkSchemes:
         with pytest.raises(ValidationError) as e:
             server(MINIMAL | {"web_url": "javascript://x"}, set())
         assert "link_schemes" not in str(e.value.errors)
+
+
+class TestWatchedOnly:
+    """A device timar only watches and links to: an access point, a NAS appliance."""
+
+    def test_it_needs_no_ssh_user_and_keeps_its_logo(self):
+        entry = server({"name": "ap", "host": "10.0.0.2", "platform": "linux",
+                        "no_ssh": "on", "logo": "tplink", "web_url": "https://ap.lan"}, set())
+        assert entry["ssh"] is False and entry["logo"] == "tplink" and entry["user"] == ""
+
+    def test_a_logo_not_in_the_sprite_is_refused(self):
+        """It lands in an href fragment; only the listed names may."""
+        with pytest.raises(ValidationError, match="Logo"):
+            server({"name": "ap", "host": "10.0.0.2", "platform": "linux", "no_ssh": "on",
+                    "logo": '"><script>'}, set())
+
+    def test_without_the_box_the_user_is_still_required(self):
+        with pytest.raises(ValidationError, match="SSH user"):
+            server({"name": "x", "host": "10.0.0.2", "platform": "linux", "logo": "tplink"}, set())
 
 
 class TestLogCheck:

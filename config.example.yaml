@@ -152,6 +152,14 @@ log_check:
 #   base_url: http://192.0.2.40:11434
 #   model: <the model you have pulled>
 
+# A device timar only watches and links to -- an access point, a NAS appliance -- needs no user:
+#  - name: access-point
+#    host: 192.0.2.2
+#    platform: linux
+#    ssh: false            # probed on 443/80, never logged in to, in no job
+#    logo: tplink          # what it is drawn as; nothing can be read from it
+#    web_url: "https://192.0.2.2"
+
 # Optional: extra schemes a server's web_url may use, for links that open a program rather than
 # a page -- a handler registered on the operator's machine, such as claude://open. http and https
 # are always allowed. javascript, data, vbscript, file and blob can never be: they would run inside
