@@ -319,5 +319,6 @@
   "Filter by job": "按任务筛选",
   "seconds, default {seconds}": "单位为秒，默认 {seconds}",
   "More settings": "更多设置",
-  "optional — seconds, default {seconds}": "可选 — 单位为秒，默认 {seconds}"
+  "optional — seconds, default {seconds}": "可选 — 单位为秒，默认 {seconds}",
+  "a floating tag: each update run moves it to the newest image": "浮动标签：每次更新运行都会将其移到最新的镜像"
 }

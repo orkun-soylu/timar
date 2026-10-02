@@ -206,6 +206,23 @@ class TestShortImage:
         assert containers.short_image(image) == shown
 
 
+class TestFloatingTag:
+    """A tag the update run moves is marked; a pinned one, an id or a local build is not."""
+
+    @pytest.mark.parametrize("image, floating", [
+        ("traefik:latest", True),
+        ("vaultwarden/server:latest", True),
+        ("ollama/ollama", True),                         # from a registry, no tag: latest
+        ("localhost:5000/team/app", True),               # a registry port is not a tag
+        ("ghcr.io/immich-app/immich-server:v2", False),
+        ("postgres:14@sha256:" + "b" * 64, False),
+        ("app-app-backend", False),                      # a local build is not pulled
+        ("sha256:" + "a" * 64, False),
+    ])
+    def test_which(self, image, floating):
+        assert containers.is_floating(image) is floating
+
+
 class TestPage:
     @pytest.fixture
     def page(self, client, monkeypatch):
@@ -252,7 +269,7 @@ class TestPage:
                                                image="ghcr.io/immich-app/immich-server:v2"))))
         containers.invalidate()
         rows = client.get("/fragments/containers").text
-        assert '<code title="ghcr.io/immich-app/immich-server:v2">immich-server:v2</code>' in rows
+        assert '<code title="ghcr.io/immich-app/immich-server:v2">immich-server<span class="tag">:v2</span></code>' in rows
 
     def test_the_host_and_its_directory_are_on_two_lines(self, page):
         rows = page.get("/fragments/containers").text

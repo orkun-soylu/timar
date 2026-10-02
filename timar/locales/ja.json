@@ -319,5 +319,6 @@
   "Filter by job": "ジョブで絞り込む",
   "seconds, default {seconds}": "秒、既定値 {seconds}",
   "More settings": "その他の設定",
-  "optional — seconds, default {seconds}": "任意 — 秒、既定値 {seconds}"
+  "optional — seconds, default {seconds}": "任意 — 秒、既定値 {seconds}",
+  "a floating tag: each update run moves it to the newest image": "移動するタグ: 更新のたびに最新のイメージに移ります"
 }

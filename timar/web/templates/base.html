@@ -87,6 +87,9 @@
     .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
     .chip-tail { color: var(--muted); font-size: 0.8rem; }
     .chip-asleep { color: var(--asleep); }
+    /* An image tag that moves (`:latest`): softer, with a dashed underline that the tooltip
+       explains. A pinned tag is left as it is. */
+    .tag-floating { opacity: 0.6; text-decoration: underline dashed; text-underline-offset: 3px; }
     /* A row of counts that filter — the servers summary, the reports' jobs. A zero stays,
        dimmed; the picked one is filled. */
     .chip-bar { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }

@@ -319,5 +319,6 @@
   "Filter by job": "İşe göre süz",
   "seconds, default {seconds}": "saniye, varsayılan {seconds}",
   "More settings": "Daha fazla ayar",
-  "optional — seconds, default {seconds}": "isteğe bağlı — saniye, varsayılan {seconds}"
+  "optional — seconds, default {seconds}": "isteğe bağlı — saniye, varsayılan {seconds}",
+  "a floating tag: each update run moves it to the newest image": "kayan etiket: her güncelleme turu onu en yeni imaja taşır"
 }

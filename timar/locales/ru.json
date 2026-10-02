@@ -319,5 +319,6 @@
   "Filter by job": "Фильтр по задаче",
   "seconds, default {seconds}": "в секундах, по умолчанию {seconds}",
   "More settings": "Другие настройки",
-  "optional — seconds, default {seconds}": "необязательно — в секундах, по умолчанию {seconds}"
+  "optional — seconds, default {seconds}": "необязательно — в секундах, по умолчанию {seconds}",
+  "a floating tag: each update run moves it to the newest image": "плавающий тег: каждый запуск обновления переносит его на самый новый образ"
 }

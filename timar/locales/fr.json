@@ -319,5 +319,6 @@
   "Filter by job": "Filtrer par tâche",
   "seconds, default {seconds}": "secondes, {seconds} par défaut",
   "More settings": "Plus de réglages",
-  "optional — seconds, default {seconds}": "facultatif — secondes, {seconds} par défaut"
+  "optional — seconds, default {seconds}": "facultatif — secondes, {seconds} par défaut",
+  "a floating tag: each update run moves it to the newest image": "une étiquette mobile : chaque mise à jour la déplace vers l’image la plus récente"
 }

@@ -18,6 +18,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Containers: floating tags are marked.** `:latest`, or no tag at all on an image from a
+  registry, is drawn softer with a dashed underline. Its tooltip says each update run moves it to
+  the newest image. Pinned tags, image ids and local builds are left as they are.
 - **A shorter server dialog.** The update timeout and the log-analysis context fold under
   *More settings*, which opens by itself when either holds a value. They no longer repeat
   "optional". *Enrol* sits beside the password field it uses.
