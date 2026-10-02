@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Each server's light is its logo.** The dot before a server's name is now its operating
+  system's logo (Debian, Ubuntu, Kali, Fedora, Arch, Alpine and others), or its appliance's
+  (Proxmox VE and Proxmox Datacenter Manager, OctoPrint). It is coloured by state: green up,
+  grey asleep, red down. The OS is read during enrolment, the log sweep and the update run,
+  never by the status probe. The hover text names the logo. A machine timar has not connected
+  to yet shows its platform's logo, or Linux's. Logos are Simple Icons (CC0), vendored, so
+  nothing is fetched at runtime.
+
 ## [0.2.20] — 2026-10-02
 
 ### Added

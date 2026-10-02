@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from . import config, validate
+from . import config, osinfo, validate
 from .network import address_key, is_host_up
 
 REFRESH_EVERY = 10.0
@@ -43,6 +43,12 @@ class HostStatus:
     # The machine's own web interface. The name becomes a link to it while the machine is up —
     # only then, because a link to a panel that is off is a click that ends in a timeout.
     web_url: str | None = None
+    # The logo before the name — what the machine is, coloured by its state. See `osinfo`.
+    logo: str = "linux"
+
+    @property
+    def logo_name(self) -> str:
+        return osinfo.LOGOS.get(self.logo, "Linux")
 
     @property
     def state(self) -> str:
@@ -98,6 +104,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
 
     sleepers = config.on_demand(servers)
     schemes = validate.link_schemes(cfg)
+    known = osinfo.seen()
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
@@ -113,6 +120,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             platform=s.get("platform", "linux"),
             wakeable=config.can_wake(s["name"], servers),
             web_url=_link(s.get("web_url"), schemes),
+            logo=osinfo.logo(s, known),
         )
         for s, up in zip(servers, results)
     ]

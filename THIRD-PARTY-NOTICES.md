@@ -1,7 +1,7 @@
 # Third-Party Notices
 
-Timar itself is MIT licensed (see [`LICENSE`](LICENSE)). It redistributes the third-party asset
-below, which carries its own license.
+Timar itself is MIT licensed (see [`LICENSE`](LICENSE)). It redistributes the third-party assets
+below, which carry their own licenses.
 
 ## htmx
 
@@ -24,6 +24,19 @@ Redistributed as [`timar/web/static/htmx.min.js`](timar/web/static/htmx.min.js),
 It is vendored rather than loaded from a CDN because the documented deployment is a private
 network that may have no route to the internet at all, and an air-gapped rack should not get a
 broken page.
+
+## Simple Icons
+
+Sixteen operating-system and appliance logos are redistributed as symbols in
+[`timar/web/static/os.svg`](timar/web/static/os.svg). They are taken from **Simple Icons
+16.33.0**, with the path data unmodified and only wrapped in `<symbol>` elements: Debian, Ubuntu,
+Kali Linux, Proxmox, OpenWrt, Raspberry Pi, OctoPrint, Linux, Alpine Linux, Arch Linux, Fedora,
+Rocky Linux, AlmaLinux, openSUSE, NixOS and Linux Mint.
+
+- **Simple Icons** (https://simpleicons.org, https://github.com/simple-icons/simple-icons) — the
+  icon data is released under **CC0 1.0 Universal** (public domain dedication).
+- The marks themselves are trademarks of their respective owners. They are used here only to
+  identify which system a server runs, not to suggest any endorsement.
 
 ## Runtime dependencies
 

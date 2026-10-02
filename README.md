@@ -12,7 +12,7 @@ There is a one-page tour at **[timar.tools](https://timar.tools)**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
-  <img alt="timar's servers page: seven machines, each with a coloured light before its name — four green (up), two grey (asleep), one red (down). The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button; + on the heading adds a server." src="docs/images/dashboard-light.png">
+  <img alt="timar's servers page: seven machines, each with its operating system's logo before its name (Fedora, Ubuntu, Proxmox, Linux, Debian, OpenWrt, Debian), coloured by state — four green (up), two grey (asleep), one red (down). The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button; + on the heading adds a server." src="docs/images/dashboard-light.png">
 </picture>
 
 Three states, not two. *Asleep* (grey) is a machine that is **meant** to be off, and it is not
@@ -151,6 +151,9 @@ first step of the job, and shutting it back down is the last.
   always-on, or switched on by hand — gets a confirmation that says it will stay off.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
+- **Its logo, in its state's colour** — each server's name has its OS's logo before it, or its
+  appliance's (Proxmox, OctoPrint), green when up, grey asleep, red down. The OS is read on
+  connections timar makes anyway (enrolment, the sweep, the update), never by the status probe.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
   them. A check that cannot run says so instead of reporting all-clear.
 - **Report archive** — every finished run is kept under `/reports`, so a disk creeping upward or

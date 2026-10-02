@@ -9,7 +9,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
-from . import cancel, containers as container_module, membership
+from . import cancel, containers as container_module, membership, osinfo
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -202,6 +202,7 @@ def update_server(server_cfg: dict, servers_map: dict,
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
             logger.info("Updating %s ...", name)
+            osinfo.note(ssh, host)
             ok, err = _do_update(ssh, update_cmd, timeout=_timeout_for(server_cfg))
             results.append(UpdateResult(server=name, success=ok, was_running=was_running,
                                         error=err if not ok else ""))
@@ -261,6 +262,7 @@ def update_server(server_cfg: dict, servers_map: dict,
         try:
             with connect(vm_host, vm_cfg["user"], resolve_ssh_key(vm_cfg)) as ssh:
                 logger.info("Updating VM %s ...", vm_name)
+                osinfo.note(ssh, vm_host)
                 ok, err = _do_update(ssh, vm_update_cmd, timeout=_timeout_for(vm_cfg))
                 results.append(UpdateResult(server=vm_name, success=ok, was_running=vm_was_running,
                                             error=err if not ok else ""))
@@ -422,6 +424,7 @@ def update_self(server_cfg: dict, entries: list[dict], done: list[UpdateResult],
     results: list[UpdateResult] = []
     try:
         with connect(server_cfg["host"], server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
+            osinfo.note(ssh, server_cfg["host"])
             # Before the packages: a dockerd restart stops this process, and a container project
             # updated afterwards would be updated by nobody.
             results.extend(_update_containers(ssh, server_cfg, entries))

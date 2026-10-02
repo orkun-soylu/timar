@@ -303,6 +303,32 @@ real three-machine fleet with one sleeping host: **3.02s cold, 0.01s cached** â€
 timeout, not the sum of them. The cache also stops a left-open browser tab from generating
 continuous traffic to every machine in the rack.
 
+### The light is the machine's logo
+
+The state light in front of a server's name is its OS's logo, drawn in the state's colour, so
+the three states still read at a glance. The OS is read by `osinfo.DETECT` on connections timar
+already makes: enrolment's key check, the log sweep and the update run. It is never read by the
+status probe, which is a bare TCP connect every ten seconds and must stay one. The result is
+kept in `ssh/os.json`, keyed by address like `ssh/enrolled`. A rename does not lose it, and
+it stays out of `state.json`, which the scheduler rewrites constantly.
+
+What a machine *does* beats what it runs, where it is recognisable. This rule was measured, not
+designed:
+
+- A Proxmox VE host and a Proxmox Datacenter Manager both print `ID=debian` in
+  `/etc/os-release`.
+- An OctoPi board prints Raspberry Pi OS.
+
+So the appliances are tested first, by a file each installs: `pveversion`,
+`proxmox-datacenter-manager-admin`, `/etc/octopi_version` (OctoPrint's own Pi Support plugin
+reads it). After them comes `/etc/rpi-issue`, then `ID`, then `ID_LIKE`. The command is POSIX
+`sh` and ran unchanged on busybox (OpenWrt 25.12).
+
+A platform of `proxmox` is drawn as Proxmox whatever was read. A machine never connected to
+falls back to its platform, then to Linux. The logos are Simple Icons (CC0), sixteen symbols in
+one sprite (`static/os.svg`, 28 KB) with `fill: currentColor`, so CSS colours them. They are
+vendored for the same reason as htmx: an air-gapped rack gets the same page.
+
 ## Power from the row that reports the state
 
 The first button in a row's *Actions* is the power action that fits the state: wake for a

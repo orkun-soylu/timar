@@ -276,9 +276,9 @@ class TestActionsColumn:
         rows = fleet.get("/fragments/fleet").text
         assert ">State<" not in rows                     # no column of its own any more
         cell = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
-        assert 'title="asleep (on-demand)"' in cell and 'class="dot"' in cell
+        assert 'title="asleep (on-demand) · Linux"' in cell and 'class="os"' in cell
         assert cell.rstrip().endswith("gpu-02")
-        assert 'title="up"' in rows
+        assert 'title="up · Linux"' in rows
 
     def test_a_web_interface_makes_the_name_a_link_while_up(self, client, monkeypatch):
         from timar import config, status as fleet_status
@@ -318,10 +318,34 @@ class TestActionsColumn:
         # Not in link_schemes (any more): no link, just the name.
         assert "pi://open" not in rows
 
+    def test_the_light_is_the_machine_s_logo_in_its_state_s_colour(self, client, monkeypatch):
+        """Read off a connection, by address; a Proxmox host is Proxmox though it reads Debian;
+        a machine never connected to falls back to its platform."""
+        import json
+        from timar import config, osinfo, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "hv", "host": "10.0.0.5", "user": "root", "platform": "proxmox"},
+            {"name": "gpu", "host": "10.0.0.41", "user": "op", "platform": "linux"},
+            {"name": "rt", "host": "10.0.0.1", "user": "root", "platform": "openwrt"},
+        ]})
+        path = config.path(osinfo.OS_FILE)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"10.0.0.5": "debian", "10.0.0.41": "ubuntu"}))
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.41")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert 'title="up · Proxmox"' in rows and 'os.svg#proxmox' in rows
+        assert 'title="down · Ubuntu"' in rows and 'os.svg#ubuntu' in rows
+        assert 'title="up · OpenWrt"' in rows and 'os.svg#openwrt' in rows
+        # The colour comes from the row's state class, which the logo inherits.
+        down = rows.split('<tr class="down">', 1)[1].split("</td>", 1)[0]
+        assert 'class="os"' in down and "ubuntu" in down
+
     @staticmethod
     def order(html):
         import re
-        return re.findall(r'<span class="dot"[^>]*></span> (?:<a [^>]*>)?([\w-]+)(?:</a>)?</td>', html)
+        return re.findall(r'</use></svg> (?:<a [^>]*>)?([\w-]+)(?:</a>)?</td>', html)
 
     def test_sorts_by_address_numerically(self, fleet):
         from timar import config
