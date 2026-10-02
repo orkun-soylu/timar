@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.20] — 2026-10-02
+
 ### Added
 
 - **Server links to programs.** A server's web interface can be a link such as `claude://open`
