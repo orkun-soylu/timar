@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Containers: the host and its compose directory are on two lines,** under a *Host / Path*
+  heading. The host is on the first line and the path under it.
+
 ## [0.2.23] — 2026-10-02
 
 ### Added

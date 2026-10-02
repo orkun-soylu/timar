@@ -254,6 +254,11 @@ class TestPage:
         rows = client.get("/fragments/containers").text
         assert '<code title="ghcr.io/immich-app/immich-server:v2">immich-server:v2</code>' in rows
 
+    def test_the_host_and_its_directory_are_on_two_lines(self, page):
+        rows = page.get("/fragments/containers").text
+        assert ">Host / Path<" in rows
+        assert 'docker-01<div class="wide"><code>/srv/immich</code></div>' in rows
+
     def test_the_page_carries_the_menu_and_requires_a_session(self, page):
         assert 'aria-current="page">containers<' in page.get("/containers").text
         page.cookies.clear()
