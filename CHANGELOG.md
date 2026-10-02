@@ -11,6 +11,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Reports: outcomes are coloured chips.** "9 updated, 1 failed, 3 skipped" becomes a green, a
+  red and a grey pill, and counts of zero are left out. A clean sweep starts with a green "all
+  clear". This applies to the reports list and to each job's row under *Scheduled work*. The stored
+  summary is unchanged.
 - **Servers: *System* instead of *Platform*.** The column shows what the machine runs, read with
   its logo: "Debian 13", "Ubuntu 26.04", "Proxmox VE 9.2.21", "OpenWrt 25.12.5", "OctoPi
   1.1.0". A machine timar has not connected to yet shows its platform, as before.

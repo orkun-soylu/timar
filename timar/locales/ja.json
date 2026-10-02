@@ -314,5 +314,6 @@
   "Set up timar": "timar のセットアップ",
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Web インターフェース: {scheme}:// のリンクは許可されていません。許可するには、config.yaml の link_schemes に {scheme} を追加してください。",
   "Host / Path": "ホスト / パス",
-  "System": "システム"
+  "System": "システム",
+  "all clear": "問題なし"
 }

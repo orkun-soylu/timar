@@ -314,5 +314,6 @@
   "Set up timar": "Настройка timar",
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Веб-интерфейс: ссылки {scheme}:// не разрешены. Чтобы разрешить их, добавьте {scheme} в link_schemes в config.yaml.",
   "Host / Path": "Хост / Путь",
-  "System": "Система"
+  "System": "Система",
+  "all clear": "всё в порядке"
 }

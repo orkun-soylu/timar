@@ -314,5 +314,6 @@
   "Set up timar": "timar'ı kur",
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Web arayüzü: {scheme}:// bağlantılarına izin verilmiyor. İzin vermek için config.yaml içindeki link_schemes listesine {scheme} ekleyin.",
   "Host / Path": "Host / Yol",
-  "System": "Sistem"
+  "System": "Sistem",
+  "all clear": "sorun yok"
 }

@@ -1,5 +1,6 @@
 {# Polled standalone, so no `extends`. #}
 {% from "_icons.html" import icon %}
+{% from "_outcome.html" import outcome %}
 <div class="table-scroll">
 <table>
   <thead>
@@ -13,7 +14,7 @@
         {% if job.last_error %}
           <div class="error" style="margin:0.2rem 0 0">{{ job.last_error }}</div>
         {% elif job.last_summary %}
-          <div class="muted" style="font-size:0.8rem">{{ job.last_summary }}</div>
+          <div class="chips">{{ outcome(job.last_summary) }}</div>
         {% endif %}
       </td>
       <td class="muted">{{ job.schedule }}</td>

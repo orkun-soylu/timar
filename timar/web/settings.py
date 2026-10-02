@@ -30,6 +30,7 @@ from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_mo
 from ..i18n import gettext as _
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
+from . import outcome
 from .auth import require_operator
 
 # Every route in this file is behind the session guard. Declared once on the router rather than
@@ -38,6 +39,7 @@ from .auth import require_operator
 router = APIRouter(prefix="/settings", dependencies=[Depends(require_operator)])
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 i18n.install(TEMPLATES.env)
+outcome.install(TEMPLATES.env)
 
 SEE_OTHER = 303
 

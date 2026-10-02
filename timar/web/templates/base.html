@@ -68,6 +68,17 @@
     .asleep .os { color: var(--asleep); }
     .down .os { color: var(--down); }
     .warn .os { color: var(--warn); }
+    /* A summary's counts (web/outcome.py): a pill per count, tinted with its state's colour. */
+    .chips { margin-top: 0.25rem; }
+    .chip {
+      display: inline-block; margin: 0.1rem 0.3rem 0.1rem 0; padding: 0.05rem 0.55rem;
+      border-radius: 999px; font-size: 0.8rem; line-height: 1.5; white-space: nowrap;
+      border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+      background: color-mix(in srgb, currentColor 10%, transparent);
+    }
+    .chip-up { color: var(--up); } .chip-warn { color: var(--warn); }
+    .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
+    .chip-tail { color: var(--muted); font-size: 0.8rem; }
     .unknown .os { color: var(--asleep); opacity: 0.45; }
     .down td:first-child { font-weight: 600; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: var(--muted); }
