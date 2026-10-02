@@ -25,7 +25,7 @@ def sweep(monkeypatch):
 @pytest.fixture
 def update(monkeypatch):
     def run(results, cfg=None):
-        monkeypatch.setattr(jobs, "run_updates", lambda _cfg: results)
+        monkeypatch.setattr(jobs, "run_updates", lambda _cfg, **kw: results)
         monkeypatch.setattr(jobs.fleet_status, "invalidate", lambda: None)
         return jobs.run_update(cfg or {})
     return run

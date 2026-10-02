@@ -570,6 +570,40 @@ leaving a red mark that reads like a bug in Timar.
 The report layer does not re-truncate: bounding the text twice, once at each end, is how the
 naming line was lost in the first place.
 
+### Timar's own host goes last, and its update is handed off
+
+The host timar runs on cannot be updated the way the others are. Its package update is a child
+of the SSH session this process holds, and when it upgrades Docker, dockerd restarts and takes
+this container with it. That happened twice on a live fleet. The first time left the job marked
+`running` for days, which is why interrupted runs are reconciled at startup. The second, on
+2026-10-02, was the first step of the run: the run died twenty seconds in, nothing else was
+updated, and apt kept writing with its session gone. It finished; nothing made sure it would.
+
+So the order is: every other host in config order, then timar's own host last. Machines that are
+woken and shut down again are finished before the one step that can restart this process. The
+hypervisor under it goes before it in the ordinary order. That is safe only because **timar never
+reboots a host**: upgraded hypervisor packages reach a running VM when the VM restarts, not
+before. If rebooting is ever added, a hypervisor must not reboot the VM timar runs in.
+
+On the host itself, its **containers come first** (a project left for after a dockerd restart is
+updated by nobody). Then the package update is **handed to the host's systemd** with
+`systemd-run --on-active=60`, so it outlives this process. Before waiting, the run saves its
+results so far to `state.json`. If the restart comes, the next process finds that record at
+startup, waits for the update's exit status, and finishes the same run, instead of calling it
+interrupted.
+
+Details that were measured, not assumed:
+
+- **`AccuracySec=1s`.** A transient timer's default accuracy is a minute: a 3-second timer had
+  not fired after six on Debian 13. With the setting it fired at 3.5 s.
+- **The exit status goes to a file** (`/var/log/timar-self-update.rc`), not to systemd.
+  `--collect` unloads the unit once it ends; without it a failed unit stays loaded and blocks its
+  name. After a run nothing is left to ask, and the unit name carries a timestamp in any case.
+- **The host is found, not configured.** The container's own id comes from `mountinfo`. The hosts
+  with registered container projects are asked `docker inspect <id>`, and only the one running
+  the container answers. Outside a container, or with timar's project unregistered, the order
+  stays the config order.
+
 ## Enrolment — the most dangerous surface in the product
 
 Installing Timar's key on a host, and optionally granting it passwordless sudo. One keypair per

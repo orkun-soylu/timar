@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **An update run no longer stops itself.** Updating Docker on the host timar runs on
+  restarted the container mid-run. The run was recorded as "Interrupted" and every host after
+  that one was left un-updated. That host now goes last. Its containers update first, then its
+  packages, under the host's own systemd. If that restarts timar, the run finishes after the
+  restart, with every host's result in the report. Nothing to configure.
+
 ## [0.2.18] — 2026-10-02
 
 ### Fixed

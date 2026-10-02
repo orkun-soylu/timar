@@ -15,9 +15,9 @@ from __future__ import annotations
 import logging
 from typing import NamedTuple
 
-from . import analysis, cancel, config, membership, llm as llm_module, notify, status as fleet_status
+from . import analysis, cancel, config, membership, llm as llm_module, notify, state, status as fleet_status
 from .log_checker import run_log_checks
-from .updater import run_updates
+from .updater import UpdateResult, run_updates, wait_for_self_update
 
 logger = logging.getLogger(__name__)
 
@@ -91,12 +91,36 @@ def run_log_sweep(cfg: dict) -> Outcome:
     return Outcome(summary, f"{written}\n\n{body}" if written else body)
 
 
+def _handoff(results: list[UpdateResult], host: str, unit: str, deadline: float) -> None:
+    state.set_handoff(UPDATE, {"results": [r.to_dict() for r in results],
+                               "host": host, "unit": unit, "deadline": deadline})
+
+
 def run_update(cfg: dict) -> Outcome:
-    results = run_updates(cfg)
+    results = run_updates(cfg, on_handoff=_handoff)
     # A wake or a shutdown makes every cached probe wrong, and a dashboard that still shows a
     # machine asleep ten minutes after Timar woke it is worse than one that shows nothing.
     fleet_status.invalidate()
+    return _update_outcome(cfg, results)
 
+
+def finish_handed_off_update(cfg: dict, handoff: dict) -> Outcome:
+    """Finish an update run that this process did not start: the previous one handed the update
+    of timar's own host to that host's systemd and was then restarted by it, as intended."""
+    results = [UpdateResult(**r) for r in handoff.get("results", [])]
+    host = handoff.get("host", "")
+    server = next((s for s in cfg.get("servers", []) if s["name"] == host), None)
+    if server is None:
+        results.append(UpdateResult(server=host or "timar's own host", success=False,
+                                    error="handed off, then removed from the config before it reported"))
+    else:
+        results.append(wait_for_self_update(server, handoff["unit"], float(handoff["deadline"]),
+                                            note="timar restarted during it"))
+    fleet_status.invalidate()
+    return _update_outcome(cfg, results)
+
+
+def _update_outcome(cfg: dict, results: list[UpdateResult]) -> Outcome:
     failed = [r for r in results if not r.success]
     skipped = [r for r in results if r.skipped]
     updated = [r for r in results if r.success and not r.skipped]
