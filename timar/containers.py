@@ -16,6 +16,7 @@ import json
 import re
 import shlex
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -76,10 +77,107 @@ class ProjectStatus:
     on_demand: bool
     web_url: str | None
     is_self: bool       # Timar's own project: it is not offered a stop or a restart
+    logo: str = "docker"  # the light before the name; see `app_logo`
+
+    @property
+    def logo_name(self) -> str:
+        return APP_LOGOS.get(self.logo, "Docker")
 
     @property
     def running(self) -> bool:
         return self.state in ("up", "warn")
+
+
+# Slug → name, for each application symbol in `web/static/logos.svg` (Simple Icons, CC0).
+APP_LOGOS = {
+    "docker": "Docker", "forgejo": "Forgejo", "gitea": "Gitea", "gitlab": "GitLab",
+    "homepage": "Homepage", "immich": "Immich", "traefikproxy": "Traefik", "vaultwarden": "Vaultwarden",
+    "bitwarden": "Bitwarden", "portainer": "Portainer", "searxng": "SearXNG", "ollama": "Ollama",
+    "wireguard": "WireGuard", "speedtest": "Speedtest", "grafana": "Grafana", "prometheus": "Prometheus",
+    "postgresql": "PostgreSQL", "redis": "Redis", "mariadb": "MariaDB", "mysql": "MySQL",
+    "mongodb": "MongoDB", "nextcloud": "Nextcloud", "jellyfin": "Jellyfin", "plex": "Plex",
+    "homeassistant": "Home Assistant", "pihole": "Pi-hole", "adguard": "AdGuard", "nginx": "NGINX",
+    "caddy": "Caddy", "uptimekuma": "Uptime Kuma", "syncthing": "Syncthing",
+    "paperlessngx": "Paperless-ngx", "minio": "MinIO", "influxdb": "InfluxDB", "rabbitmq": "RabbitMQ",
+    "n8n": "n8n",
+}
+
+# Names that are not their logo's slug: an image is `traefik`, a database `postgres`.
+_APP_ALIASES = {
+    "traefik": "traefikproxy", "postgres": "postgresql", "pgvecto-rs": "postgresql",
+    "home-assistant": "homeassistant", "uptime-kuma": "uptimekuma", "paperless-ngx": "paperlessngx",
+    "adguardhome": "adguard", "mongo": "mongodb", "influxdb2": "influxdb",
+}
+
+# What a project *uses* rather than what it *is*. A photo library ships its own database, and the
+# row should look like the library: these lose to any other match among the same project's names.
+_SUPPORTING = frozenset({"postgresql", "redis", "mariadb", "mysql", "mongodb", "nginx", "rabbitmq",
+                         "minio", "influxdb", "caddy"})
+
+
+def _app_slug(word: str) -> str | None:
+    word = word.lower()
+    for candidate in (word, word.split("-")[0]):
+        slug = _APP_ALIASES.get(candidate, candidate)
+        if slug in APP_LOGOS and slug != "docker":
+            return slug
+    return None
+
+
+def _image_words(image: str) -> list[str]:
+    """`ghcr.io/immich-app/immich-server:v2@sha256:…` → ["immich-server", "immich-app"]."""
+    ref = image.split("@")[0]
+    parts = ref.split("/")
+    parts[-1] = parts[-1].split(":")[0]
+    if len(parts) > 1 and ("." in parts[0] or ":" in parts[0] or parts[0] == "localhost"):
+        parts = parts[1:]           # a registry host, not a name
+    return [parts[-1]] + parts[-2::-1][:1]
+
+
+def app_logo(name: str, images: tuple[str, ...] | list[str]) -> str:
+    """The logo for a compose project, read off names timar already has — no connection of its
+    own. The project's name first, then each image's name and its owner (`vaultwarden/server` is
+    Vaultwarden). Project names are often not the application's (`photos`, `vault`), so the
+    images usually decide. A supporting service — a database, a proxy — counts only when nothing
+    else matched, and with nothing at all it is Docker's whale.
+
+    A project that builds its own image is its own application, whatever runs beside it: compose
+    names such an image `<project>-<service>`, and a search engine it ships as a sidecar must
+    not become its face. Found on a real fleet, where an app showed the SearXNG logo.
+    """
+    if own := _app_slug(name):
+        return own
+    lowered = name.lower()
+    if any(_image_words(i)[0].lower().startswith(lowered + "-") for i in images):
+        return "docker"
+    found = [s for s in (_app_slug(w) for i in images for w in _image_words(i)) if s]
+    return next((s for s in found if s not in _SUPPORTING), found[0] if found else "docker")
+
+
+# The last logo each project's images gave, by host and directory. Without it a project whose
+# host is asleep — or that was never created — has no images to read, and its row would turn
+# into the whale until the host is back: the same project, two looks, for no reason.
+LOGO_FILE = "container-logos.json"
+_logo_lock = threading.Lock()
+
+
+def _remembered_logo(key: str, name: str, images: tuple[str, ...]) -> str:
+    with _logo_lock:
+        path = config.path(LOGO_FILE)
+        try:
+            known = json.loads(path.read_text()) if path.exists() else {}
+        except (OSError, ValueError):
+            known = {}      # decoration: a damaged file costs the memory, nothing else
+        if not images:
+            return known.get(key) or app_logo(name, images)
+        logo = app_logo(name, images)
+        if known.get(key) != logo:
+            known[key] = logo
+            try:
+                config.write_private(LOGO_FILE, json.dumps(known, indent=2, sort_keys=True))
+            except OSError:
+                pass
+        return logo
 
 
 _EXITED = re.compile(r"^Exited \((-?\d+)\)")
@@ -273,6 +371,7 @@ def projects(cfg: dict) -> list[ProjectStatus]:
             name=entry["name"], server=server_name, path=path, state=state, detail=detail,
             images=images, on_demand=on_demand, web_url=entry.get("web_url"),
             is_self=bool(me) and any(c.id == me for c in containers),
+            logo=_remembered_logo(f"{server_name}:{path}", entry["name"], images),
         ))
     return sorted(out, key=lambda p: p.name.casefold())
 

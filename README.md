@@ -152,7 +152,8 @@ first step of the job, and shutting it back down is the last.
 - **Log sweep** — system log errors, disk pressure, stopped containers, and scheduled jobs that
   did not run.
 - **Its logo, in its state's colour** — each server's name has its OS's logo before it, or its
-  appliance's (Proxmox, OctoPrint), green when up, grey asleep, red down. The OS is read on
+  appliance's (Proxmox, OctoPrint), green when up, grey asleep, red down. Each container project
+  has its application's logo the same way. The OS is read on
   connections timar makes anyway (enrolment, the sweep, the update), never by the status probe.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
   them. A check that cannot run says so instead of reporting all-clear.
@@ -214,7 +215,7 @@ tick, adjust, **Add selected**. All ticked rows go in, or, if any is wrong, none
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/containers-dark.png">
-  <img alt="The containers page: six compose projects on nas-01 with their images. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." src="docs/images/containers-light.png">
+  <img alt="The containers page: six compose projects on nas-01 with their images, each with its application's logo before its name (Forgejo, Grafana, Immich, Vaultwarden, and Docker's whale for local builds), coloured by state. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." src="docs/images/containers-light.png">
 </picture>
 
 - **State** comes from one `docker ps -a` per host over SSH, grouped by the compose
@@ -224,6 +225,12 @@ tick, adjust, **Add selected**. All ticked rows go in, or, if any is wrong, none
   not count), or the optional *health check* address does not answer below HTTP 500; grey is
   stopped and marked on-demand, or the host is not up and was not asked; red should run and
   does not.
+- **The light is the application's logo** in the state's colour. It is read off names timar
+  already has: the project's own name, then each image and its owner, so `vaultwarden/server`
+  shows Vaultwarden. Project names are often not the application's (`photos`, `vault`), which is
+  why the images decide. A bundled database or proxy loses to the application it serves, and
+  anything not recognised, such as a local build, shows Docker's whale. The last logo seen is
+  kept, so a project on a host that is asleep looks the same as when it ran.
 - **Start, stop, restart** run `docker compose up -d`, `stop` and `restart` in the project's
   directory. Start uses `up -d` because after a `down` the containers no longer exist.
 - **timar's own project** gets no stop or restart button: it finds its container id in

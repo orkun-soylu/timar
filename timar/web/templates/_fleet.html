@@ -33,7 +33,7 @@
          on the whole cell, not just the logo: a target that small is one nobody manages to hover. While it is up, a machine with a
          web interface has its name as a link to it, in a new tab — the dashboard stays put. #}
       <td class="col-edge" title="{{ state_label }} · {{ host.logo_name }}"><svg class="os" role="img"
-          aria-label="{{ state_label }} · {{ host.logo_name }}"><use href="/static/os.svg#{{ host.logo }}"></use></svg> {% if host.web_url and host.state == "up" -%}
+          aria-label="{{ state_label }} · {{ host.logo_name }}"><use href="/static/logos.svg#{{ host.logo }}"></use></svg> {% if host.web_url and host.state == "up" -%}
           {#- A link to a program (`link_schemes`) opens no page, so no new tab: one would be
               left behind, empty, every time. -#}
           <a href="{{ host.web_url }}" {% if host.web_url.startswith(('http://', 'https://')) %}target="_blank" {% endif %}rel="noopener noreferrer"

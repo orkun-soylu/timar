@@ -89,9 +89,11 @@ class TestRemembering:
 
 def test_every_logo_has_a_symbol_in_the_sprite():
     """A slug without a symbol draws nothing — an empty space where the state should be."""
-    sprite = (Path(osinfo.__file__).parent / "web" / "static" / "os.svg").read_text()
-    symbols = set(re.findall(r'<symbol id="([a-z]+)"', sprite))
+    sprite = (Path(osinfo.__file__).parent / "web" / "static" / "logos.svg").read_text()
+    symbols = set(re.findall(r'<symbol id="([a-z0-9]+)"', sprite))
+    from timar.containers import APP_LOGOS
     assert set(osinfo.LOGOS) <= symbols
+    assert set(APP_LOGOS) <= symbols
 
 
 def test_the_sweep_reads_the_os_on_the_connection_it_already_has(monkeypatch):

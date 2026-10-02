@@ -23,7 +23,8 @@
                      "running, but the health check does not answer": _("running, but the health check does not answer")} %}
     {%- set word = words.get(p.detail, p.detail) %}
     <tr class="{{ p.state }}">
-      <td class="col-edge" title="{{ word }}"><span class="dot" role="img" aria-label="{{ word }}"></span>
+      <td class="col-edge" title="{{ word }} · {{ p.logo_name }}"><svg class="os" role="img"
+          aria-label="{{ word }} · {{ p.logo_name }}"><use href="/static/logos.svg#{{ p.logo }}"></use></svg>
         {% if p.web_url and p.running -%}
         <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
         {%- else %}{{ p.name }}{% endif %}</td>

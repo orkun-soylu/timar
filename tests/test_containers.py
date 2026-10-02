@@ -141,6 +141,55 @@ def test_self_container_id_comes_from_mountinfo(monkeypatch, tmp_path):
     assert containers.self_container_id() == cid
 
 
+class TestAppLogo:
+    """The light before a project's name: its application's logo, read off names timar already
+    has. Project names are often not the application's, so the images usually decide."""
+
+    @pytest.mark.parametrize("name, images, logo", [
+        ("git", ("codeberg.org/forgejo/forgejo:11",), "forgejo"),
+        ("vault", ("vaultwarden/server:1.34",), "vaultwarden"),             # the owner names it
+        ("speedtest", ("lscr.io/linuxserver/speedtest-tracker:latest",), "speedtest"),
+        ("ollama-gateway", ("ollama/ollama:latest",), "ollama"),
+        ("traefik", ("traefik:v3",), "traefikproxy"),                         # an alias
+        ("db", ("postgres:16",), "postgresql"),
+        ("x", ("localhost:5000/grafana/grafana:12@sha256:" + "0" * 64,), "grafana"),  # registry, digest
+    ])
+    def test_names_and_images(self, name, images, logo):
+        assert containers.app_logo(name, images) == logo
+
+    def test_the_application_beats_the_database_it_ships_with(self):
+        """docker ps lists a project's containers in no promised order."""
+        images = ("docker.io/valkey/valkey:8", "ghcr.io/immich-app/postgres:14",
+                  "ghcr.io/immich-app/immich-server:v2")
+        assert containers.app_logo("photos", images) == "immich"
+
+    def test_a_project_that_builds_its_own_image_is_not_its_sidecar(self):
+        """Compose names a locally built image `<project>-<service>`: that project is its own
+        application, and the search engine it runs beside it is not its face."""
+        images = ("searxng/searxng:latest", "app-app-frontend", "app-app-backend")
+        assert containers.app_logo("app", images) == "docker"
+        # Without its own build, the same sidecar does name the project.
+        assert containers.app_logo("search", ("searxng/searxng:latest",)) == "searxng"
+
+    @pytest.mark.parametrize("name, images", [
+        ("timar", ("ghcr.io/example/timar:0.2",)),
+        ("batch-tools", ("batch-tools:local",)),
+        ("brain", ("68b2a218869a",)),                  # an image known only by its id
+    ])
+    def test_a_local_build_is_the_whale(self, name, images):
+        assert containers.app_logo(name, images) == "docker"
+
+    def test_a_project_with_no_images_to_read_keeps_its_last_logo(self, tmp_path, monkeypatch):
+        """Asleep host, or never created: the row must not turn into the whale until it is back."""
+        import importlib
+        monkeypatch.setenv("TIMAR_DATA", str(tmp_path))
+        from timar import config
+        importlib.reload(config)
+        assert containers._remembered_logo("h:/srv/photos", "photos", ("immich-app/immich-server:v2",)) == "immich"
+        assert containers._remembered_logo("h:/srv/photos", "photos", ()) == "immich"
+        assert containers._remembered_logo("h:/srv/other", "other", ()) == "docker"
+
+
 class TestPage:
     @pytest.fixture
     def page(self, client, monkeypatch):
@@ -166,6 +215,14 @@ class TestPage:
         assert "/containers/odata/start" in rows
         assert 'hx-target="#toast"' in rows
         assert rows.count('href="/settings/containers/new"') == 1
+
+    def test_the_light_is_the_project_s_logo_in_its_state_s_colour(self, page):
+        rows = page.get("/fragments/containers").text
+        up = rows.split('<tr class="up">', 1)[1].split("</td>", 1)[0]
+        assert 'class="os"' in up and "logos.svg#immich" in up and 'title="running · Immich"' in up
+        # Nothing created yet and no images ever seen: the whale.
+        asleep = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
+        assert "logos.svg#docker" in asleep and "· Docker" in asleep
 
     def test_the_page_carries_the_menu_and_requires_a_session(self, page):
         assert 'aria-current="page">containers<' in page.get("/containers").text
