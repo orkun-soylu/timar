@@ -12,7 +12,7 @@ from .network import is_host_up
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run
-from . import cancel, membership
+from . import cancel, membership, osinfo
 from .containers import parse_ps
 
 logger = logging.getLogger(__name__)
@@ -139,6 +139,7 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
 
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
+            osinfo.note(ssh, host)
             journal_out, _, _ = run(ssh, platform.journal_cmd(hours))
             journal_errors = platform.parse_journal(journal_out)
 

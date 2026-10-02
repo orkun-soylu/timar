@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 import paramiko
 
-from . import config, keys, membership
+from . import config, keys, membership, osinfo
 from .i18n import gettext as _
 from .network import split_address
 from .ssh import new_client
@@ -219,6 +219,7 @@ def verify(server: dict) -> str:
         raise EnrollError(f"could not connect: {e}") from e
 
     membership.mark_enrolled(server["host"])
+    osinfo.note(client, server["host"])
     try:
         out, _, _ = _run(client, "id -un")
         who = out.strip() or server["user"]
