@@ -190,6 +190,22 @@ class TestAppLogo:
         assert containers._remembered_logo("h:/srv/other", "other", ()) == "docker"
 
 
+class TestShortImage:
+    """The images column shows what runs and at which tag; the full reference is the tooltip."""
+
+    @pytest.mark.parametrize("image, shown", [
+        ("ghcr.io/immich-app/immich-server:v2", "immich-server:v2"),
+        ("ghcr.io/immich-app/postgres:14@sha256:" + "a" * 64, "postgres:14"),     # digest dropped
+        ("vaultwarden/server:1.34", "server:1.34"),
+        ("traefik:v3", "traefik:v3"),
+        ("localhost:5000/team/app:1.2", "app:1.2"),       # a registry port is not a tag
+        ("app-app-backend", "app-app-backend"),            # a local build, untouched
+        ("sha256:" + "68b2a218869a" + "0" * 52, "sha256:68b2a218869a"),   # known only by its id
+    ])
+    def test_shown(self, image, shown):
+        assert containers.short_image(image) == shown
+
+
 class TestPage:
     @pytest.fixture
     def page(self, client, monkeypatch):
@@ -223,6 +239,20 @@ class TestPage:
         # Nothing created yet and no images ever seen: the whale.
         asleep = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
         assert "logos.svg#docker" in asleep and "· Docker" in asleep
+
+    def test_an_image_is_shown_short_with_the_whole_reference_on_hover(self, client, monkeypatch):
+        from timar import config
+        complete_setup(client)
+        config.save({"servers": [{"name": "docker-01", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
+                     "containers": [{"name": "photos", "server": "docker-01", "path": "/srv/photos"}]})
+        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host: True)
+        monkeypatch.setattr(containers, "self_container_id", lambda: None)
+        monkeypatch.setattr(containers, "_host_containers", lambda server: containers.HostContainers(
+            by_dir=containers.parse_ps(ps_line("/srv/photos", "immich-server",
+                                               image="ghcr.io/immich-app/immich-server:v2"))))
+        containers.invalidate()
+        rows = client.get("/fragments/containers").text
+        assert '<code title="ghcr.io/immich-app/immich-server:v2">immich-server:v2</code>' in rows
 
     def test_the_page_carries_the_menu_and_requires_a_session(self, page):
         assert 'aria-current="page">containers<' in page.get("/containers").text
