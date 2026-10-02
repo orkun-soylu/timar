@@ -1,6 +1,6 @@
 {# The one header every signed-in page carries: the name, then the three places, the language
-   and the way out. The place you are on is the accent colour and not a link; the others stay
-   plain underlined links, so the bar reads the same on every page and only the highlight moves.
+   and the way out. The place you are on is the accent colour with a bar under it; the others are
+   plain muted words that show a bar on hover, so only the highlight moves between pages.
    Imported `with context` — it needs `_`, the language list and the request. #}
 {% macro nav(section) -%}
 <header class="topnav">

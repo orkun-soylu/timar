@@ -18,6 +18,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **A quieter menu:** no underlines. The page you are on is amber with a bar under it, and the
+  others show a bar on hover.
 - **Servers: guests sit under their hypervisor.** Sorted by name (the default), each VM in a
   hypervisor's `manages_vms` is drawn right under it, indented, with a thin line back to it, so
   what starts when it starts reads at a glance. Sorted by address or system, the list stays flat.

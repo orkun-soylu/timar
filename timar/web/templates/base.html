@@ -243,11 +243,15 @@
       text-decoration: none;
     }
     header.topnav nav { display: flex; gap: 1rem; }
-    header.topnav nav a { color: var(--muted); }
-    header.topnav nav a:hover { color: var(--text); }
-    header.topnav nav a.current { color: var(--accent); text-decoration: none; font-weight: 600; }
-    header.topnav .linkish { text-decoration: underline; font-size: inherit; }
-    header.topnav .linkish:hover { color: var(--text); }
+    /* No underlines in the menu: five underlined words read as a paragraph of links. The place
+       you are on carries an accent bar under it instead; the rest show theirs on hover. */
+    header.topnav nav a, header.topnav .linkish {
+      color: var(--muted); text-decoration: none; padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+    }
+    header.topnav nav a:hover, header.topnav .linkish:hover { color: var(--text); border-bottom-color: var(--line); }
+    header.topnav nav a.current { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+    header.topnav .linkish { font-size: inherit; }
     /* The server form's sections: a plain heading on a rule, its "?" on the right. */
     .form-section + .form-section { margin-top: 1.5rem; }
     .form-section-head {
