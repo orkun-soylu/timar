@@ -26,7 +26,7 @@ from .. import config, i18n, jobs, power, reports, state, status as fleet_status
 from .. import containers as container_status
 from ..i18n import gettext as _
 from ..scheduler import scheduler
-from . import auth, outcome, settings
+from . import assets, auth, outcome, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
 i18n.install(TEMPLATES.env)
 outcome.install(TEMPLATES.env)
+assets.install(TEMPLATES.env)
 
 
 @asynccontextmanager

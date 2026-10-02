@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **New logos show up after an upgrade.** Static files are now served with a hash of their
+  content in the URL (`/static/logos.svg?v=…`). A browser that cached the previous sprite drew an
+  empty slot for every logo added since.
+
 ## [0.2.26] — 2026-10-03
 
 ### Added
