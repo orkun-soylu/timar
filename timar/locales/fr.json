@@ -312,5 +312,6 @@
   "enrol from its card": "inscrire depuis sa fiche",
   "leave out": "retirer",
   "Set up timar": "Configurer timar",
-  "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Interface web : les liens {scheme}:// ne sont pas autorisés. Pour les autoriser, ajoutez {scheme} à link_schemes dans config.yaml."
+  "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Interface web : les liens {scheme}:// ne sont pas autorisés. Pour les autoriser, ajoutez {scheme} à link_schemes dans config.yaml.",
+  "Host / Path": "Hôte / Chemin"
 }

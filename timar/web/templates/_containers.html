@@ -7,7 +7,7 @@
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("/containers", sort, descending, "name", _("Name"), "col-edge") }}{{ sortable("/containers", sort, descending, "host", _("Host"), "col-mid") }}
+    <tr>{{ sortable("/containers", sort, descending, "name", _("Name"), "col-edge") }}{{ sortable("/containers", sort, descending, "host", _("Host / Path"), "col-mid") }}
       <th class="col-mid wide">{{ _("Images") }}</th>
       <th class="col-edge actions-head"><span>{{ _("Actions") }}</span>
         <a href="/settings/containers/new" class="icon-btn" title="{{ _("Add a container") }}"
@@ -28,7 +28,9 @@
         {% if p.web_url and p.running -%}
         <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
         {%- else %}{{ p.name }}{% endif %}</td>
-      <td class="col-mid">{{ p.server }} <code class="wide">{{ p.path }}</code></td>
+      {# The host on its line, the directory under it: side by side, a long path pushed the images
+         column off the row. The path is dropped on a narrow screen, as before. #}
+      <td class="col-mid">{{ p.server }}<div class="wide"><code>{{ p.path }}</code></div></td>
       <td class="col-mid wide muted">{% for shown, full in p.image_rows %}<div><code title="{{ full }}">{{ shown }}</code></div>{% else %}—{% endfor %}</td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
