@@ -12,7 +12,7 @@ There is a one-page tour at **[timar.tools](https://timar.tools)**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
-  <img alt="timar's servers page: seven machines, each with its operating system's logo before its name (Fedora, Ubuntu, Proxmox, Linux, Debian, OpenWrt, Debian), coloured by state — four green (up), two grey (asleep), one red (down). The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button; + on the heading adds a server." src="docs/images/dashboard-light.png">
+  <img alt="timar's servers page. Above the table, a summary that filters: 5 up, 2 asleep, 1 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it. The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button." src="docs/images/dashboard-light.png">
 </picture>
 
 Three states, not two. *Asleep* (grey) is a machine that is **meant** to be off, and it is not
@@ -45,7 +45,7 @@ It all lands in `config.yaml` in the `timar-data` volume, which you can also edi
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/server-dialog-dark.png">
-  <img width="560" alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, timeout, context for the log analysis. SSH access: user, a password used only to enrol, passwordless sudo, and an Enrol button. Save, cancel, and remove on the right." src="docs/images/server-dialog-light.png">
+  <img width="560" alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, and More settings folded. SSH access: user, and a password used only to enrol with the Enrol button beside it; passwordless sudo below. Save, cancel, and remove on the right." src="docs/images/server-dialog-light.png">
 </picture>
 
 A VM has no wake address of its own, so it names the hypervisor that starts it and inherits
@@ -153,12 +153,18 @@ first step of the job, and shutting it back down is the last.
   did not run.
 - **Its logo, in its state's colour** — each server's name has its OS's logo before it, or its
   appliance's (Proxmox, OctoPrint), green when up, grey asleep, red down. Each container project
-  has its application's logo the same way. The OS is read on
-  connections timar makes anyway (enrolment, the sweep, the update), never by the status probe.
+  has its application's logo the same way. The OS and its version ("Debian 13", "Proxmox VE 9.2")
+  are read on connections timar makes anyway (enrolment, the sweep, the update), never by the
+  status probe.
+- **The fleet at a glance** — a summary above the servers table counts each state ("13 up · 3
+  asleep · 0 down"), and each count filters the table. Sorted by name, a hypervisor's VMs sit
+  nested under it.
 - **Platform-aware** — Linux/systemd, OpenWrt and Proxmox VE each get commands that exist on
   them. A check that cannot run says so instead of reporting all-clear.
 - **Report archive** — every finished run is kept under `/reports`, so a disk creeping upward or
-  an update failing every week shows as a series. Telegram delivery is a copy, not the only one.
+  an update failing every week shows as a series. Telegram delivery is a copy, not the only one. Each run's outcome is its
+  counts as coloured chips (red failed, yellow findings, green updated), and times read relatively
+  ("2 hours ago", "in 8 hours") with the exact minute on hover.
 - **Containers** — Docker Compose projects on those machines: their state, start / stop /
   restart, and an update with every run (below).
 
@@ -177,7 +183,7 @@ The **reports** page holds the two jobs at the top and every run they finished b
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/reports-dark.png">
-  <img alt="The reports page. Scheduled work: Log sweep, daily at 07:30, and Update run, every Sunday at 04:00, each with its last summary, last and next run, and run and edit buttons. Below, the archive: four finished runs with their outcome and a button that opens each report." src="docs/images/reports-light.png">
+  <img alt="The reports page. Scheduled work: Log sweep, daily at 07:30, and Update run, every Sunday at 04:00, each with its last outcome as coloured chips, last and next run in relative time, and run and edit buttons. Below, chips filter the archive by job, and four finished runs show their outcome as chips — yellow findings, red unreachable or failed, green updated or all clear, grey asleep or skipped." src="docs/images/reports-light.png">
 </picture>
 
 - **run** starts a job now; while it runs the button becomes **stop**, which asks first. The job
