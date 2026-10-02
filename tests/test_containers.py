@@ -252,10 +252,10 @@ class TestPage:
     def test_the_light_is_the_project_s_logo_in_its_state_s_colour(self, page):
         rows = page.get("/fragments/containers").text
         up = rows.split('<tr class="up">', 1)[1].split("</td>", 1)[0]
-        assert 'class="os"' in up and "logos.svg#immich" in up and 'title="running · Immich"' in up
+        assert 'class="os"' in up and '#immich"></use>' in up and 'title="running · Immich"' in up
         # Nothing created yet and no images ever seen: the whale.
         asleep = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
-        assert "logos.svg#docker" in asleep and "· Docker" in asleep
+        assert '#docker"></use>' in asleep and "· Docker" in asleep
 
     def test_an_image_is_shown_short_with_the_whole_reference_on_hover(self, client, monkeypatch):
         from timar import config

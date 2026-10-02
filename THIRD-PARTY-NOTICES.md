@@ -38,6 +38,17 @@ listed in `osinfo.LOGOS` and `containers.APP_LOGOS`.
   identify which system a server runs or which application a container
   project is, not to suggest any endorsement.
 
+## Dashboard Icons
+
+One symbol in [`timar/web/static/logos.svg`](timar/web/static/logos.svg), `#synology`, is the
+Synology DSM mark from **homarr-labs/dashboard-icons** (`svg/synology-dsm.svg`), with its path data
+unmodified and its fill left to CSS. It replaces Simple Icons' Synology wordmark, which drew as a
+19×5 px strip at the size the table uses.
+
+- **Dashboard Icons** (https://github.com/homarr-labs/dashboard-icons), licensed under the
+  **Apache License 2.0**. The mark is a trademark of Synology Inc., used here only to identify the
+  device.
+
 ## Runtime dependencies
 
 Not vendored into this repository — they are installed from PyPI when the image is built, and

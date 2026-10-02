@@ -336,9 +336,9 @@ class TestActionsColumn:
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.41")
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
-        assert 'title="up · Proxmox"' in rows and 'logos.svg#proxmox' in rows
-        assert 'title="down · Ubuntu"' in rows and 'logos.svg#ubuntu' in rows
-        assert 'title="up · OpenWrt"' in rows and 'logos.svg#openwrt' in rows
+        assert 'title="up · Proxmox"' in rows and '#proxmox"></use>' in rows
+        assert 'title="down · Ubuntu"' in rows and '#ubuntu"></use>' in rows
+        assert 'title="up · OpenWrt"' in rows and '#openwrt"></use>' in rows
         # System: what was read, else the platform.
         assert ">Ubuntu 26.04<" in rows and ">openwrt<" in rows
         # The colour comes from the row's state class, which the logo inherits.
@@ -404,7 +404,7 @@ class TestActionsColumn:
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: True)
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
-        assert 'logos.svg#tplink' in rows and 'title="up · TP-Link"' in rows and ">TP-Link<" in rows
+        assert '#tplink"></use>' in rows and 'title="up · TP-Link"' in rows and ">TP-Link<" in rows
         assert "/servers/ap/shutdown" not in rows and '<a href="https://ap.lan"' in rows
 
     @staticmethod
