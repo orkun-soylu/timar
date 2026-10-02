@@ -371,6 +371,31 @@ class TestActionsColumn:
         # Anything else is no filter at all.
         assert len(self.order(client.get("/fragments/fleet?state=bogus").text)) == 3
 
+    def test_sorted_by_name_guests_sit_under_their_hypervisor(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "alpha", "host": "10.0.0.2", "user": "op"},
+            {"name": "hv", "host": "10.0.0.5", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 101, "server_name": "zeta"}, {"vm_id": 102, "server_name": "beta"}]},
+            {"name": "beta", "host": "10.0.0.3", "user": "op"},
+            {"name": "zeta", "host": "10.0.0.9", "user": "op"},
+            {"name": "omega", "host": "10.0.0.1", "user": "op"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.9")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert self.order(rows) == ["alpha", "hv", "beta", "zeta", "omega"]
+        assert rows.count('class="up guest"') == 1 and rows.count('class="down guest"') == 1
+        flipped = client.get("/fragments/fleet?sort=name&dir=desc").text
+        assert self.order(flipped) == ["omega", "hv", "zeta", "beta", "alpha"]
+        # By address the reader asked for addresses: no nesting.
+        by_address = client.get("/fragments/fleet?sort=address&dir=asc").text
+        assert self.order(by_address) == ["omega", "alpha", "beta", "hv", "zeta"] and " guest" not in by_address
+        # Filtered to "down", the guest has no parent on the page and stands alone.
+        down = client.get("/fragments/fleet?state=down").text
+        assert self.order(down) == ["zeta"] and " guest" not in down
+
     @staticmethod
     def order(html):
         import re

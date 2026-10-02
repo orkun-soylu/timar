@@ -42,7 +42,8 @@
     {%- elif host.state == "asleep" %}{% set state_label = _("asleep") ~ " (" ~ _("on-demand") ~ ")" %}
     {%- else %}{% set state_label = _("down") %}
     {%- endif %}
-    <tr class="{{ host.state }}">
+    {%- set nested = sort == "name" and host.parent and host.parent in fleet | map(attribute="name") | list %}
+    <tr class="{{ host.state }}{% if nested %} guest{% endif %}">
       {# The state is the light in front of the name — the machine's own logo (osinfo), green up,
          grey asleep, red down — and its word is the tooltip, with the logo's name. The label is
          on the whole cell, not just the logo: a target that small is one nobody manages to hover. While it is up, a machine with a

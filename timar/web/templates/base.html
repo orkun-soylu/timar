@@ -68,6 +68,13 @@
     .asleep .os { color: var(--asleep); }
     .down .os { color: var(--down); }
     .warn .os { color: var(--warn); }
+    /* A guest under its hypervisor (sorted by name): indented by about one logo, with a thin
+       line back to the parent so the nesting reads without a word. */
+    tr.guest td:first-child { padding-left: 2.6rem; position: relative; }
+    tr.guest td:first-child::before {
+      content: ""; position: absolute; left: 1.55rem; top: 0; bottom: 50%; width: 0.6rem;
+      border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-bottom-left-radius: 4px;
+    }
     /* A summary's counts (web/outcome.py): a pill per count, tinted with its state's colour. */
     .chips { margin-top: 0.25rem; }
     .chip {
