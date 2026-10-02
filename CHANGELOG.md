@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.27] — 2026-10-03
+
 ### Fixed
 
 - **New logos show up after an upgrade.** Static files are now served with a hash of their
