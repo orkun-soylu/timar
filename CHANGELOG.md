@@ -14,6 +14,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **New logos show up after an upgrade.** Static files are now served with a hash of their
   content in the URL (`/static/logos.svg?v=…`). A browser that cached the previous sprite drew an
   empty slot for every logo added since.
+- **The Synology logo is legible:** the square DSM mark instead of the wordmark, which drew as a
+  19×5 px strip.
 
 ## [0.2.26] — 2026-10-03
 
