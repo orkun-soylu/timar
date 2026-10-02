@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.26] — 2026-10-03
+
 ### Added
 
 - **Devices without SSH.** An access point or a NAS appliance can be on the servers page with its
