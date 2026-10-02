@@ -62,7 +62,8 @@
     .warn .dot { background: var(--warn); }
     .unknown .dot { background: var(--asleep); opacity: 0.45; }
     /* The servers table's light is the machine's own logo, in the same three colours. */
-    .os { display: inline-block; width: 1.25em; height: 1.25em; vertical-align: -0.35em; fill: currentColor; }
+    /* Three spaces to the name: the one in the markup, and two more here (0.6em at 15px). */
+    .os { display: inline-block; width: 1.25em; height: 1.25em; vertical-align: -0.35em; fill: currentColor; margin-right: 0.6em; }
     .up .os { color: var(--up); }
     .asleep .os { color: var(--asleep); }
     .down .os { color: var(--down); }
