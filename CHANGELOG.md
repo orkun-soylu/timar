@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **A summary above the servers table:** "13 up · 3 asleep · 0 down", one chip per state, counted
+  over the whole fleet. Each chip filters the table to its state, and *all* clears the filter. The
+  filter lives in the URL like the sort order, so the ten-second refresh, a reload and a bookmark
+  keep it. A zero count stays, dimmed.
+
 ### Changed
 
 - **Reports: outcomes are coloured chips.** "9 updated, 1 failed, 3 skipped" becomes a green, a

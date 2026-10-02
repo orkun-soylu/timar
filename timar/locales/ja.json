@@ -315,5 +315,8 @@
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Web インターフェース: {scheme}:// のリンクは許可されていません。許可するには、config.yaml の link_schemes に {scheme} を追加してください。",
   "Host / Path": "ホスト / パス",
   "System": "システム",
-  "all clear": "問題なし"
+  "all clear": "問題なし",
+  "all": "すべて",
+  "Filter by state": "状態で絞り込む",
+  "No machine is in this state right now.": "現在この状態のマシンはありません。"
 }

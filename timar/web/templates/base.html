@@ -79,6 +79,13 @@
     .chip-up { color: var(--up); } .chip-warn { color: var(--warn); }
     .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
     .chip-tail { color: var(--muted); font-size: 0.8rem; }
+    .chip-asleep { color: var(--asleep); }
+    /* The servers summary: counts that filter. A zero stays, dimmed; the picked one is filled. */
+    .fleet-summary { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+    .fleet-summary .chip { text-decoration: none; }
+    .fleet-summary .chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+    .chip-zero { opacity: 0.45; }
+    .chip-on { background: color-mix(in srgb, currentColor 22%, transparent); border-color: currentColor; font-weight: 600; }
     .unknown .os { color: var(--asleep); opacity: 0.45; }
     .down td:first-child { font-weight: 600; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: var(--muted); }

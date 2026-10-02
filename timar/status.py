@@ -132,6 +132,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
 
 
 SORT_KEYS = ("name", "address", "platform")
+STATES = ("up", "asleep", "down")       # HostStatus.state, in the order the summary counts them
 
 
 def sort_fleet(hosts: list[HostStatus], key: str, descending: bool = False) -> list[HostStatus]:

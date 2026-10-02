@@ -345,6 +345,32 @@ class TestActionsColumn:
         down = rows.split('<tr class="down">', 1)[1].split("</td>", 1)[0]
         assert 'class="os"' in down and "ubuntu" in down
 
+    def test_the_summary_counts_every_state_and_filters_by_one(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "a", "host": "10.0.0.1", "user": "op"},
+            {"name": "b", "host": "10.0.0.2", "user": "op"},
+            {"name": "c", "host": "10.0.0.3", "user": "op", "wol_mac": "aa:bb:cc:dd:ee:03"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.3")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert ">2 up</a>" in rows and ">1 asleep</a>" in rows and ">0 down</a>" in rows
+        assert "chip-zero" in rows and ">all " not in rows
+        picked = client.get("/fragments/fleet?state=asleep&sort=name&dir=asc").text
+        # Still counted over the whole fleet; only the table is filtered.
+        assert ">2 up</a>" in picked and 'aria-current="true">1 asleep</a>' in picked
+        assert self.order(picked) == ["c"] and ">all 3</a>" in picked
+        # A sort link keeps the filter, and so does the poll.
+        assert "sort=address&amp;dir=asc&amp;state=asleep" in picked
+        page = client.get("/?state=asleep").text
+        assert "/fragments/fleet?sort=name&amp;dir=asc&amp;state=asleep" in page
+        # An empty filter is not an empty fleet.
+        assert "No machine is in this state" in client.get("/fragments/fleet?state=down").text
+        # Anything else is no filter at all.
+        assert len(self.order(client.get("/fragments/fleet?state=bogus").text)) == 3
+
     @staticmethod
     def order(html):
         import re

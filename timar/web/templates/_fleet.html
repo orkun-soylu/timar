@@ -11,11 +11,25 @@
 {# Server hugs the left wall and Actions the right, each only as wide as its content; Address
    and System share what is left between them evenly, their text left-aligned. System is what
    osinfo read ("Debian 13"), or the platform until a connection has read it. #}
+{# The fleet in one line: a count per state, each a filter. Counted over every machine, so it
+   reads the same whichever is picked; the picked one is outlined, "all" clears it. Zero counts
+   stay, dimmed — "0 down" is the line an operator looks for first. #}
+{% set query = ("&state=" ~ state) if state else "" %}
+{% set q = "&sort=" ~ sort ~ "&dir=" ~ ("desc" if descending else "asc") %}
+{% if total %}
+<nav class="fleet-summary" aria-label="{{ _("Filter by state") }}">
+  {%- for s in ("up", "asleep", "down") %}
+  <a href="/?state={{ s }}{{ q }}" class="chip chip-{{ s }}{% if not counts[s] %} chip-zero{% endif %}{% if state == s %} chip-on{% endif %}"
+     {%- if state == s %} aria-current="true"{% endif %}>{{ counts[s] }} {{ _(s) }}</a>
+  {%- endfor %}
+  {%- if state %}<a href="/?{{ q[1:] }}" class="chip chip-muted">{{ _("all") }} {{ total }}</a>{% endif %}
+</nav>
+{% endif %}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge") }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid") }}{{ sortable("/", sort, descending, "platform", _("System"), "col-mid wide") }}<th class="col-edge actions-head">
+    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge", query) }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid", query) }}{{ sortable("/", sort, descending, "platform", _("System"), "col-mid wide", query) }}<th class="col-edge actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
@@ -82,6 +96,8 @@
   </tbody>
 </table>
 </div>
+{% elif total %}
+<p class="empty">{{ _("No machine is in this state right now.") }}</p>
 {% else %}
 <p class="empty">
   {{ _("No servers configured yet.") }}<br>

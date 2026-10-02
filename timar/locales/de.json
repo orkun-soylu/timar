@@ -315,5 +315,8 @@
   "Web interface: {scheme}:// links are not allowed. To allow them, add {scheme} to link_schemes in config.yaml.": "Weboberfläche: {scheme}://-Links sind nicht erlaubt. Um sie zu erlauben, fügen Sie {scheme} zu link_schemes in config.yaml hinzu.",
   "Host / Path": "Host / Pfad",
   "System": "System",
-  "all clear": "alles in Ordnung"
+  "all clear": "alles in Ordnung",
+  "all": "alle",
+  "Filter by state": "Nach Zustand filtern",
+  "No machine is in this state right now.": "Derzeit ist kein Rechner in diesem Zustand."
 }
