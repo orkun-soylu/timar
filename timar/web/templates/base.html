@@ -68,6 +68,35 @@
     .asleep .os { color: var(--asleep); }
     .down .os { color: var(--down); }
     .warn .os { color: var(--warn); }
+    /* A guest under its hypervisor (sorted by name): indented by about one logo, with a thin
+       line back to the parent so the nesting reads without a word. */
+    tr.guest td:first-child { padding-left: 2.6rem; position: relative; }
+    tr.guest td:first-child::before {
+      content: ""; position: absolute; left: 1.55rem; top: 0; bottom: 50%; width: 0.6rem;
+      border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-bottom-left-radius: 4px;
+    }
+    /* A summary's counts (web/outcome.py): a pill per count, tinted with its state's colour. */
+    .chips { margin-top: 0.25rem; }
+    .chip {
+      display: inline-block; margin: 0.1rem 0.3rem 0.1rem 0; padding: 0.05rem 0.55rem;
+      border-radius: 999px; font-size: 0.8rem; line-height: 1.5; white-space: nowrap;
+      border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+      background: color-mix(in srgb, currentColor 10%, transparent);
+    }
+    .chip-up { color: var(--up); } .chip-warn { color: var(--warn); }
+    .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
+    .chip-tail { color: var(--muted); font-size: 0.8rem; }
+    .chip-asleep { color: var(--asleep); }
+    /* An image tag that moves (`:latest`): softer, with a dashed underline that the tooltip
+       explains. A pinned tag is left as it is. */
+    .tag-floating { opacity: 0.6; text-decoration: underline dashed; text-underline-offset: 3px; }
+    /* A row of counts that filter — the servers summary, the reports' jobs. A zero stays,
+       dimmed; the picked one is filled. */
+    .chip-bar { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+    .chip-bar a.chip { text-decoration: none; }
+    .chip-bar a.chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+    .chip-zero { opacity: 0.45; }
+    .chip-on { background: color-mix(in srgb, currentColor 22%, transparent); border-color: currentColor; font-weight: 600; }
     .unknown .os { color: var(--asleep); opacity: 0.45; }
     .down td:first-child { font-weight: 600; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; color: var(--muted); }
@@ -139,6 +168,14 @@
     .stack + .stack { border-top: 1px solid var(--line); margin-top: 1rem; }
     .row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .row > label { flex: 1 1 14rem; }
+    .field-with-action { flex: 1 1 14rem; display: flex; gap: 0.6rem; align-items: flex-end; }
+    .field-with-action > label { flex: 1; }
+    .field-with-action > button { margin-bottom: 1rem; white-space: nowrap; }
+    /* Folded settings: a quiet line that opens to the fields under it. */
+    details.more { margin: 0 0 0.5rem; }
+    details.more > summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.8rem; }
+    details.more > summary:hover { color: var(--text); }
+    details.more:not([open]) > summary { margin-bottom: 0; }
     select {
       width: 100%; padding: 0.55rem 0.7rem; border-radius: 7px;
       border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
@@ -217,11 +254,15 @@
       text-decoration: none;
     }
     header.topnav nav { display: flex; gap: 1rem; }
-    header.topnav nav a { color: var(--muted); }
-    header.topnav nav a:hover { color: var(--text); }
-    header.topnav nav a.current { color: var(--accent); text-decoration: none; font-weight: 600; }
-    header.topnav .linkish { text-decoration: underline; font-size: inherit; }
-    header.topnav .linkish:hover { color: var(--text); }
+    /* No underlines in the menu: five underlined words read as a paragraph of links. The place
+       you are on carries an accent bar under it instead; the rest show theirs on hover. */
+    header.topnav nav a, header.topnav .linkish {
+      color: var(--muted); text-decoration: none; padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+    }
+    header.topnav nav a:hover, header.topnav .linkish:hover { color: var(--text); border-bottom-color: var(--line); }
+    header.topnav nav a.current { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+    header.topnav .linkish { font-size: inherit; }
     /* The server form's sections: a plain heading on a rule, its "?" on the right. */
     .form-section + .form-section { margin-top: 1.5rem; }
     .form-section-head {
@@ -286,6 +327,40 @@
       clearTimeout(timer);
       timer = setTimeout(function () { toast.classList.remove("shown"); }, 3000);
     });
+  })();
+
+  // Relative times (_when.html): "in 9 hours", "2 days ago", in the page's language through the
+  // browser's own Intl, so no catalog has to carry them. A week or more away is a date again —
+  // "23 days ago" makes the reader do arithmetic the date would not. Redrawn after every swap
+  // and once a minute, so "in 3 minutes" does not go stale on a page left open.
+  // Under a day is minutes or hours; from a day on, calendar days.
+  (function () {
+    var lang = document.documentElement.lang || undefined;
+    var rtf = window.Intl && Intl.RelativeTimeFormat ? new Intl.RelativeTimeFormat(lang, {numeric: "auto"}) : null;
+    var STEPS = [[60, "second", 1], [3600, "minute", 60], [86400, "hour", 3600], [604800, "day", 86400]];
+    function draw(root) {
+      if (!rtf) return;
+      (root || document).querySelectorAll("time[data-rel]").forEach(function (el) {
+        if (!el.dataset.abs) el.dataset.abs = el.textContent.trim();
+        var t = new Date(el.getAttribute("datetime")), s = (t - Date.now()) / 1000, a = Math.abs(s);
+        el.title = el.dataset.abs;
+        if (isNaN(t) || a >= 604800) { el.textContent = el.dataset.abs.slice(0, 10); return; }
+        if (a < 45) { el.textContent = rtf.format(0, "second"); return; }
+        for (var i = 1; i < STEPS.length - 1; i++) {
+          if (a < STEPS[i][0]) { el.textContent = rtf.format(Math.round(s / STEPS[i][2]), STEPS[i][1]); return; }
+        }
+        // Days count calendar days, not 24-hour blocks: 04:00 the day after tomorrow is 28 hours
+        // from 23:49 tonight, and rounding hours would call it "tomorrow".
+        var d0 = new Date(), d1 = new Date(t);
+        d0.setHours(0, 0, 0, 0); d1.setHours(0, 0, 0, 0);
+        el.textContent = rtf.format(Math.round((d1 - d0) / 86400000), "day");
+      });
+    }
+    draw();
+    // The whole page after a settle, not the swap target: an outerHTML swap hands back the element
+    // it just removed, and drawing inside that left the new times absolute.
+    document.body.addEventListener("htmx:afterSettle", function () { draw(); });
+    setInterval(draw, 60000);
   })();
 </script>
 </body>

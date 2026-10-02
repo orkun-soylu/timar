@@ -31,7 +31,8 @@
       {# The host on its line, the directory under it: side by side, a long path pushed the images
          column off the row. The path is dropped on a narrow screen, as before. #}
       <td class="col-mid">{{ p.server }}<div class="wide"><code>{{ p.path }}</code></div></td>
-      <td class="col-mid wide muted">{% for shown, full in p.image_rows %}<div><code title="{{ full }}">{{ shown }}</code></div>{% else %}—{% endfor %}</td>
+      <td class="col-mid wide muted">{% for name, tag, full, floating in p.image_rows %}<div><code title="{{ full }}{% if floating %} — {{ _("a floating tag: each update run moves it to the newest image") }}{% endif %}">{{ name }}
+          {%- if tag %}<span class="{{ 'tag-floating' if floating else 'tag' }}">{{ tag }}</span>{% endif %}</code></div>{% else %}—{% endfor %}</td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
           <span class="icon-slot" title="{{ _("timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>

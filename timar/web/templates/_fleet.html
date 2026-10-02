@@ -9,12 +9,27 @@
 {% from "_icons.html" import icon %}
 {% from "_table.html" import sortable %}
 {# Server hugs the left wall and Actions the right, each only as wide as its content; Address
-   and Platform share what is left between them evenly, their text left-aligned. #}
+   and System share what is left between them evenly, their text left-aligned. System is what
+   osinfo read ("Debian 13"), or the platform until a connection has read it. #}
+{# The fleet in one line: a count per state, each a filter. Counted over every machine, so it
+   reads the same whichever is picked; the picked one is outlined, "all" clears it. Zero counts
+   stay, dimmed — "0 down" is the line an operator looks for first. #}
+{% set query = ("&state=" ~ state) if state else "" %}
+{% set q = "&sort=" ~ sort ~ "&dir=" ~ ("desc" if descending else "asc") %}
+{% if total %}
+<nav class="chip-bar" aria-label="{{ _("Filter by state") }}">
+  {%- for s in ("up", "asleep", "down") %}
+  <a href="/?state={{ s }}{{ q }}" class="chip chip-{{ s }}{% if not counts[s] %} chip-zero{% endif %}{% if state == s %} chip-on{% endif %}"
+     {%- if state == s %} aria-current="true"{% endif %}>{{ counts[s] }} {{ _(s) }}</a>
+  {%- endfor %}
+  {%- if state %}<a href="/?{{ q[1:] }}" class="chip chip-muted">{{ _("all") }} {{ total }}</a>{% endif %}
+</nav>
+{% endif %}
 {% if fleet %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge") }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid") }}{{ sortable("/", sort, descending, "platform", _("Platform"), "col-mid wide") }}<th class="col-edge actions-head">
+    <tr>{{ sortable("/", sort, descending, "name", _("Server"), "col-edge", query) }}{{ sortable("/", sort, descending, "address", _("Address"), "col-mid", query) }}{{ sortable("/", sort, descending, "platform", _("System"), "col-mid wide", query) }}<th class="col-edge actions-head">
       <span>{{ _("Actions") }}</span>
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
@@ -27,7 +42,8 @@
     {%- elif host.state == "asleep" %}{% set state_label = _("asleep") ~ " (" ~ _("on-demand") ~ ")" %}
     {%- else %}{% set state_label = _("down") %}
     {%- endif %}
-    <tr class="{{ host.state }}">
+    {%- set nested = sort == "name" and host.parent and host.parent in fleet | map(attribute="name") | list %}
+    <tr class="{{ host.state }}{% if nested %} guest{% endif %}">
       {# The state is the light in front of the name — the machine's own logo (osinfo), green up,
          grey asleep, red down — and its word is the tooltip, with the logo's name. The label is
          on the whole cell, not just the logo: a target that small is one nobody manages to hover. While it is up, a machine with a
@@ -40,7 +56,7 @@
              title="{{ host.web_url }}">{{ host.name }}</a>
         {%- else %}{{ host.name }}{% endif %}</td>
       <td class="col-mid"><code>{{ host.host }}</code></td>
-      <td class="col-mid muted wide">{{ host.platform }}</td>
+      <td class="col-mid muted wide">{{ host.system }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so edit sits in the same place on every row. Enrolment and removal are in the
          edit form. #}
@@ -81,6 +97,8 @@
   </tbody>
 </table>
 </div>
+{% elif total %}
+<p class="empty">{{ _("No machine is in this state right now.") }}</p>
 {% else %}
 <p class="empty">
   {{ _("No servers configured yet.") }}<br>

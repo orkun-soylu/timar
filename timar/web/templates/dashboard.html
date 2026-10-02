@@ -3,7 +3,7 @@
 {% from "_nav.html" import nav with context %}{{ nav("servers") }}
 
 <div class="panel"
-     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}"
+     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}{% if state %}&amp;state={{ state }}{% endif %}"
      hx-trigger="every 10s"
      hx-swap="innerHTML">
   {% include "_fleet.html" %}

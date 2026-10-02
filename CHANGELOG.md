@@ -9,6 +9,42 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **A summary above the servers table:** "13 up · 3 asleep · 0 down", one chip per state, counted
+  over the whole fleet. Each chip filters the table to its state, and *all* clears the filter. The
+  filter lives in the URL like the sort order, so the ten-second refresh, a reload and a bookmark
+  keep it. A zero count stays, dimmed.
+
+### Changed
+
+- **Containers: floating tags are marked.** `:latest`, or no tag at all on an image from a
+  registry, is drawn softer with a dashed underline. Its tooltip says each update run moves it to
+  the newest image. Pinned tags, image ids and local builds are left as they are.
+- **A shorter server dialog.** The update timeout and the log-analysis context fold under
+  *More settings*, which opens by itself when either holds a value. They no longer repeat
+  "optional". *Enrol* sits beside the password field it uses.
+- **A quieter menu:** no underlines. The page you are on is amber with a bar under it, and the
+  others show a bar on hover.
+- **Servers: guests sit under their hypervisor.** Sorted by name (the default), each VM in a
+  hypervisor's `manages_vms` is drawn right under it, indented, with a thin line back to it, so
+  what starts when it starts reads at a glance. Sorted by address or system, the list stays flat.
+- **Reports: the job filter is a row of chips** ("All reports 4 · Log sweep 3 · Update run 1")
+  instead of a labelled dropdown, in the same shape as the servers summary. It saves about 120 px
+  above the list, and a filtered list is still a bookmarkable URL. The help under **?** describes
+  the coloured outcomes.
+- **Times read relatively:** "2 hours ago", "in 8 hours", "yesterday", "in 2 days", in the page's
+  language through the browser's own `Intl`. A week or more away is shown as the date. The exact
+  minute is the tooltip, and also the text when scripting is off. Seconds are gone. Relative
+  times assume the browser and timar share a time zone, since timar stores local times.
+- **Reports: outcomes are coloured chips.** "9 updated, 1 failed, 3 skipped" becomes a green, a
+  red and a grey pill, and counts of zero are left out. A clean sweep starts with a green "all
+  clear". This applies to the reports list and to each job's row under *Scheduled work*. The stored
+  summary is unchanged.
+- **Servers: *System* instead of *Platform*.** The column shows what the machine runs, read with
+  its logo: "Debian 13", "Ubuntu 26.04", "Proxmox VE 9.2.21", "OpenWrt 25.12.5", "OctoPi
+  1.1.0". A machine timar has not connected to yet shows its platform, as before.
+
 ## [0.2.24] — 2026-10-02
 
 ### Changed

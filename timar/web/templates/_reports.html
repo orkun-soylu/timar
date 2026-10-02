@@ -1,6 +1,8 @@
 {# Swapped on its own when the filter changes, so no `extends` — and the id has to live on
    this element, not on a wrapper, for the outerHTML swap to replace it. #}
 {% from "_icons.html" import icon %}
+{% from "_outcome.html" import outcome %}
+{% from "_when.html" import when %}
 <div id="report-list">
 {% if reports %}
   <table>
@@ -10,18 +12,18 @@
     <tbody>
     {% for entry in reports %}
       <tr>
-        <td style="white-space:nowrap">{{ entry.finished_at | replace("T", " ") }}</td>
+        <td style="white-space:nowrap">{{ when(entry.finished_at) }}</td>
         <td class="muted">{{ _(entry.title) }}</td>
         <td>
-          {# Red marks a run that *failed*; a run that finished is left in the body colour even
-             when it found something. Green on "2 with findings" reads as all-clear at a glance,
-             which is the opposite of what the line says. #}
+          {# Red text marks a run that *failed*. A run that finished is drawn as chips, each in
+             the colour of what it counts — so "2 with findings" is yellow, never green, and a
+             finished run with nothing to count reads "all clear". #}
           {% if entry.error %}
             {# The failure text, not just "failed": which host and which command is the whole
                reason to keep the run rather than the fact that it went wrong. #}
             <span class="error">{{ entry.error }}</span>
           {% elif entry.ok %}
-            {{ entry.summary or "—" }}
+            {% if entry.summary %}{{ outcome(entry.summary) }}{% else %}—{% endif %}
           {% else %}
             <span class="error">{{ entry.summary or _("failed") }}</span>
           {% endif %}

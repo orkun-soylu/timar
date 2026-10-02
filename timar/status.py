@@ -45,6 +45,10 @@ class HostStatus:
     web_url: str | None = None
     # The logo before the name — what the machine is, coloured by its state. See `osinfo`.
     logo: str = "linux"
+    # "Debian 13", "Proxmox VE 9.2.21" — read with the logo; the platform until it has been.
+    system: str = ""
+    # The hypervisor that starts this machine (`manages_vms`), for nesting it under that row.
+    parent: str | None = None
 
     @property
     def logo_name(self) -> str:
@@ -105,6 +109,8 @@ def fleet(cfg: dict) -> list[HostStatus]:
     sleepers = config.on_demand(servers)
     schemes = validate.link_schemes(cfg)
     known = osinfo.seen()
+    parents = {vm["server_name"]: s["name"] for s in servers for vm in s.get("manages_vms", [])}
+    systems = osinfo.versions()
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(s["host"]), servers))
@@ -121,6 +127,8 @@ def fleet(cfg: dict) -> list[HostStatus]:
             wakeable=config.can_wake(s["name"], servers),
             web_url=_link(s.get("web_url"), schemes),
             logo=osinfo.logo(s, known),
+            system=osinfo.system(s, systems),
+            parent=parents.get(s["name"]),
         )
         for s, up in zip(servers, results)
     ]
@@ -128,6 +136,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
 
 
 SORT_KEYS = ("name", "address", "platform")
+STATES = ("up", "asleep", "down")       # HostStatus.state, in the order the summary counts them
 
 
 def sort_fleet(hosts: list[HostStatus], key: str, descending: bool = False) -> list[HostStatus]:
@@ -135,8 +144,33 @@ def sort_fleet(hosts: list[HostStatus], key: str, descending: bool = False) -> l
     by_name = sorted(hosts, key=lambda h: h.name.casefold())
     if key == "address":
         ordered = sorted(by_name, key=lambda h: address_key(h.host))
-    elif key == "platform":
-        ordered = sorted(by_name, key=lambda h: h.platform.casefold())
+    elif key == "platform":     # the column is *System* now; the key stays so old links work
+        ordered = sorted(by_name, key=lambda h: h.system.casefold())
     else:
-        ordered = by_name
+        return _nested(by_name, descending)
     return ordered[::-1] if descending else ordered
+
+
+def _nested(by_name: list[HostStatus], descending: bool) -> list[HostStatus]:
+    """By name, with each hypervisor's guests right under it — what starts when it starts.
+
+    Only for the name order: sorted by address or system, a guest under its hypervisor would
+    break the very order the reader asked for. A guest whose hypervisor is not in the list (a
+    filter left it out) stands on its own. The direction flips the hypervisors and the guests
+    under each alike.
+    """
+    present = {h.name for h in by_name}
+    top = [h for h in by_name if h.parent not in present]
+    guests: dict[str, list[HostStatus]] = {}
+    for h in by_name:
+        if h.parent in present:
+            guests.setdefault(h.parent, []).append(h)
+    if descending:
+        top.reverse()
+        for group in guests.values():
+            group.reverse()
+    out: list[HostStatus] = []
+    for h in top:
+        out.append(h)
+        out.extend(guests.get(h.name, []))
+    return out

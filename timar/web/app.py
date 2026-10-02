@@ -26,13 +26,14 @@ from .. import config, i18n, jobs, power, reports, state, status as fleet_status
 from .. import containers as container_status
 from ..i18n import gettext as _
 from ..scheduler import scheduler
-from . import auth, settings
+from . import auth, outcome, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
 logger = logging.getLogger(__name__)
 TEMPLATES = Jinja2Templates(directory=str(HERE / "templates"))
 i18n.install(TEMPLATES.env)
+outcome.install(TEMPLATES.env)
 
 
 @asynccontextmanager
@@ -244,7 +245,7 @@ def _job_view() -> list[dict]:
     return rows
 
 
-def _fleet_view(cfg: dict, sort: str | None, dir: str | None) -> dict:
+def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None = None) -> dict:
     """The fleet table, ordered by the column the operator picked.
 
     The order is a query parameter, not something the browser keeps: the table is re-fetched
@@ -253,29 +254,39 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None) -> dict:
     """
     key = sort if sort in fleet_status.SORT_KEYS else "name"
     descending = dir == "desc"
+    hosts = fleet_status.fleet(cfg)
+    # Counted over the whole fleet, then filtered: the summary is what clicking each count shows,
+    # and it must not shrink to the one state already picked.
+    counts = {s: sum(h.state == s for h in hosts) for s in fleet_status.STATES}
+    picked = state if state in fleet_status.STATES else None
+    if picked:
+        hosts = [h for h in hosts if h.state == picked]
     return {
-        "fleet": fleet_status.sort_fleet(fleet_status.fleet(cfg), key, descending),
+        "fleet": fleet_status.sort_fleet(hosts, key, descending),
         "sort": key,
         "descending": descending,
+        "counts": counts,
+        "state": picked,
+        "total": sum(counts.values()),
     }
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, sort: str | None = None, dir: str | None = None,
-                    operator: str = Depends(current_operator)):
+                    state: str | None = None, operator: str = Depends(current_operator)):
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "servers": cfg.get("servers", []),
-        **_fleet_view(cfg, sort, dir),
+        **_fleet_view(cfg, sort, dir, state),
     })
 
 
 @app.get("/fragments/fleet", response_class=HTMLResponse)
 async def fleet_fragment(request: Request, sort: str | None = None, dir: str | None = None,
-                         operator: str = Depends(current_operator)):
+                         state: str | None = None, operator: str = Depends(current_operator)):
     """The status table alone — polled by HTMX so the page updates without a reload."""
     return TEMPLATES.TemplateResponse(request, "_fleet.html",
-                                      _fleet_view(config.load(), sort, dir))
+                                      _fleet_view(config.load(), sort, dir, state))
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)

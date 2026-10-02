@@ -88,15 +88,20 @@
           <button type="button" class="linkish" popovertarget="platform-defaults">{{ _("platform default") }}</button></span>
         <input name="update_cmd" aria-label="{{ _("Update command") }}" value="{{ values.get('update_cmd', '') }}">
       </div>
-      <div class="row">
-        <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("optional — seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
-          <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
-                 placeholder="{{ default_update_timeout }}"
-                 value="{{ values.get('update_timeout', '') }}"></label>
-      </div>
-      <label><span>{{ _("Context for the log analysis") }} <em class="muted">{{ _("optional") }}</em></span>
-        <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
-               value="{{ values.get('context', '') }}"></label>
+      {# Rarely touched, so folded away — and open whenever either holds a value, so nothing set is
+         ever hidden behind the fold. Everything in here is optional; the word is not repeated. #}
+      <details class="more"{% if values.get('update_timeout') or values.get('context') %} open{% endif %}>
+        <summary>{{ _("More settings") }}</summary>
+        <div class="row">
+          <label><span>{{ _("Update timeout") }} <em class="muted">{{ _("seconds, default {seconds}", seconds=default_update_timeout) }}</em></span>
+            <input name="update_timeout" type="number" min="{{ min_update_timeout }}" max="{{ max_update_timeout }}"
+                   placeholder="{{ default_update_timeout }}"
+                   value="{{ values.get('update_timeout', '') }}"></label>
+        </div>
+        <label><span>{{ _("Context for the log analysis") }}</span>
+          <input name="context" placeholder="{{ _("Nightly batch job logs connection resets; expected.") }}"
+                 value="{{ values.get('context', '') }}"></label>
+      </details>
     </div>
 
     <div class="form-section" id="ssh-access">
@@ -106,16 +111,18 @@
       <div class="row">
         <label><span>{{ _("SSH user") }}</span>
           <input name="user" required value="{{ values.get('user', '') }}"></label>
-        <label><span>{{ _("Password") }} <em class="muted">{{ _("only to enrol, never stored") }}</em></span>
-          <input name="password" type="password" autocomplete="new-password"></label>
+        {# The button beside the field it uses, on the inputs' baseline: enrolling is "this password,
+           now", not a step of its own at the bottom of the section. #}
+        <div class="field-with-action">
+          <label><span>{{ _("Password") }} <em class="muted">{{ _("only to enrol, never stored") }}</em></span>
+            <input name="password" type="password" autocomplete="new-password"></label>
+          <button type="submit" name="action" value="enrol" class="secondary">{{ _("Enrol") }}</button>
+        </div>
       </div>
       <label class="inline">
         <input type="checkbox" name="grant_sudo">
         <span>{{ _("Also grant passwordless sudo") }}</span>
       </label>
-      <div class="actions">
-        <button type="submit" name="action" value="enrol" class="secondary">{{ _("Enrol") }}</button>
-      </div>
     </div>
 
     <div class="actions form-actions">

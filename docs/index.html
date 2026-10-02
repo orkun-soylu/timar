@@ -232,15 +232,16 @@
   </p>
 
   <figure class="shot">
-    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1116"
-         alt="timar's servers page: seven machines, each with its operating system's logo before its name (Fedora, Ubuntu, Proxmox, Linux, Debian, OpenWrt, Debian), coloured by state — four green (up), two grey (asleep), one red (down). The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep — and an edit button; + on the heading adds a server." />
-    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1116"
+    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1344"
+         alt="timar's servers page. Above the table, a summary that filters: 5 up, 2 asleep, 1 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it. The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button." />
+    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1344"
          alt="The same dashboard in a light theme." />
     <figcaption>
       Each machine's logo (Debian, Ubuntu, Proxmox, OpenWrt, OctoPrint and more) takes the colour
       of its state. There are three states, not two: grey <em>asleep</em> is a machine that is
       meant to be off, and it is not painted like a fault. A status page that shows both in red teaches you to ignore
-      red. A server is added, edited, enrolled and removed from its own dialog.
+      red. The counts above the table filter it, a hypervisor's VMs sit under it, and each row
+      names the system it runs. A server is added, edited, enrolled and removed from its own dialog.
     </figcaption>
   </figure>
 </div>
@@ -430,9 +431,9 @@
 
     <figure class="shot narrow">
       <div>
-        <img class="shot-dark" src="images/server-dialog-dark.png" width="1410" height="2204"
-             alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, timeout, context for the log analysis. SSH access: user, a password used only to enrol, passwordless sudo, and an Enrol button." />
-        <img class="shot-light" src="images/server-dialog-light.png" width="1410" height="2204"
+        <img class="shot-dark" src="images/server-dialog-dark.png" width="1410" height="1832"
+             alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, and More settings folded. SSH access: user, and a password used only to enrol with the Enrol button beside it; passwordless sudo below." />
+        <img class="shot-light" src="images/server-dialog-light.png" width="1410" height="1832"
              alt="The same dialog in a light theme." />
       </div>
       <figcaption>

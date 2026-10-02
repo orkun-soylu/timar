@@ -1,12 +1,13 @@
 {# A column heading that sorts by itself. Plain links to the page: the order lives in the URL, so
    it survives the polled refresh (which carries it along), a refresh and a bookmark. Clicking
-   the column already in use flips its direction. `page` is the page the table lives on. #}
-{% macro sortable(page, sort, descending, key, label, extra_class="") -%}
+   the column already in use flips its direction. `page` is the page the table lives on, and
+   `query` carries anything else the URL holds (`&state=down`), so sorting keeps a filter. #}
+{% macro sortable(page, sort, descending, key, label, extra_class="", query="") -%}
   {%- set active = sort == key -%}
   {%- set next_dir = "asc" if active and descending else ("desc" if active else "asc") -%}
   <th class="sortable {{ extra_class }}"
       {%- if active %} aria-sort="{{ 'descending' if descending else 'ascending' }}"{% endif %}>
-    <a href="{{ page }}?sort={{ key }}&amp;dir={{ next_dir }}">{{ label }}
+    <a href="{{ page }}?sort={{ key }}&amp;dir={{ next_dir }}{{ query }}">{{ label }}
       {%- if active %} <span aria-hidden="true">{{ "▼" if descending else "▲" }}</span>{% endif %}</a>
   </th>
 {%- endmacro %}

@@ -1,0 +1,9 @@
+{# A job's summary as chips: red for what failed, yellow for findings, green for what was
+   updated, grey for what was skipped or asleep. Zero counts are left out (web/outcome.py). #}
+{% macro outcome(summary) -%}
+  {%- for chip in outcome_chips(summary) -%}
+    {%- if chip.kind == "clear" %}<span class="chip chip-up">{{ _("all clear") }}</span>
+    {%- elif chip.kind %}<span class="chip chip-{{ chip.kind }}">{{ chip.text }}</span>
+    {%- else %}<span class="chip-tail">{{ chip.text }}</span>{% endif %}
+  {%- endfor -%}
+{%- endmacro %}

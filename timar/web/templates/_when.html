@@ -1,0 +1,8 @@
+{# A moment, written so the page can say it relatively: "in 9 hours", "yesterday". The text is the
+   absolute time to the minute — what a page without scripting, or a test, reads — and the script
+   in base.html swaps in the relative form and keeps the absolute one as the tooltip. Seconds are
+   dropped: no schedule here is that precise, and they made every date a column wider. #}
+{% macro when(iso) -%}
+  {%- if iso %}<time datetime="{{ iso }}" data-rel>{{ iso[:16] | replace("T", " ") }}</time>
+  {%- else %}—{% endif -%}
+{%- endmacro %}

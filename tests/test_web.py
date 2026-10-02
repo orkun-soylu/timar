@@ -331,16 +331,70 @@ class TestActionsColumn:
         ]})
         path = config.path(osinfo.OS_FILE)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"10.0.0.5": "debian", "10.0.0.41": "ubuntu"}))
+        path.write_text(json.dumps({"10.0.0.5": "debian",
+                                    "10.0.0.41": {"logo": "ubuntu", "version": "Ubuntu 26.04"}}))
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.41")
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
         assert 'title="up · Proxmox"' in rows and 'logos.svg#proxmox' in rows
         assert 'title="down · Ubuntu"' in rows and 'logos.svg#ubuntu' in rows
         assert 'title="up · OpenWrt"' in rows and 'logos.svg#openwrt' in rows
+        # System: what was read, else the platform.
+        assert ">Ubuntu 26.04<" in rows and ">openwrt<" in rows
         # The colour comes from the row's state class, which the logo inherits.
         down = rows.split('<tr class="down">', 1)[1].split("</td>", 1)[0]
         assert 'class="os"' in down and "ubuntu" in down
+
+    def test_the_summary_counts_every_state_and_filters_by_one(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "a", "host": "10.0.0.1", "user": "op"},
+            {"name": "b", "host": "10.0.0.2", "user": "op"},
+            {"name": "c", "host": "10.0.0.3", "user": "op", "wol_mac": "aa:bb:cc:dd:ee:03"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.3")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert ">2 up</a>" in rows and ">1 asleep</a>" in rows and ">0 down</a>" in rows
+        assert "chip-zero" in rows and ">all " not in rows
+        picked = client.get("/fragments/fleet?state=asleep&sort=name&dir=asc").text
+        # Still counted over the whole fleet; only the table is filtered.
+        assert ">2 up</a>" in picked and 'aria-current="true">1 asleep</a>' in picked
+        assert self.order(picked) == ["c"] and ">all 3</a>" in picked
+        # A sort link keeps the filter, and so does the poll.
+        assert "sort=address&amp;dir=asc&amp;state=asleep" in picked
+        page = client.get("/?state=asleep").text
+        assert "/fragments/fleet?sort=name&amp;dir=asc&amp;state=asleep" in page
+        # An empty filter is not an empty fleet.
+        assert "No machine is in this state" in client.get("/fragments/fleet?state=down").text
+        # Anything else is no filter at all.
+        assert len(self.order(client.get("/fragments/fleet?state=bogus").text)) == 3
+
+    def test_sorted_by_name_guests_sit_under_their_hypervisor(self, client, monkeypatch):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        config.save({"servers": [
+            {"name": "alpha", "host": "10.0.0.2", "user": "op"},
+            {"name": "hv", "host": "10.0.0.5", "user": "root", "platform": "proxmox",
+             "manages_vms": [{"vm_id": 101, "server_name": "zeta"}, {"vm_id": 102, "server_name": "beta"}]},
+            {"name": "beta", "host": "10.0.0.3", "user": "op"},
+            {"name": "zeta", "host": "10.0.0.9", "user": "op"},
+            {"name": "omega", "host": "10.0.0.1", "user": "op"},
+        ]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.9")
+        fleet_status.invalidate()
+        rows = client.get("/fragments/fleet").text
+        assert self.order(rows) == ["alpha", "hv", "beta", "zeta", "omega"]
+        assert rows.count('class="up guest"') == 1 and rows.count('class="down guest"') == 1
+        flipped = client.get("/fragments/fleet?sort=name&dir=desc").text
+        assert self.order(flipped) == ["omega", "hv", "zeta", "beta", "alpha"]
+        # By address the reader asked for addresses: no nesting.
+        by_address = client.get("/fragments/fleet?sort=address&dir=asc").text
+        assert self.order(by_address) == ["omega", "alpha", "beta", "hv", "zeta"] and " guest" not in by_address
+        # Filtered to "down", the guest has no parent on the page and stands alone.
+        down = client.get("/fragments/fleet?state=down").text
+        assert self.order(down) == ["zeta"] and " guest" not in down
 
     @staticmethod
     def order(html):
@@ -899,6 +953,20 @@ class TestSettings:
         client.post("/settings/servers", data=form)
         assert config.load()["servers"][0]["web_url"] == "claude://open"
 
+    def test_rarely_used_settings_are_folded_unless_one_is_set(self, client):
+        """Folded away by default, but never hiding a value: set, the fold opens by itself."""
+        complete_setup(client)
+        from timar import config
+        config.save({"servers": [{"name": "a", "host": "10.0.0.1", "user": "op", "platform": "linux"},
+                                 {"name": "b", "host": "10.0.0.2", "user": "op", "platform": "linux",
+                                  "context": "Batch job resets are expected."}]})
+        plain = client.get("/settings/servers/a/edit").text
+        assert '<details class="more">' in plain and 'name="update_timeout"' in plain
+        assert '<details class="more" open>' in client.get("/settings/servers/b/edit").text
+        # Enrol sits beside the password it uses.
+        field = plain.split('class="field-with-action"', 1)[1].split("</div>", 1)[0]
+        assert 'name="password"' in field and 'value="enrol"' in field
+
     def test_an_edit_keeps_hand_written_wake_settings_and_shows_them(self, client):
         complete_setup(client)
         from timar import config
@@ -1434,14 +1502,19 @@ class TestReportArchive:
         body = client.get("/reports").text
         assert body.index("newer run") < body.index("older run")
 
-    def test_the_dropdown_offers_every_job_with_its_count(self, client):
+    def test_the_filter_offers_every_job_with_its_count(self, client):
         complete_setup(client)
         self.archive("update", title="Update run", summary="3 updated")
         body = client.get("/reports").text
-        assert "Update run (1)" in body
+        current = lambda html: html.split('aria-current="true"', 1)[1].split(">", 1)[1].split("</a>", 1)[0]
+        assert ">Update run 1</a>" in body and current(body) == "All reports 1"
         # Offered even with nothing archived: an empty list is the answer to "why have I seen
         # no sweep report", which the filter should be able to ask.
-        assert "Log sweep (0)" in body
+        assert ">Log sweep 0</a>" in body
+        # A plain link that HTMX upgrades, swapping the chips with the list so the pick moves.
+        assert 'href="/reports?job=update"' in body and 'hx-select="#report-view"' in body
+        picked = client.get("/reports?job=update").text
+        assert current(picked) == "Update run 1"
 
     def test_filtering_narrows_the_list(self, client):
         complete_setup(client)
@@ -1449,6 +1522,15 @@ class TestReportArchive:
         self.archive("update", title="Update run", summary="3 updated")
         body = client.get("/reports?job=update").text
         assert "3 updated" in body and "1 with findings" not in body
+
+    def test_a_finished_time_is_marked_for_the_relative_form_and_reads_without_it(self, client):
+        """The script turns it into "2 hours ago"; without scripting it is the minute it ended."""
+        import re
+        complete_setup(client)
+        self.archive("update", title="Update run", summary="3 updated")
+        body = client.get("/reports").text
+        stamp = re.search(r'<time datetime="(\d{4}-\d\d-\d\dT\d\d:\d\d[^"]*)" data-rel>([^<]+)</time>', body)
+        assert stamp and stamp.group(2) == stamp.group(1)[:16].replace("T", " ")
 
     def test_an_unknown_job_shows_an_empty_list_rather_than_an_error(self, client):
         """The value can come from a stale bookmark naming a job that no longer exists."""

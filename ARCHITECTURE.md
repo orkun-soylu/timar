@@ -263,6 +263,27 @@ A link to a program has no `target="_blank"`: the program opens, and a new tab w
 behind empty. Containers stay `http(s)` only, because their address doubles as a health check
 that timar fetches.
 
+### Drawing a record without changing it
+
+Several things on the pages are drawn differently from how they are stored, on purpose:
+
+- **Outcome chips** (`web/outcome.py`). A summary stays the English sentence `jobs` wrote, which
+  is the record that Telegram and the archive carry. The page splits it into counts and colours
+  each by meaning. A summary it does not recognise is shown whole, never half-parsed, so a new
+  job's wording cannot lose words to a stale table.
+- **Relative times** (`_when.html` and a script in `base.html`). The markup holds the absolute
+  minute, which is what a page without scripting, and every test, reads. The browser's
+  `Intl.RelativeTimeFormat` rewrites it in the page's language, so no catalog carries "2 hours
+  ago". From a day on it counts calendar days: rounding hours called 04:00 the day after tomorrow
+  "tomorrow" at 23:50. timar stores naive local times, so this assumes the browser shares timar's
+  time zone. The tooltip is exact either way.
+- **Nesting follows the sort.** VMs sit under their hypervisor only when sorted by name. There is
+  no separate switch, because nested rows would break an order by address or system that the
+  reader asked for.
+- **Filters are URLs.** The servers summary and the reports chips are links with query
+  parameters, carried by sort links and the poll, so a reload or a bookmark keeps them. They are
+  not page state that the next poll would undo.
+
 ### Languages — the reader's for the page, English for the record
 
 The interface is translated; what Timar *writes down* is not. The language lives in a context
