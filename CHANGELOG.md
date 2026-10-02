@@ -18,6 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Reports: the job filter is a row of chips** ("All reports 4 · Log sweep 3 · Update run 1")
+  instead of a labelled dropdown, in the same shape as the servers summary. It saves about 120 px
+  above the list, and a filtered list is still a bookmarkable URL. The help under **?** describes
+  the coloured outcomes.
 - **Times read relatively:** "2 hours ago", "in 8 hours", "yesterday", "in 2 days", in the page's
   language through the browser's own `Intl`. A week or more away is shown as the date. The exact
   minute is the tooltip, and also the text when scripting is off. Seconds are gone. Relative

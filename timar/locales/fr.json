@@ -107,8 +107,6 @@
   "This job has not run yet.": "Cette tâche ne s’est pas encore exécutée.",
   "Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> under Scheduled work on the reports page.": "Rien d’enregistré pour l’instant. Les rapports sont sauvegardés à l’exécution de la tâche — utilisez <em>lancer maintenant</em> sous Tâches planifiées, sur la page des rapports.",
   "Reports": "Rapports",
-  "Show": "Afficher",
-  "show": "afficher",
   "Every run a job finishes is kept here, whether or not it was also sent to Telegram. Scheduled work shows the latest one; this list shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.": "Chaque exécution terminée est conservée ici, qu’elle ait aussi été envoyée sur Telegram ou non. Tâches planifiées montre la plus récente ; cette liste montre comment un constat a évolué — un disque qui se remplit peu à peu, un hôte injoignable depuis plusieurs passages, une mise à jour qui échoue chaque semaine.",
   "Settings": "Réglages",
   "Saved.": "Enregistré.",
@@ -267,7 +265,6 @@
   "Find": "Chercher",
   "Find on a host": "Chercher sur un hôte",
   "Tick at least one project.": "Cochez au moins un projet.",
-  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Afficher</em> réduit la liste à une tâche ; le choix est dans l’adresse, une liste filtrée peut donc être mise en favori. Le rouge marque une exécution en échec ; une exécution terminée avec des constats reste dans la couleur normale. Le bouton en fin de ligne ouvre le rapport complet.",
   "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Lit chaque machine allumée : erreurs du journal système, remplissage des disques, conteneurs arrêtés et tâches planifiées qui n’ont pas tourné. Les machines en veille ne sont pas réveillées et sont signalées comme non vérifiées.",
   "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Affiché pendant qu’une tâche tourne. La tâche s’arrête après l’étape en cours — une commande déjà lancée sur un hôte se termine, et une machine réveillée pour la tournée est quand même éteinte ; ce qui n’était pas atteint attend la prochaine tournée. Le rapport indique l’arrêt.",
   "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "Lance la tâche hors de sa planification. La tournée de mises à jour demande d’abord, parce qu’elle réveille des machines.",
@@ -318,5 +315,7 @@
   "all clear": "tout va bien",
   "all": "tous",
   "Filter by state": "Filtrer par état",
-  "No machine is in this state right now.": "Aucune machine n’est dans cet état pour le moment."
+  "No machine is in this state right now.": "Aucune machine n’est dans cet état pour le moment.",
+  "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Les pastilles au-dessus de la liste la limitent à une tâche ; le choix est dans l’adresse, une liste filtrée peut donc être mise en favori. Le résultat de chaque exécution, ce sont ses comptes en couleur — rouge pour ce qui a échoué, jaune pour les constats, vert pour ce qui a été mis à jour, gris pour ce qui a été ignoré ou était en veille — et un texte rouge signale une exécution qui a échoué entièrement. Le bouton en fin de ligne ouvre le rapport complet.",
+  "Filter by job": "Filtrer par tâche"
 }

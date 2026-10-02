@@ -107,8 +107,6 @@
   "This job has not run yet.": "此任务尚未运行。",
   "Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> under Scheduled work on the reports page.": "尚无记录。报告会在任务运行时保存 — 请在报告页面的“计划任务”中使用<em>立即运行</em>。",
   "Reports": "报告",
-  "Show": "显示",
-  "show": "显示",
   "Every run a job finishes is kept here, whether or not it was also sent to Telegram. Scheduled work shows the latest one; this list shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.": "任务每次完成的运行都会保存在这里，无论是否也发送到了 Telegram。计划任务只显示最新的一次；这个列表可以看到问题如何演变 — 逐渐上涨的磁盘占用、连续多次巡检都无法连接的主机、每周都失败的更新。",
   "Settings": "设置",
   "Saved.": "已保存。",
@@ -267,7 +265,6 @@
   "Find": "查找",
   "Find on a host": "在主机上查找",
   "Tick at least one project.": "请至少勾选一个项目。",
-  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>显示</em>可把列表限定为一个任务；选择保存在地址中，所以筛选后的列表可以加入书签。红色表示运行失败；带有发现但已完成的运行保持正常颜色。行尾按钮打开完整报告。",
   "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "读取每台运行中的机器：系统日志错误、磁盘占用、已停止的容器以及没有运行的计划任务。休眠的机器不会被唤醒，并报告为未检查。",
   "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "任务运行时显示。任务会在当前步骤之后停止 — 主机上已在运行的命令会执行完，为本次运行唤醒的机器仍会关机；尚未到达的部分留到下次运行。报告会注明已停止。",
   "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "在计划之外启动任务。更新任务会唤醒机器，所以会先确认。",
@@ -318,5 +315,7 @@
   "all clear": "一切正常",
   "all": "全部",
   "Filter by state": "按状态筛选",
-  "No machine is in this state right now.": "目前没有处于此状态的机器。"
+  "No machine is in this state right now.": "目前没有处于此状态的机器。",
+  "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "列表上方的标签可将其缩小到某一个任务；所选内容在地址中，因此筛选后的列表可以加入书签。每次运行的结果是彩色的计数——红色表示失败，黄色表示发现的问题，绿色表示已更新，灰色表示已跳过或处于休眠——红色文字表示整个运行失败。行末的按钮打开完整报告。",
+  "Filter by job": "按任务筛选"
 }

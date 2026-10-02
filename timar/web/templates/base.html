@@ -80,10 +80,11 @@
     .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
     .chip-tail { color: var(--muted); font-size: 0.8rem; }
     .chip-asleep { color: var(--asleep); }
-    /* The servers summary: counts that filter. A zero stays, dimmed; the picked one is filled. */
-    .fleet-summary { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
-    .fleet-summary .chip { text-decoration: none; }
-    .fleet-summary .chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
+    /* A row of counts that filter — the servers summary, the reports' jobs. A zero stays,
+       dimmed; the picked one is filled. */
+    .chip-bar { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+    .chip-bar a.chip { text-decoration: none; }
+    .chip-bar a.chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
     .chip-zero { opacity: 0.45; }
     .chip-on { background: color-mix(in srgb, currentColor 22%, transparent); border-color: currentColor; font-weight: 600; }
     .unknown .os { color: var(--asleep); opacity: 0.45; }
@@ -334,7 +335,9 @@
       });
     }
     draw();
-    document.body.addEventListener("htmx:afterSwap", function (e) { draw(e.detail.target); });
+    // The whole page after a settle, not the swap target: an outerHTML swap hands back the element
+    // it just removed, and drawing inside that left the new times absolute.
+    document.body.addEventListener("htmx:afterSettle", function () { draw(); });
     setInterval(draw, 60000);
   })();
 </script>

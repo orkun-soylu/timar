@@ -17,7 +17,7 @@
 {% set query = ("&state=" ~ state) if state else "" %}
 {% set q = "&sort=" ~ sort ~ "&dir=" ~ ("desc" if descending else "asc") %}
 {% if total %}
-<nav class="fleet-summary" aria-label="{{ _("Filter by state") }}">
+<nav class="chip-bar" aria-label="{{ _("Filter by state") }}">
   {%- for s in ("up", "asleep", "down") %}
   <a href="/?state={{ s }}{{ q }}" class="chip chip-{{ s }}{% if not counts[s] %} chip-zero{% endif %}{% if state == s %} chip-on{% endif %}"
      {%- if state == s %} aria-current="true"{% endif %}>{{ counts[s] }} {{ _(s) }}</a>

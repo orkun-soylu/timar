@@ -1463,14 +1463,19 @@ class TestReportArchive:
         body = client.get("/reports").text
         assert body.index("newer run") < body.index("older run")
 
-    def test_the_dropdown_offers_every_job_with_its_count(self, client):
+    def test_the_filter_offers_every_job_with_its_count(self, client):
         complete_setup(client)
         self.archive("update", title="Update run", summary="3 updated")
         body = client.get("/reports").text
-        assert "Update run (1)" in body
+        current = lambda html: html.split('aria-current="true"', 1)[1].split(">", 1)[1].split("</a>", 1)[0]
+        assert ">Update run 1</a>" in body and current(body) == "All reports 1"
         # Offered even with nothing archived: an empty list is the answer to "why have I seen
         # no sweep report", which the filter should be able to ask.
-        assert "Log sweep (0)" in body
+        assert ">Log sweep 0</a>" in body
+        # A plain link that HTMX upgrades, swapping the chips with the list so the pick moves.
+        assert 'href="/reports?job=update"' in body and 'hx-select="#report-view"' in body
+        picked = client.get("/reports?job=update").text
+        assert current(picked) == "Update run 1"
 
     def test_filtering_narrows_the_list(self, client):
         complete_setup(client)

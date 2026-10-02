@@ -107,8 +107,6 @@
   "This job has not run yet.": "Bu iş henüz çalışmadı.",
   "Nothing recorded yet. Reports are saved when the job runs — use <em>run now</em> under Scheduled work on the reports page.": "Henüz kayıt yok. Raporlar iş çalıştığında kaydedilir — raporlar sayfasında, Zamanlanmış işler altındaki <em>şimdi çalıştır</em>'ı kullanın.",
   "Reports": "Raporlar",
-  "Show": "Göster",
-  "show": "göster",
   "Every run a job finishes is kept here, whether or not it was also sent to Telegram. Scheduled work shows the latest one; this list shows how a finding developed — a disk creeping upwards, a host that has been unreachable for several sweeps, an update that fails every week.": "Bir işin bitirdiği her çalışma, Telegram'a da gönderilmiş olsun ya da olmasın, burada saklanır. Zamanlanmış işler en sonuncusunu gösterir; bu liste bir bulgunun nasıl geliştiğini gösterir — yavaş yavaş dolan bir disk, birkaç taramadır ulaşılamayan bir makine, her hafta başarısız olan bir güncelleme.",
   "Settings": "Ayarlar",
   "Saved.": "Kaydedildi.",
@@ -267,7 +265,6 @@
   "Find": "Bul",
   "Find on a host": "Host'ta bul",
   "Tick at least one project.": "En az bir proje işaretleyin.",
-  "<em>Show</em> narrows the list to one job; the choice is in the address, so a filtered list can be bookmarked. Red marks a run that failed; a run that finished with findings stays in the normal colour. The button at the end of a row opens the whole report.": "<em>Göster</em> listeyi tek bir işe daraltır; seçim adreste durur, böylece süzülmüş liste yer imine eklenebilir. Kırmızı, başarısız bir çalışmayı gösterir; bulgularla biten bir çalışma normal renkte kalır. Satırın sonundaki düğme raporun tamamını açar.",
   "Reads every machine that is up: system log errors, disk pressure, stopped containers and scheduled jobs that did not run. Asleep machines are not woken and are reported as not checked.": "Açık her makineyi okur: sistem logu hataları, disk doluluğu, duran container'lar ve çalışmamış zamanlanmış işler. Uyuyan makineler uyandırılmaz, kontrol edilmedi olarak raporlanır.",
   "Shown while a job runs. The job stops after the step it is on — a command already running on a host finishes, and a machine woken for the run is still shut down; what it had not reached is left for the next run. The report says it was stopped.": "Bir iş çalışırken görünür. İş üzerinde olduğu adımdan sonra durur — bir host'ta çalışmakta olan komut biter, tur için uyandırılan makine yine kapatılır; henüz ulaşılmayanlar bir sonraki tura kalır. Rapor durdurulduğunu yazar.",
   "Starts the job outside its schedule. The update run asks first, because it wakes machines.": "İşi zamanlamasının dışında başlatır. Güncelleme turu makineleri uyandırdığı için önce sorar.",
@@ -318,5 +315,7 @@
   "all clear": "sorun yok",
   "all": "tümü",
   "Filter by state": "Duruma göre süz",
-  "No machine is in this state right now.": "Şu an bu durumda makine yok."
+  "No machine is in this state right now.": "Şu an bu durumda makine yok.",
+  "The chips above the list narrow it to one job; the choice is in the address, so a filtered list can be bookmarked. Each run's outcome is its counts in colour — red for what failed, yellow for findings, green for what was updated, grey for what was skipped or asleep — and red text marks a run that failed outright. The button at the end of a row opens the whole report.": "Listenin üstündeki rozetler onu tek bir işe daraltır; seçim adreste durur, böylece süzülmüş liste yer imlerine eklenebilir. Her koşunun sonucu renkli sayılardır — kırmızı başarısız olanlar, sarı bulgular, yeşil güncellenenler, gri atlanan ya da uykuda olanlar — ve kırmızı metin tümden başarısız olmuş bir koşuyu gösterir. Satırın sonundaki düğme raporun tamamını açar.",
+  "Filter by job": "İşe göre süz"
 }
