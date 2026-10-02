@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.21] — 2026-10-02
+
 ### Added
 
 - **Each server's light is its logo.** The dot before a server's name is now its operating
