@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **More room between a server's logo and its name:** three spaces' width instead of one
+  (13.5 px at the table's 15 px, measured).
+
 ## [0.2.21] — 2026-10-02
 
 ### Added
