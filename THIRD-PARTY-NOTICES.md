@@ -27,16 +27,16 @@ broken page.
 
 ## Simple Icons
 
-Sixteen operating-system and appliance logos are redistributed as symbols in
-[`timar/web/static/os.svg`](timar/web/static/os.svg). They are taken from **Simple Icons
-16.33.0**, with the path data unmodified and only wrapped in `<symbol>` elements: Debian, Ubuntu,
-Kali Linux, Proxmox, OpenWrt, Raspberry Pi, OctoPrint, Linux, Alpine Linux, Arch Linux, Fedora,
-Rocky Linux, AlmaLinux, openSUSE, NixOS and Linux Mint.
+Fifty-two operating-system, appliance and application logos are redistributed as symbols in
+[`timar/web/static/logos.svg`](timar/web/static/logos.svg). They are taken from **Simple Icons
+16.33.0**, with the path data unmodified and only wrapped in `<symbol>` elements. The slugs are
+listed in `osinfo.LOGOS` and `containers.APP_LOGOS`.
 
 - **Simple Icons** (https://simpleicons.org, https://github.com/simple-icons/simple-icons) — the
   icon data is released under **CC0 1.0 Universal** (public domain dedication).
 - The marks themselves are trademarks of their respective owners. They are used here only to
-  identify which system a server runs, not to suggest any endorsement.
+  identify which system a server runs or which application a container
+  project is, not to suggest any endorsement.
 
 ## Runtime dependencies
 

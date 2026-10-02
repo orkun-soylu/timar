@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 OS_FILE = "ssh/os.json"
 
-# Slug → name, for each symbol in `web/static/os.svg` (Simple Icons, CC0).
+# Slug → name, for each symbol in `web/static/logos.svg` (Simple Icons, CC0).
 LOGOS = {
     "debian": "Debian", "ubuntu": "Ubuntu", "kalilinux": "Kali Linux", "proxmox": "Proxmox",
     "openwrt": "OpenWrt", "raspberrypi": "Raspberry Pi", "octoprint": "OctoPrint",

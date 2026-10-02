@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Each container project's light is its application's logo,** in the same state colours
+  (yellow included). It is read from the project's name and its images, so `vaultwarden/server`
+  is Vaultwarden and `ghcr.io/immich-app/immich-server` is Immich, with no extra connection. The
+  application beats the database or proxy it ships with, and a project that builds its
+  own image is its own application, not its sidecar. A local build, or anything not
+  recognised, shows Docker's whale. The last logo seen is kept, so a project whose host is
+  asleep keeps its look. 36 application logos (Simple Icons, CC0) were added to the sprite,
+  which is now `static/logos.svg`.
+
 ## [0.2.22] — 2026-10-02
 
 ### Changed

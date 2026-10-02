@@ -303,7 +303,7 @@ real three-machine fleet with one sleeping host: **3.02s cold, 0.01s cached** â€
 timeout, not the sum of them. The cache also stops a left-open browser tab from generating
 continuous traffic to every machine in the rack.
 
-### The light is the machine's logo
+### The light is the logo
 
 The state light in front of a server's name is its OS's logo, drawn in the state's colour, so
 the three states still read at a glance. The OS is read by `osinfo.DETECT` on connections timar
@@ -326,8 +326,28 @@ reads it). After them comes `/etc/rpi-issue`, then `ID`, then `ID_LIKE`. The com
 
 A platform of `proxmox` is drawn as Proxmox whatever was read. A machine never connected to
 falls back to its platform, then to Linux. The logos are Simple Icons (CC0), sixteen symbols in
-one sprite (`static/os.svg`, 28 KB) with `fill: currentColor`, so CSS colours them. They are
+one sprite (`static/logos.svg`, shared with the containers page, 52 symbols, 82 KB) with `fill: currentColor`, so CSS colours them. They are
 vendored for the same reason as htmx: an air-gapped rack gets the same page.
+
+The containers page uses the same sprite for the application's logo (`containers.app_logo`).
+It opens no connection of its own: it reads the project's name, then each image's name and
+owner. Four rules come from real projects:
+
+- **The images decide.** Project directories are named for what they are *to the operator*
+  (`photos`, `vault`, `git`), not for the software inside them.
+- **A supporting service loses.** A database, cache, proxy or object store counts only when
+  nothing else matched. An Immich project ships Postgres and Valkey, and `docker ps` promises no
+  order for a project's containers.
+- **A project that builds its own image is its own application.** Compose names such an image
+  `<project>-<service>`, and a search engine the project runs beside it must not become its
+  face. This was found on a real fleet, where an app showed SearXNG's logo.
+- **The last logo is remembered** (`container-logos.json`, by host and directory). A project on
+  a host that is asleep, or not created yet, has no images to read. Without the memory its row
+  would turn into the whale until the host came back.
+
+Anything not recognised, such as a local build, an image known only by its id, or something
+outside the sprite, is Docker's whale. There is no per-project override, by decision: one more
+key would add little over the whale.
 
 ## Power from the row that reports the state
 

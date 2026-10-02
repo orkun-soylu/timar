@@ -335,9 +335,9 @@ class TestActionsColumn:
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: host != "10.0.0.41")
         fleet_status.invalidate()
         rows = client.get("/fragments/fleet").text
-        assert 'title="up · Proxmox"' in rows and 'os.svg#proxmox' in rows
-        assert 'title="down · Ubuntu"' in rows and 'os.svg#ubuntu' in rows
-        assert 'title="up · OpenWrt"' in rows and 'os.svg#openwrt' in rows
+        assert 'title="up · Proxmox"' in rows and 'logos.svg#proxmox' in rows
+        assert 'title="down · Ubuntu"' in rows and 'logos.svg#ubuntu' in rows
+        assert 'title="up · OpenWrt"' in rows and 'logos.svg#openwrt' in rows
         # The colour comes from the row's state class, which the logo inherits.
         down = rows.split('<tr class="down">', 1)[1].split("</td>", 1)[0]
         assert 'class="os"' in down and "ubuntu" in down
