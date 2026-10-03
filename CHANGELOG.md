@@ -9,6 +9,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Waking a VM whose hypervisor is asleep wakes the hypervisor first.** It used to refuse with
+  "wake it first" in a toast that was gone in three seconds, so the button seemed to do nothing.
+  Now the hypervisor gets its magic packet, timar waits for it and for its own boot-time guests
+  (`pve-guests`), then starts the VM, or reports it already running if it started on boot. It
+  runs in the background: the wake button asks first, then pulses on both rows, and a failure
+  stays under the VM's name for ten minutes.
+- **A VM whose hypervisor is off and cannot be woken has no wake button**, the same as any other
+  machine timar cannot start.
+
+### Fixed
+
+- Waking a VM that is already running no longer fails on `qm start`.
+
 ## [0.2.28] — 2026-10-03
 
 ### Added

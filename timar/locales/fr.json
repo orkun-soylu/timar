@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Confiée à l'hôte sur lequel timar tourne, sous son propre systemd : il télécharge la nouvelle image, réécrit le tag épinglé dans le fichier compose s'il y en a un, et recrée le conteneur timar. Le projet compose de timar doit figurer sur la page des conteneurs ; les tâches en cours sont attendues. Le journal est <code>/var/log/timar-upgrade.log</code> sur cet hôte.",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Lisez d'abord le changelog : tant que la version commence par 0, une version peut modifier <code>config.yaml</code>.",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "Attendez la fin de {jobs} — la mise à niveau redémarre timar.",
-  "Could not start the upgrade: {error}": "Impossible de lancer la mise à niveau : {error}"
+  "Could not start the upgrade: {error}": "Impossible de lancer la mise à niveau : {error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "Réveiller d'abord {hypervisor}, puis démarrer {name} ? Ses autres VM lancées au démarrage démarreront avec lui.",
+  "waking up…": "réveil en cours…",
+  "waking {hypervisor} first — {name} starts once it is up": "réveil de {hypervisor} d'abord — {name} démarre dès qu'il est en ligne",
+  "waking {name} failed: {error}": "le réveil de {name} a échoué : {error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} n'a pas démarré — {name} n'a pas été lancé",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} est éteint et timar ne peut pas le réveiller — {name} ne pourra démarrer qu'une fois celui-ci allumé",
+  "{name} is already being woken": "{name} est déjà en cours de réveil",
+  "{name} is already running on {hypervisor}": "{name} tourne déjà sur {hypervisor}",
+  "{name} is offline": "{name} est hors ligne"
 }

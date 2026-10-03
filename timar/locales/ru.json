@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Передаётся хосту, на котором работает timar, под его собственный systemd: он скачивает новый образ, переписывает закреплённый тег в compose-файле, если он есть, и пересоздаёт контейнер timar. Для этого compose-проект timar должен быть на странице контейнеров; выполняющиеся задачи дожидаются завершения. Журнал — <code>/var/log/timar-upgrade.log</code> на этом хосте.",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Сначала прочитайте журнал изменений: пока версия начинается с 0, релиз может изменить <code>config.yaml</code>.",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "Дождитесь завершения: {jobs} — обновление перезапускает timar.",
-  "Could not start the upgrade: {error}": "Не удалось начать обновление: {error}"
+  "Could not start the upgrade: {error}": "Не удалось начать обновление: {error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "Сначала разбудить {hypervisor}, затем запустить {name}? Другие его ВМ с автозапуском поднимутся вместе с ним.",
+  "waking up…": "пробуждается…",
+  "waking {hypervisor} first — {name} starts once it is up": "сначала будим {hypervisor} — {name} запустится, когда он поднимется",
+  "waking {name} failed: {error}": "не удалось разбудить {name}: {error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} не поднялся — {name} не запущен",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} выключен, и timar не может его разбудить — {name} запустится только после его включения",
+  "{name} is already being woken": "{name} уже пробуждается",
+  "{name} is already running on {hypervisor}": "{name} уже работает на {hypervisor}",
+  "{name} is offline": "{name} недоступен"
 }

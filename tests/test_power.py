@@ -5,6 +5,7 @@ host, `qm` on the hypervisor for a guest — and the button on the dashboard is 
 tests are mostly about which mechanism is chosen, and about the failures that otherwise look
 exactly like success.
 """
+import threading
 from contextlib import contextmanager
 
 import pytest
@@ -29,7 +30,8 @@ FLEET = [HYPERVISOR, GUEST, SLEEPER, ALWAYS_ON, BY_HAND]
 def ssh(monkeypatch):
     """Records what was run where, and lets a test choose the result."""
     calls = []
-    outcome = {"result": ("", "", 0), "raise_on_connect": None, "raise_on_run": None}
+    outcome = {"result": ("", "", 0), "raise_on_connect": None, "raise_on_run": None,
+               "by_prefix": {}}
 
     @contextmanager
     def fake_connect(host, user, key, timeout=30):
@@ -42,6 +44,9 @@ def ssh(monkeypatch):
                       "timeout": timeout})
         if outcome["raise_on_run"]:
             raise outcome["raise_on_run"]
+        for prefix, result in outcome["by_prefix"].items():
+            if command.startswith(prefix):
+                return result
         return outcome["result"]
 
     monkeypatch.setattr(power, "connect", fake_connect)
@@ -65,17 +70,91 @@ class TestWake:
         WOL path would only ever answer 'no MAC address configured'."""
         monkeypatch.setattr(power.wol, "wake",
                             lambda *a, **kw: pytest.fail("a guest has no magic packet"))
+        ssh.outcome["by_prefix"] = {"qm status": ("status: stopped\n", "", 0)}
         message = power.wake(GUEST, FLEET)
-        assert ssh.calls[0]["command"] == "qm start 100"
-        assert ssh.calls[0]["host"] == "10.0.0.4"       # the hypervisor, not the guest
+        assert [c["command"] for c in ssh.calls] == ["qm status 100", "qm start 100"]
+        assert {c["host"] for c in ssh.calls} == {"10.0.0.4"}   # the hypervisor, not the guest
         assert "pve-01" in message
 
-    def test_a_sleeping_hypervisor_is_named_as_the_next_action(self, ssh, monkeypatch):
-        """'could not reach pve-01' is a paramiko message; this one says what to do about it."""
-        monkeypatch.setattr(power, "is_host_up", lambda host, **kw: False)
-        with pytest.raises(power.PowerError, match="pve-01 is offline"):
-            power.wake(GUEST, FLEET)
-        assert ssh.calls == []
+    def test_a_guest_already_running_is_not_started_again(self, ssh):
+        """`qm start` on a running VM fails — reporting that as an error would call a machine
+        that is exactly where the operator wants it broken."""
+        ssh.outcome["by_prefix"] = {"qm status": ("status: running\n", "", 0)}
+        assert "already running" in power.wake(GUEST, FLEET)
+        assert [c["command"] for c in ssh.calls] == ["qm status 100"]
+
+
+class TestWakeThroughASleepingHypervisor:
+    """The guest is what the operator asked for; the hypervisor is the way there."""
+
+    @pytest.fixture
+    def asleep(self, ssh, monkeypatch):
+        """The hypervisor is off until its magic packet, and comes up when it is sent."""
+        state = {"up": set(), "packets": []}
+
+        def fake_wol(server, by_name):
+            state["packets"].append(server["name"])
+            state["up"].add(server["host"])
+
+        monkeypatch.setattr(power.wol, "wake", fake_wol)
+        monkeypatch.setattr(power, "is_host_up", lambda host, **kw: host in state["up"])
+        monkeypatch.setattr(power, "wait_for_host", lambda host, **kw: host in state["up"])
+        ssh.outcome["by_prefix"] = {"qm status": ("status: stopped\n", "", 0)}
+        power._waking.clear()
+        power._failed.clear()
+        yield state
+        power._waking.clear()
+        power._failed.clear()
+
+    def test_wakes_the_hypervisor_waits_for_its_guests_then_starts_the_vm(self, ssh, asleep):
+        message = power.wake(GUEST, FLEET, background=False)
+        assert asleep["packets"] == ["pve-01"]
+        commands = [c["command"] for c in ssh.calls]
+        # Its boot-time guests first: starting during `pve-guests` races the hypervisor's own
+        # starts for the VM lock.
+        assert "pve-guests" in commands[0]
+        assert commands[1:] == ["qm status 100", "qm start 100"]
+        assert "kali-01 started on pve-01" in message
+
+    def test_a_guest_the_hypervisor_started_on_boot_is_success(self, ssh, asleep):
+        ssh.outcome["by_prefix"] = {"qm status": ("status: running\n", "", 0)}
+        assert "already running" in power.wake(GUEST, FLEET, background=False)
+        assert not any(c["command"].startswith("qm start") for c in ssh.calls)
+
+    def test_runs_in_the_background_and_the_row_shows_it(self, ssh, asleep, monkeypatch):
+        """Minutes long — the request must not wait for it, and the dashboard must show it."""
+        release = threading.Event()
+        monkeypatch.setattr(power, "_wake_through", lambda *a: release.wait(5) and "done")
+        message = power.wake(GUEST, FLEET)
+        assert "waking pve-01 first" in message
+        assert power.waking() == {"kali-01", "pve-01"}
+        # A second press does not start a second chain.
+        assert "already being woken" in power.wake(GUEST, FLEET)
+        release.set()
+        for t in threading.enumerate():
+            if t.name == "wake-kali-01":
+                t.join(5)
+        assert power.waking() == set()
+        assert power.failures() == {}
+
+    def test_a_failure_is_kept_for_the_row_to_show(self, ssh, asleep, monkeypatch):
+        """The toast is long gone when the hypervisor fails to come up."""
+        monkeypatch.setattr(power, "wait_for_host", lambda host, **kw: False)
+        power.wake(GUEST, FLEET)
+        for t in threading.enumerate():
+            if t.name == "wake-kali-01":
+                t.join(5)
+        assert power.waking() == set()
+        assert "pve-01 did not come up" in power.failures()["kali-01"]
+        assert not any(c["command"].startswith("qm start") for c in ssh.calls)
+
+    def test_a_hypervisor_nothing_can_wake_is_named(self, ssh, asleep):
+        """An always-on hypervisor that is off is a fault, not a step on the way."""
+        always_on = dict(HYPERVISOR, wol_mac=None)
+        with pytest.raises(power.PowerError, match="pve-01 is off and timar cannot wake it"):
+            power.wake(GUEST, [always_on, GUEST])
+        assert asleep["packets"] == [] and ssh.calls == []
+        assert power.waking() == set()
 
     def test_a_host_gets_a_magic_packet(self, monkeypatch):
         sent = {}

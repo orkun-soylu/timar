@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
-from . import config, osinfo, validate
+from . import config, osinfo, power, validate
 from .network import address_key, is_host_up
 
 REFRESH_EVERY = 10.0
@@ -37,9 +37,17 @@ class HostStatus:
     up: bool
     on_demand: bool
     platform: str
-    # False when Timar has nothing to start it with — no MAC, no hypervisor. It can still be shut
-    # down; it gets no wake button, and its shutdown warns that it will stay off.
+    # False when Timar has nothing to start it with — no MAC, no hypervisor, or a hypervisor that
+    # is off and cannot be woken either. It can still be shut down; it gets no wake button, and
+    # its shutdown warns that it will stay off.
     wakeable: bool = True
+    # The hypervisor a wake has to bring up first — set only while it is off — for the
+    # confirmation that says so.
+    wakes_first: str | None = None
+    # A chained wake (`power.wake`) is working on it right now.
+    waking: bool = False
+    # Why the last chained wake of it failed, for a few minutes after it did.
+    wake_error: str | None = None
     # The machine's own web interface. The name becomes a link to it while the machine is up —
     # only then, because a link to a panel that is off is a click that ends in a timeout.
     web_url: str | None = None
@@ -135,6 +143,9 @@ def fleet(cfg: dict) -> list[HostStatus]:
 
     with ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, len(servers))) as pool:
         results = list(pool.map(lambda s: _probe(_probe_key(s)), servers))
+    up_by_name = {s["name"]: up for s, up in zip(servers, results)}
+    waking = power.waking()
+    failed = power.failures()
 
     # By name, not config order: the order hosts were enrolled in means nothing to the reader,
     # and a host is found faster in an alphabetical list.
@@ -145,7 +156,12 @@ def fleet(cfg: dict) -> list[HostStatus]:
             up=up,
             on_demand=s["name"] in sleepers,
             platform=s.get("platform", "linux"),
-            wakeable=config.can_wake(s["name"], servers),
+            wakeable=_wakeable(s["name"], servers, parents, up_by_name),
+            wakes_first=(parents.get(s["name"])
+                         if s["name"] in parents and not up_by_name.get(parents[s["name"]])
+                         else None),
+            waking=s["name"] in waking,
+            wake_error=None if up else failed.get(s["name"]),
             web_url=_link(s.get("web_url"), schemes),
             logo=osinfo.logo(s, known),
             system=osinfo.system(s, systems),
@@ -155,6 +171,26 @@ def fleet(cfg: dict) -> list[HostStatus]:
         for s, up in zip(servers, results)
     ]
     return sorted(hosts, key=lambda h: h.name.casefold())
+
+
+def _wakeable(name: str, servers: list[dict], parents: dict[str, str],
+              up: dict[str, bool]) -> bool:
+    """`config.can_wake`, and for a guest: its hypervisor is up, or can be woken in turn.
+
+    A guest of a hypervisor that is off and has no wake address cannot be started — offering the
+    button and refusing the click would be worse than no button. Followed up the chain for
+    nested hypervisors; the `seen` guard keeps a hand-written loop in `config.yaml` finite.
+    """
+    seen: set[str] = set()
+    while name not in seen:
+        seen.add(name)
+        if not config.can_wake(name, servers):
+            return False
+        parent = parents.get(name)
+        if parent is None or up.get(parent):
+            return True
+        name = parent
+    return False
 
 
 SORT_KEYS = ("name", "address", "platform")
