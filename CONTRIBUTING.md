@@ -138,7 +138,8 @@ grow with the code rather than after it.
 
 ## 6. Security
 
-If you find a vulnerability, **do not open a public issue** — contact the maintainer directly.
+If you find a vulnerability, **do not open a public issue** — report it privately as
+[SECURITY.md](SECURITY.md) describes.
 
 Things to know while contributing:
 
