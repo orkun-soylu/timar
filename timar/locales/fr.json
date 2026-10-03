@@ -325,5 +325,21 @@
   "No SSH — only watch it and link to it": "Pas de SSH — seulement surveiller et lier",
   "Logo": "Logo",
   "Logo must be one of the listed ones.": "Le logo doit être l’un de ceux de la liste.",
-  "{name} is watched only — there is nothing to enrol.": "{name} est seulement surveillé — il n’y a rien à enrôler."
+  "{name} is watched only — there is nothing to enrol.": "{name} est seulement surveillé — il n’y a rien à enrôler.",
+  "Upgrading to {version} — timar restarts, this page follows.": "Mise à niveau vers {version} — timar redémarre, cette page suit.",
+  "Upgraded to {version}.": "Mis à niveau vers {version}.",
+  "The upgrade to {version} failed: {error}": "La mise à niveau vers {version} a échoué : {error}",
+  "{version} is out": "{version} est sortie",
+  "Upgrade timar to {version}? It restarts, and the page reconnects on its own.": "Mettre timar à niveau vers {version} ? Il redémarre, et la page se reconnecte d'elle-même.",
+  "Upgrade": "Mettre à niveau",
+  "up to date": "à jour",
+  "update check is off": "la vérification des mises à jour est désactivée",
+  "could not check for a newer version": "impossible de vérifier s'il existe une version plus récente",
+  "Version": "Version",
+  "Update check": "Vérification des mises à jour",
+  "Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.": "L'ouverture de cette page demande à GitHub la dernière version, au plus toutes les quelques heures. Rien d'autre sur votre installation n'est envoyé. <code>check_for_updates: false</code> dans <code>config.yaml</code> la désactive.",
+  "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Confiée à l'hôte sur lequel timar tourne, sous son propre systemd : il télécharge la nouvelle image, réécrit le tag épinglé dans le fichier compose s'il y en a un, et recrée le conteneur timar. Le projet compose de timar doit figurer sur la page des conteneurs ; les tâches en cours sont attendues. Le journal est <code>/var/log/timar-upgrade.log</code> sur cet hôte.",
+  "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Lisez d'abord le changelog : tant que la version commence par 0, une version peut modifier <code>config.yaml</code>.",
+  "Wait for {jobs} to finish — the upgrade restarts timar.": "Attendez la fin de {jobs} — la mise à niveau redémarre timar.",
+  "Could not start the upgrade: {error}": "Impossible de lancer la mise à niveau : {error}"
 }

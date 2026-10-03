@@ -349,24 +349,29 @@ def find_self_host(cfg: dict) -> str | None:
     return None
 
 
-def self_update_command(update_cmd: str, unit: str) -> str:
+def self_update_command(update_cmd: str, unit: str, *, log: str | None = None,
+                        rc: str | None = None, delay: int | None = None) -> str:
     """The update command, wrapped to run under the host's systemd instead of this session.
 
     The exit status is written to a file rather than read back from systemd: `--collect` unloads
     the unit once it finishes (without it, a failed unit stays loaded and the next run cannot
     reuse the name), so there is nothing left to ask. Measured on Debian 13: nothing remains.
     """
-    inner = (f"umask 022; ( {update_cmd} ) > {SELF_LOG} 2>&1; "
-             f"echo $? > {SELF_RC}.tmp && mv {SELF_RC}.tmp {SELF_RC}")
-    return (_AS_ROOT + f"$S rm -f {SELF_RC} && $S systemd-run --quiet --collect --unit={unit} "
-            f"--on-active={HANDOFF_DELAY} --timer-property=AccuracySec=1s "
+    log, rc = log or SELF_LOG, rc or SELF_RC
+    delay = HANDOFF_DELAY if delay is None else delay
+    inner = (f"umask 022; ( {update_cmd} ) > {log} 2>&1; "
+             f"echo $? > {rc}.tmp && mv {rc}.tmp {rc}")
+    return (_AS_ROOT + f"$S rm -f {rc} && $S systemd-run --quiet --collect --unit={unit} "
+            f"--on-active={delay} --timer-property=AccuracySec=1s "
             f"/bin/sh -c {shlex.quote(inner)}")
 
 
-def _self_update_status(ssh, unit: str) -> tuple[str, int | None, str]:
+def handoff_status(ssh, unit: str, *, log: str | None = None,
+                   rc: str | None = None) -> tuple[str, int | None, str]:
     """("done", rc, log tail), ("pending", None, "") or ("gone", None, "")."""
+    log, rc = log or SELF_LOG, rc or SELF_RC
     out, _, _ = run(ssh, _AS_ROOT
-                    + f"if [ -f {SELF_RC} ]; then echo done $(cat {SELF_RC}); $S tail -c 4000 {SELF_LOG}; "
+                    + f"if [ -f {rc} ]; then echo done $(cat {rc}); $S tail -c 4000 {log}; "
                     f"elif systemctl list-units --all --plain --no-legend '{unit}.*' | grep -q .; "
                     f"then echo pending; else echo gone; fi", timeout=30)
     first, _, rest = out.partition("\n")
@@ -390,7 +395,7 @@ def wait_for_self_update(server_cfg: dict, unit: str, deadline: float,
     while True:
         try:
             with connect(server_cfg["host"], server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
-                status, rc, log = _self_update_status(ssh, unit)
+                status, rc, log = handoff_status(ssh, unit)
         except Exception as e:
             logger.warning("%s: could not check the update yet: %s", name, e)
             status, rc, log = "pending", None, ""

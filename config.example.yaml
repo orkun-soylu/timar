@@ -165,3 +165,7 @@ log_check:
 # are always allowed. javascript, data, vbscript, file and blob can never be: they would run inside
 # timar's own page. Without this list, the server form refuses anything but http(s).
 # link_schemes: [claude, pi]
+
+# Optional: the settings page asks GitHub for the newest timar release when it is opened (at most
+# every few hours) and offers an upgrade. Nothing else is sent. false turns the check off.
+# check_for_updates: false

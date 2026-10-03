@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **The settings page names timar's version**, with links to the source on GitHub and to
+  timar.tools.
+- **It says when a newer release is out, and upgrades to it.** Opening the page asks GitHub's
+  releases API for the newest release (remembered for six hours; `check_for_updates: false` turns
+  it off). *Upgrade* hands the work to the host timar runs on, under its own systemd like the
+  host's package update: pull the new image, rewrite a pinned `ghcr.io/orkun-soylu/timar:<version>`
+  tag in the compose file, `docker compose up -d` timar's service, and record the result in
+  `/var/log/timar-upgrade.log`. The page follows the restart and says when the new version
+  answers. It needs timar's compose project on the containers page, refuses while a job runs,
+  and leaves any other tag — `latest` is pulled, a build of your own is not touched — alone.
+
 ## [0.2.27] — 2026-10-03
 
 ### Fixed
