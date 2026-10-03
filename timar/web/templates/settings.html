@@ -76,6 +76,19 @@
   </form>
 </section>
 
+<section class="panel">
+  <h2 class="with-action">timar
+    <button type="button" class="help" popovertarget="help-version"
+            aria-label="{{ _("About {section}", section="timar") }}">?</button></h2>
+  <div class="stack"><div class="actions">
+    <span>{{ _("Version") }} <strong>{{ version }}</strong></span>
+    <a href="{{ source_url }}" target="_blank" rel="noopener">GitHub</a>
+    <a href="{{ site_url }}" target="_blank" rel="noopener">timar.tools</a>
+    <span id="version-status" class="result" hx-get="/settings/version" hx-trigger="load"
+          hx-swap="outerHTML"></span>
+  </div></div>
+</section>
+
 {# The explanations, behind the "?" on each heading. #}
 <div id="help-model" popover class="popover">
   <h3>{{ _("Model") }}</h3>
@@ -113,5 +126,17 @@
     <dd>{{ _("Settings are stored in <code>config.yaml</code> in timar's data volume. Saving from this page rewrites that file, which drops any comments you added by hand.") }}</dd>
   </dl>
   <button type="button" class="secondary" popovertarget="help-notifications" popovertargetaction="hide">{{ _("close") }}</button>
+</div>
+
+<div id="help-version" popover class="popover">
+  <h3>timar</h3>
+  <dl class="help-list">
+    <dt>{{ _("Update check") }}</dt>
+    <dd>{{ _("Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.") }}</dd>
+    <dt>{{ _("Upgrade") }}</dt>
+    <dd>{{ _("Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.") }}</dd>
+    <dd>{{ _("Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.") }}</dd>
+  </dl>
+  <button type="button" class="secondary" popovertarget="help-version" popovertargetaction="hide">{{ _("close") }}</button>
 </div>
 {% endblock %}

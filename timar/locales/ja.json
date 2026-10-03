@@ -325,5 +325,21 @@
   "No SSH — only watch it and link to it": "SSH なし — 監視とリンクのみ",
   "Logo": "ロゴ",
   "Logo must be one of the listed ones.": "ロゴは一覧にあるものから選んでください。",
-  "{name} is watched only — there is nothing to enrol.": "{name} は監視のみです — 登録するものはありません。"
+  "{name} is watched only — there is nothing to enrol.": "{name} は監視のみです — 登録するものはありません。",
+  "Upgrading to {version} — timar restarts, this page follows.": "{version} にアップグレード中 — timar が再起動し、このページは自動で追従します。",
+  "Upgraded to {version}.": "{version} にアップグレードしました。",
+  "The upgrade to {version} failed: {error}": "{version} へのアップグレードに失敗しました: {error}",
+  "{version} is out": "{version} が公開されました",
+  "Upgrade timar to {version}? It restarts, and the page reconnects on its own.": "timar を {version} にアップグレードしますか？再起動し、ページは自動で再接続します。",
+  "Upgrade": "アップグレード",
+  "up to date": "最新です",
+  "update check is off": "更新チェックはオフです",
+  "could not check for a newer version": "新しいバージョンを確認できませんでした",
+  "Version": "バージョン",
+  "Update check": "更新チェック",
+  "Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.": "このページを開くと、GitHub に最新リリースを問い合わせます（数時間に一度まで）。インストールに関するそれ以外の情報は送信しません。<code>config.yaml</code> の <code>check_for_updates: false</code> で無効にできます。",
+  "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "timar が動作しているホストの systemd に引き渡されます: 新しいイメージを取得し、compose ファイルに固定タグがあれば書き換え、timar コンテナを作り直します。timar の compose プロジェクトがコンテナページに登録されている必要があり、実行中のジョブの完了を待ちます。ログはそのホストの <code>/var/log/timar-upgrade.log</code> です。",
+  "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "先に変更履歴を読んでください: バージョンが 0 で始まる間は、リリースで <code>config.yaml</code> が変わることがあります。",
+  "Wait for {jobs} to finish — the upgrade restarts timar.": "{jobs} の完了を待ってください — アップグレードで timar が再起動します。",
+  "Could not start the upgrade: {error}": "アップグレードを開始できませんでした: {error}"
 }

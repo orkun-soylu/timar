@@ -26,7 +26,8 @@ from fastapi.templating import Jinja2Templates
 
 from .. import containers as container_status, membership
 from .. import (config, enroll as enroll_module, i18n, jobs, keys, llm as llm_module, notify,
-                state, status as fleet_status, updater, validate)
+                release, state, status as fleet_status, updater, validate)
+from ..scheduler import scheduler
 from ..i18n import gettext as _
 from ..platforms import PLATFORMS, get as get_platform
 from ..schedule import DAYS as _DAYS, KINDS as _KINDS
@@ -164,6 +165,9 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "telegram_has_token": bool(telegram_cfg.get("token")),
         "providers": llm_module.PROVIDERS,
         "anthropic_default": llm_module.DEFAULTS[llm_module.ANTHROPIC]["model"],
+        "version": release.current_version(),
+        "source_url": release.SOURCE_URL,
+        "site_url": release.SITE_URL,
         "errors": errors or [],
         "notice": notice,
     }, status_code=status_code)
@@ -460,6 +464,53 @@ async def test_telegram():
     except notify.NotifyError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
     return HTMLResponse(f'<span class="ok">{_escape(_("Sent — check your chat."))}</span>')
+
+
+def _version_panel(request: Request, *, error: str | None = None):
+    """What the version line says after the number: a newer release, an upgrade under way.
+
+    A fragment loaded after the page, so a slow or unreachable GitHub delays only this line.
+    While an upgrade is under way it polls itself: the requests that fail while the container
+    is replaced are simply retried, and the first answer from the new one says it is done.
+    """
+    cfg = config.load()
+    upgrade = release.upgrade_status(cfg)
+    latest = None
+    if not (upgrade and upgrade["state"] == "pending") and release.check_enabled(cfg):
+        latest = release.latest()
+    running = release.current_version()
+    return TEMPLATES.TemplateResponse(request, "_version.html", {
+        "running": running,
+        "latest": latest,
+        "newer": bool(latest and release.is_newer(latest["version"], running)),
+        "check_enabled": release.check_enabled(cfg),
+        "upgrade": upgrade,
+        "error": error,
+    })
+
+
+@router.get("/version", response_class=HTMLResponse)
+async def version(request: Request):
+    return await asyncio.to_thread(_version_panel, request)
+
+
+@router.post("/upgrade", response_class=HTMLResponse)
+async def upgrade(request: Request):
+    form = await request.form()
+    target = str(form.get("version", ""))
+    busy = [jobs.TITLES.get(name, name) for name in jobs.JOBS if scheduler.is_running(name)]
+    if busy:
+        message = _("Wait for {jobs} to finish — the upgrade restarts timar.",
+                    jobs=", ".join(_(b) for b in busy))
+        return await asyncio.to_thread(_version_panel, request, error=message)
+    try:
+        await asyncio.to_thread(release.start_upgrade, config.load(), target)
+    except release.UpgradeError as e:
+        return await asyncio.to_thread(_version_panel, request, error=str(e))
+    except Exception as e:
+        message = _("Could not start the upgrade: {error}", error=str(e))
+        return await asyncio.to_thread(_version_panel, request, error=message)
+    return await asyncio.to_thread(_version_panel, request)
 
 
 def _job_form(request: Request, name: str, *, errors: list[str] | None = None,

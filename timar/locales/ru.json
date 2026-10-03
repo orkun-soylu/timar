@@ -325,5 +325,21 @@
   "No SSH — only watch it and link to it": "Без SSH — только наблюдать и ссылаться",
   "Logo": "Логотип",
   "Logo must be one of the listed ones.": "Логотип должен быть одним из перечисленных.",
-  "{name} is watched only — there is nothing to enrol.": "{name} только наблюдается — подключать нечего."
+  "{name} is watched only — there is nothing to enrol.": "{name} только наблюдается — подключать нечего.",
+  "Upgrading to {version} — timar restarts, this page follows.": "Обновление до {version} — timar перезапускается, страница последует за ним.",
+  "Upgraded to {version}.": "Обновлено до {version}.",
+  "The upgrade to {version} failed: {error}": "Обновление до {version} не удалось: {error}",
+  "{version} is out": "Вышла версия {version}",
+  "Upgrade timar to {version}? It restarts, and the page reconnects on its own.": "Обновить timar до {version}? Он перезапустится, а страница переподключится сама.",
+  "Upgrade": "Обновить",
+  "up to date": "актуальная версия",
+  "update check is off": "проверка обновлений выключена",
+  "could not check for a newer version": "не удалось проверить наличие новой версии",
+  "Version": "Версия",
+  "Update check": "Проверка обновлений",
+  "Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.": "При открытии этой страницы у GitHub запрашивается последний релиз — не чаще, чем раз в несколько часов. Больше ничего о вашей установке не отправляется. <code>check_for_updates: false</code> в <code>config.yaml</code> отключает это.",
+  "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Передаётся хосту, на котором работает timar, под его собственный systemd: он скачивает новый образ, переписывает закреплённый тег в compose-файле, если он есть, и пересоздаёт контейнер timar. Для этого compose-проект timar должен быть на странице контейнеров; выполняющиеся задачи дожидаются завершения. Журнал — <code>/var/log/timar-upgrade.log</code> на этом хосте.",
+  "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Сначала прочитайте журнал изменений: пока версия начинается с 0, релиз может изменить <code>config.yaml</code>.",
+  "Wait for {jobs} to finish — the upgrade restarts timar.": "Дождитесь завершения: {jobs} — обновление перезапускает timar.",
+  "Could not start the upgrade: {error}": "Не удалось начать обновление: {error}"
 }

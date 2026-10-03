@@ -1,0 +1,24 @@
+{# What follows the version number on the settings page — see `settings._version_panel`.
+   Replaces itself; while an upgrade is under way it asks again every few seconds, and keeps
+   asking through the failed requests of the restart. #}
+{% if upgrade and upgrade.state == "pending" %}
+<span id="version-status" class="result" hx-get="/settings/version" hx-trigger="every 3s"
+      hx-swap="outerHTML">{{ _("Upgrading to {version} — timar restarts, this page follows.", version=upgrade.target) }}</span>
+{% else %}
+<span id="version-status" class="result">
+  {%- if error %}<span class="error">{{ error }}</span>
+  {%- elif upgrade and upgrade.state == "done" %}<span class="ok">{{ _("Upgraded to {version}.", version=upgrade.target) }}</span>
+  {%- elif upgrade %}<span class="error">{{ _("The upgrade to {version} failed: {error}", version=upgrade.target, error=upgrade.error) }}</span>
+  {%- endif %}
+  {% if newer %}
+    <a href="{{ latest.url }}" target="_blank" rel="noopener">{{ _("{version} is out", version=latest.version) }}</a>
+    <button type="button" hx-post="/settings/upgrade" hx-vals='{{ {"version": latest.version} | tojson }}'
+            hx-target="#version-status" hx-swap="outerHTML"
+            hx-confirm="{{ _("Upgrade timar to {version}? It restarts, and the page reconnects on its own.", version=latest.version) }}">{{ _("Upgrade") }}</button>
+  {%- elif error or upgrade %}
+  {%- elif latest %}<span class="muted">{{ _("up to date") }}</span>
+  {%- elif not check_enabled %}<span class="muted">{{ _("update check is off") }}</span>
+  {%- else %}<span class="muted">{{ _("could not check for a newer version") }}</span>
+  {%- endif %}
+</span>
+{% endif %}

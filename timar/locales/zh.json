@@ -325,5 +325,21 @@
   "No SSH — only watch it and link to it": "无 SSH — 仅监视并链接",
   "Logo": "图标",
   "Logo must be one of the listed ones.": "图标必须是列表中的一个。",
-  "{name} is watched only — there is nothing to enrol.": "{name} 仅被监视——没有可注册的内容。"
+  "{name} is watched only — there is nothing to enrol.": "{name} 仅被监视——没有可注册的内容。",
+  "Upgrading to {version} — timar restarts, this page follows.": "正在升级到 {version} — timar 将重启，本页会自动跟进。",
+  "Upgraded to {version}.": "已升级到 {version}。",
+  "The upgrade to {version} failed: {error}": "升级到 {version} 失败：{error}",
+  "{version} is out": "{version} 已发布",
+  "Upgrade timar to {version}? It restarts, and the page reconnects on its own.": "将 timar 升级到 {version}？它会重启，页面会自动重新连接。",
+  "Upgrade": "升级",
+  "up to date": "已是最新",
+  "update check is off": "更新检查已关闭",
+  "could not check for a newer version": "无法检查是否有新版本",
+  "Version": "版本",
+  "Update check": "更新检查",
+  "Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.": "打开此页面时会向 GitHub 查询最新版本，最多每几小时一次。不会发送关于您安装的任何其他信息。在 <code>config.yaml</code> 中设置 <code>check_for_updates: false</code> 可关闭。",
+  "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "交给 timar 所在主机自己的 systemd 执行：拉取新镜像，如果 compose 文件中有固定的标签则改写它，然后重建 timar 容器。需要在容器页面登记 timar 的 compose 项目，并会等待正在运行的任务。日志位于该主机的 <code>/var/log/timar-upgrade.log</code>。",
+  "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "请先阅读更新日志：版本号以 0 开头期间，新版本可能会改变 <code>config.yaml</code>。",
+  "Wait for {jobs} to finish — the upgrade restarts timar.": "请等待 {jobs} 完成 — 升级会重启 timar。",
+  "Could not start the upgrade: {error}": "无法开始升级：{error}"
 }

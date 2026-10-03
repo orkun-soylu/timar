@@ -325,5 +325,21 @@
   "No SSH — only watch it and link to it": "Kein SSH — nur beobachten und verlinken",
   "Logo": "Logo",
   "Logo must be one of the listed ones.": "Das Logo muss eines der aufgeführten sein.",
-  "{name} is watched only — there is nothing to enrol.": "{name} wird nur beobachtet — es gibt nichts einzurichten."
+  "{name} is watched only — there is nothing to enrol.": "{name} wird nur beobachtet — es gibt nichts einzurichten.",
+  "Upgrading to {version} — timar restarts, this page follows.": "Upgrade auf {version} — timar startet neu, diese Seite folgt.",
+  "Upgraded to {version}.": "Auf {version} aktualisiert.",
+  "The upgrade to {version} failed: {error}": "Das Upgrade auf {version} ist fehlgeschlagen: {error}",
+  "{version} is out": "{version} ist erschienen",
+  "Upgrade timar to {version}? It restarts, and the page reconnects on its own.": "timar auf {version} aktualisieren? Es startet neu, die Seite verbindet sich von selbst wieder.",
+  "Upgrade": "Aktualisieren",
+  "up to date": "aktuell",
+  "update check is off": "Update-Prüfung ist aus",
+  "could not check for a newer version": "konnte nicht nach einer neueren Version suchen",
+  "Version": "Version",
+  "Update check": "Update-Prüfung",
+  "Opening this page asks GitHub for the newest release, at most every few hours. Nothing else about your installation is sent. <code>check_for_updates: false</code> in <code>config.yaml</code> turns it off.": "Beim Öffnen dieser Seite wird GitHub nach der neuesten Version gefragt, höchstens alle paar Stunden. Sonst wird nichts über Ihre Installation gesendet. <code>check_for_updates: false</code> in <code>config.yaml</code> schaltet das ab.",
+  "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Wird an den Host übergeben, auf dem timar läuft, unter dessen eigenem systemd: Er lädt das neue Image, schreibt den festgelegten Tag in der Compose-Datei um, falls es einen gibt, und erstellt den timar-Container neu. Dafür muss timars Compose-Projekt auf der Container-Seite stehen; laufende Jobs werden abgewartet. Das Protokoll ist <code>/var/log/timar-upgrade.log</code> auf diesem Host.",
+  "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Lesen Sie zuerst das Changelog: solange die Version mit 0 beginnt, kann ein Release <code>config.yaml</code> ändern.",
+  "Wait for {jobs} to finish — the upgrade restarts timar.": "Warten Sie, bis {jobs} fertig ist — das Upgrade startet timar neu.",
+  "Could not start the upgrade: {error}": "Das Upgrade konnte nicht gestartet werden: {error}"
 }
