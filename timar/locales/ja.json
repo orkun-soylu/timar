@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "timar が動作しているホストの systemd に引き渡されます: 新しいイメージを取得し、compose ファイルに固定タグがあれば書き換え、timar コンテナを作り直します。timar の compose プロジェクトがコンテナページに登録されている必要があり、実行中のジョブの完了を待ちます。ログはそのホストの <code>/var/log/timar-upgrade.log</code> です。",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "先に変更履歴を読んでください: バージョンが 0 で始まる間は、リリースで <code>config.yaml</code> が変わることがあります。",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "{jobs} の完了を待ってください — アップグレードで timar が再起動します。",
-  "Could not start the upgrade: {error}": "アップグレードを開始できませんでした: {error}"
+  "Could not start the upgrade: {error}": "アップグレードを開始できませんでした: {error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "先に {hypervisor} を起動してから {name} を起動しますか？起動時に自動で立ち上がる他の VM も一緒に起動します。",
+  "waking up…": "起動中…",
+  "waking {hypervisor} first — {name} starts once it is up": "先に {hypervisor} を起動しています — 起動後に {name} を開始します",
+  "waking {name} failed: {error}": "{name} の起動に失敗しました: {error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} が起動しませんでした — {name} は開始されていません",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} は停止中で、timar は起動できません — {name} は {hypervisor} の電源が入るまで開始できません",
+  "{name} is already being woken": "{name} はすでに起動処理中です",
+  "{name} is already running on {hypervisor}": "{name} はすでに {hypervisor} 上で実行中です",
+  "{name} is offline": "{name} はオフラインです"
 }

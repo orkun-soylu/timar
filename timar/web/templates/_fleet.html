@@ -54,7 +54,10 @@
               left behind, empty, every time. -#}
           <a href="{{ host.web_url }}" {% if host.web_url.startswith(('http://', 'https://')) %}target="_blank" {% endif %}rel="noopener noreferrer"
              title="{{ host.web_url }}">{{ host.name }}</a>
-        {%- else %}{{ host.name }}{% endif %}</td>
+        {%- else %}{{ host.name }}{% endif %}
+        {#- A chained wake runs in the background, long after its toast has faded; when it fails,
+            the row is the only place left to say so. #}
+        {%- if host.wake_error %}<div class="error row-note">{{ host.wake_error }}</div>{% endif %}</td>
       <td class="col-mid"><code>{{ host.host }}</code></td>
       <td class="col-mid muted wide">{{ host.system }}</td>
       {# Power first, then the row's own management. The power slot is kept even when it is
@@ -81,12 +84,21 @@
           {# Off, and nothing to wake it with. Offering the button and refusing the click would
              be worse than an empty slot. #}
           <span class="icon-slot"></span>
+        {%- elif host.waking %}
+          {# Its hypervisor is booting on its way to starting it — a minute or two. A second
+             press would only be refused. #}
+          <button type="button" class="icon-btn waking" disabled
+                  title="{{ _("waking up…") }}" aria-label="{{ _("waking up…") }}"
+                  >{{ icon("wake") }}</button>
         {%- else %}
           <button type="button" class="icon-btn"
                   title="{{ _("wake up") }}" aria-label="{{ _("wake up") }}"
                   hx-post="/servers/{{ host.name }}/wake"
                   hx-target="#toast" hx-swap="innerHTML"
                   hx-indicator="#toast" hx-disabled-elt="this"
+                  {%- if host.wakes_first %}
+                  hx-confirm="{{ _("Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.", hypervisor=host.wakes_first, name=host.name) }}"
+                  {%- endif %}
                   >{{ icon("wake") }}</button>
         {%- endif %}
         <a href="/settings/servers/{{ host.name }}/edit" class="icon-btn"

@@ -232,6 +232,44 @@ class TestActionsColumn:
         hv = rows.split("/servers/hv/shutdown", 1)[1].split("</button>", 1)[0]
         assert "switches it on by hand" in hv
 
+    def _hypervisor_off(self, client, monkeypatch, wol_mac):
+        from timar import config, status as fleet_status
+        complete_setup(client)
+        hv = {"name": "hv", "host": "10.0.0.1", "user": "root", "platform": "proxmox",
+              "manages_vms": [{"vm_id": 100, "server_name": "vm-a"}]}
+        if wol_mac:
+            hv["wol_mac"] = wol_mac
+        config.save({"servers": [hv, {"name": "vm-a", "host": "10.0.0.2", "user": "op"}]})
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: False)
+        fleet_status.invalidate()
+        return client.get("/fragments/fleet").text
+
+    def test_a_guest_of_a_sleeping_hypervisor_wakes_it_first_and_says_so(
+            self, client, monkeypatch):
+        rows = self._hypervisor_off(client, monkeypatch, "aa:bb:cc:dd:ee:01")
+        vm_a = rows.split("/servers/vm-a/wake", 1)[1].split("</button>", 1)[0]
+        assert "Wake hv first, then start vm-a?" in vm_a
+
+    def test_a_guest_of_a_hypervisor_nothing_can_wake_gets_no_button(self, client, monkeypatch):
+        """Offering it and refusing the click would be worse than an empty slot."""
+        rows = self._hypervisor_off(client, monkeypatch, None)
+        assert "/servers/vm-a/wake" not in rows and "/servers/hv/wake" not in rows
+
+    def test_a_chained_wake_in_flight_shows_on_both_rows(self, client, monkeypatch):
+        from timar import power
+        monkeypatch.setattr(power, "_waking", {"vm-a", "hv"})
+        rows = self._hypervisor_off(client, monkeypatch, "aa:bb:cc:dd:ee:01")
+        assert "/servers/vm-a/wake" not in rows and "/servers/hv/wake" not in rows
+        assert rows.count('class="icon-btn waking" disabled') == 2
+
+    def test_a_failed_chained_wake_stays_on_the_row(self, client, monkeypatch):
+        import time
+        from timar import power
+        monkeypatch.setattr(power, "_failed",
+                            {"vm-a": (time.monotonic(), "hv did not come up <b>")})
+        rows = self._hypervisor_off(client, monkeypatch, "aa:bb:cc:dd:ee:01")
+        assert 'class="error row-note">hv did not come up &lt;b&gt;' in rows
+
     def test_a_machine_switched_on_by_hand_can_be_shut_down_but_not_woken(
             self, client, monkeypatch):
         from timar import config, status as fleet_status

@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "交给 timar 所在主机自己的 systemd 执行：拉取新镜像，如果 compose 文件中有固定的标签则改写它，然后重建 timar 容器。需要在容器页面登记 timar 的 compose 项目，并会等待正在运行的任务。日志位于该主机的 <code>/var/log/timar-upgrade.log</code>。",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "请先阅读更新日志：版本号以 0 开头期间，新版本可能会改变 <code>config.yaml</code>。",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "请等待 {jobs} 完成 — 升级会重启 timar。",
-  "Could not start the upgrade: {error}": "无法开始升级：{error}"
+  "Could not start the upgrade: {error}": "无法开始升级：{error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "先唤醒 {hypervisor}，再启动 {name}？它的其他开机自启 VM 也会一起启动。",
+  "waking up…": "唤醒中…",
+  "waking {hypervisor} first — {name} starts once it is up": "正在先唤醒 {hypervisor} — 它启动后再启动 {name}",
+  "waking {name} failed: {error}": "唤醒 {name} 失败：{error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} 未能启动 — 未启动 {name}",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} 已关机且 timar 无法唤醒它 — 只有它开机后 {name} 才能启动",
+  "{name} is already being woken": "{name} 已在唤醒中",
+  "{name} is already running on {hypervisor}": "{name} 已在 {hypervisor} 上运行",
+  "{name} is offline": "{name} 离线"
 }

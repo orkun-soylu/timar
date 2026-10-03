@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "timar'ın çalıştığı host'a, onun kendi systemd'sine devredilir: yeni imajı çeker, compose dosyasında sabitlenmiş bir etiket varsa onu yeniden yazar ve timar container'ını yeniden oluşturur. timar'ın compose projesinin containers sayfasında kayıtlı olması gerekir; çalışan işleri bekler. Günlük o host'ta <code>/var/log/timar-upgrade.log</code>.",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Önce değişiklik günlüğünü okuyun: sürüm 0 ile başladığı sürece bir sürüm <code>config.yaml</code>'ı değiştirebilir.",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "{jobs} bitene kadar bekleyin — yükseltme timar'ı yeniden başlatır.",
-  "Could not start the upgrade: {error}": "Yükseltme başlatılamadı: {error}"
+  "Could not start the upgrade: {error}": "Yükseltme başlatılamadı: {error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "Önce {hypervisor} uyandırılsın, sonra {name} başlatılsın mı? Açılışta başlayan diğer VM'leri de onunla birlikte kalkar.",
+  "waking up…": "uyanıyor…",
+  "waking {hypervisor} first — {name} starts once it is up": "önce {hypervisor} uyandırılıyor — {name} o açılınca başlar",
+  "waking {name} failed: {error}": "{name} uyandırılamadı: {error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} açılmadı — {name} başlatılmadı",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} kapalı ve timar onu uyandıramıyor — {name} ancak o açılınca başlayabilir",
+  "{name} is already being woken": "{name} zaten uyandırılıyor",
+  "{name} is already running on {hypervisor}": "{name} zaten {hypervisor} üzerinde çalışıyor",
+  "{name} is offline": "{name} çevrimdışı"
 }

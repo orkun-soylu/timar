@@ -341,5 +341,14 @@
   "Handed to the host timar runs on, under its own systemd: it pulls the new image, rewrites the pinned tag in the compose file if there is one, and recreates the timar container. It needs timar's compose project on the containers page, and waits for running jobs. The log is <code>/var/log/timar-upgrade.log</code> on that host.": "Wird an den Host übergeben, auf dem timar läuft, unter dessen eigenem systemd: Er lädt das neue Image, schreibt den festgelegten Tag in der Compose-Datei um, falls es einen gibt, und erstellt den timar-Container neu. Dafür muss timars Compose-Projekt auf der Container-Seite stehen; laufende Jobs werden abgewartet. Das Protokoll ist <code>/var/log/timar-upgrade.log</code> auf diesem Host.",
   "Read the changelog first: while the version starts with 0, a release may change <code>config.yaml</code>.": "Lesen Sie zuerst das Changelog: solange die Version mit 0 beginnt, kann ein Release <code>config.yaml</code> ändern.",
   "Wait for {jobs} to finish — the upgrade restarts timar.": "Warten Sie, bis {jobs} fertig ist — das Upgrade startet timar neu.",
-  "Could not start the upgrade: {error}": "Das Upgrade konnte nicht gestartet werden: {error}"
+  "Could not start the upgrade: {error}": "Das Upgrade konnte nicht gestartet werden: {error}",
+  "Wake {hypervisor} first, then start {name}? Its other VMs that start on boot come up with it.": "Zuerst {hypervisor} aufwecken, dann {name} starten? Seine anderen VMs, die beim Booten starten, kommen mit hoch.",
+  "waking up…": "wird aufgeweckt…",
+  "waking {hypervisor} first — {name} starts once it is up": "{hypervisor} wird zuerst aufgeweckt — {name} startet, sobald er läuft",
+  "waking {name} failed: {error}": "Aufwecken von {name} fehlgeschlagen: {error}",
+  "{hypervisor} did not come up — {name} was not started": "{hypervisor} ist nicht hochgekommen — {name} wurde nicht gestartet",
+  "{hypervisor} is off and timar cannot wake it — {name} can start only once it is switched on": "{hypervisor} ist aus und timar kann ihn nicht aufwecken — {name} kann erst starten, wenn er eingeschaltet ist",
+  "{name} is already being woken": "{name} wird bereits aufgeweckt",
+  "{name} is already running on {hypervisor}": "{name} läuft bereits auf {hypervisor}",
+  "{name} is offline": "{name} ist offline"
 }
