@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.29] — 2026-10-03
+
 ### Changed
 
 - **Waking a VM whose hypervisor is asleep wakes the hypervisor first.** It used to refuse with
