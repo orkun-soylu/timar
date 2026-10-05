@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.30] — 2026-10-05
+
 ### Added
 
 - **Telegram messages in your language.** Settings → Notifications has a *Message language*:
