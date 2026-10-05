@@ -5,9 +5,10 @@ nobody has translated yet falls back to the English it already is rather than to
 Catalogs are flat JSON in `locales/`, one file per language, English → translation.
 
 The language is per request, held in a context variable that the web middleware sets. Anything
-that runs outside a request — the scheduler, reports, Telegram — sees the default and stays in
-English: a report is read later, by whoever happens to read it, and a stored summary must not
-depend on the language of the browser that happened to trigger the run.
+that runs outside a request — the scheduler, reports — sees the default and stays in English: a
+report is read later, by whoever happens to read it, and a stored summary must not depend on the
+language of the browser that happened to trigger the run. Telegram is the exception that proves
+it: its language is a setting, not a browser, so a job builds the message under `using` that.
 
 Placeholders are `str.format` fields (`{name}`), so a translation can move them to wherever its
 grammar wants them.
@@ -15,6 +16,7 @@ grammar wants them.
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import cache
 from pathlib import Path
@@ -55,6 +57,20 @@ def current() -> str:
 
 def activate(lang: str | None) -> None:
     _current.set(lang if lang in LANGUAGES else DEFAULT)
+
+
+@contextmanager
+def using(lang: str | None):
+    """Speak `lang` for the duration of the block, then whatever was spoken before.
+
+    For text built outside a request in a language the configuration chose — and for the stored
+    copy next to it, which has to be English even when the job was started from a Turkish page.
+    """
+    token = _current.set(lang if lang in LANGUAGES else DEFAULT)
+    try:
+        yield
+    finally:
+        _current.reset(token)
 
 
 def negotiate(cookie: str | None, accept_language: str | None) -> str:

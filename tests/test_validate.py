@@ -243,6 +243,14 @@ class TestTelegram:
         result = telegram({"token": "", "chat_id": "456"}, {"token": "t", "chat_id": "123"})
         assert result == {"token": "t", "chat_id": "456"}
 
+    def test_language_is_kept_unless_english(self):
+        assert telegram({"token": "t", "chat_id": "1", "language": "tr"}, None)["language"] == "tr"
+        assert "language" not in telegram({"token": "t", "chat_id": "1", "language": "en"}, None)
+
+    def test_unknown_language_rejected(self):
+        with pytest.raises(ValidationError, match="Unknown language"):
+            telegram({"token": "t", "chat_id": "1", "language": "xx"}, None)
+
 
 class TestAdvancedWakeSettings:
     """`wol_broadcast` and `wol_relay` are config.yaml-only now; the form neither reads nor owns them."""

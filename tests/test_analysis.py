@@ -127,3 +127,24 @@ class TestAnalyze:
         assert result == "ok"
         assert "web-01" in seen["system"] and "a note" in seen["system"]
         assert "web-01: clean" in seen["prompt"]
+
+    def test_assessment_is_asked_for_in_the_readers_language_from_english_findings(self, monkeypatch):
+        """The findings are what the model reasons over, so they stay English even when the
+        assessment is written for a Turkish reader — and even when a Turkish page started it."""
+        from timar import i18n
+        seen = {}
+        monkeypatch.setattr(analysis, "complete",
+                            lambda cfg, system, prompt: seen.update(prompt=prompt) or "ok")
+        llm = LLMConfig(provider="ollama", model="m", base_url="http://x")
+        with i18n.using("tr"):
+            analyze(llm, CONFIG, [LogResult(server="web-01", success=True)], language="tr")
+        assert "web-01: clean" in seen["prompt"]
+        assert "Türkçe" in seen["prompt"]
+
+    def test_english_adds_no_language_instruction(self, monkeypatch):
+        seen = {}
+        monkeypatch.setattr(analysis, "complete",
+                            lambda cfg, system, prompt: seen.update(prompt=prompt) or "ok")
+        llm = LLMConfig(provider="ollama", model="m", base_url="http://x")
+        analyze(llm, CONFIG, [LogResult(server="web-01", success=True)])
+        assert "Write the assessment in" not in seen["prompt"]

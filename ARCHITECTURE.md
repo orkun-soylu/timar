@@ -302,11 +302,18 @@ Several things on the pages are drawn differently from how they are stored, on p
 
 The interface is translated; what Timar *writes down* is not. The language lives in a context
 variable that a middleware sets per request (cookie, then `Accept-Language`, then English), and
-nothing outside a request ever sets it. So a form error follows the browser, while a report, a
-job summary or a Telegram message — written by a background job, stored, and read later by
-whoever happens to read it — is always English. The alternative, a stored summary in the
-language of whichever tab pressed *run now*, makes the archive a patchwork and turns a copied
-error into something a search engine cannot find.
+nothing outside a request sets it except by an explicit `i18n.using`. So a form error follows
+the browser, while a report or a job summary — written by a background job, stored, and read
+later by whoever happens to read it — is always English. The alternative, a stored summary in
+the language of whichever tab pressed *run now*, makes the archive a patchwork and turns a
+copied error into something a search engine cannot find.
+
+- **Telegram is the one exception, and it is a setting, not a browser.** `telegram.language`
+  is chosen once, by the operator who reads the chat, so it is as deterministic as English.
+  A job builds the stored text under `using("en")` and the message under `using(language)` from
+  the same results. The model's assessment is written once, in the Telegram language, and the
+  archive keeps that one: a second call only for an English copy is not worth its cost. The
+  findings the model is given stay English either way.
 
 - **The English sentence is the message id**, gettext-style, in flat JSON catalogs. Templates
   and code read as they did, and a missing translation degrades to English rather than to a key
