@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Telegram messages in your language.** Settings → Notifications has a *Message language*:
+  the log sweep and update reports, the model's assessment and the test message arrive in it.
+  The archived findings and job summaries stay in English. Stored as `telegram.language`;
+  without it, English as before.
+
 ## [0.2.29] — 2026-10-03
 
 ### Changed

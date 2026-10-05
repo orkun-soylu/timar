@@ -9,13 +9,18 @@ Each job produces two things from one set of results: a one-line `summary` for t
 and the full `report`. Both are persisted. The report is built as **plain text** and marked up
 for Telegram separately, because it has to render in two places that escape differently, and
 storing the Telegram version would put `<pre>` tags on the page.
+
+The two are also built in different languages. The stored copy is English, like everything
+timar keeps (`i18n`); the Telegram message is in `telegram.language`, because it is read once,
+on a phone, by the operator who chose it.
 """
 from __future__ import annotations
 
 import logging
 from typing import NamedTuple
 
-from . import analysis, cancel, config, membership, llm as llm_module, notify, state, status as fleet_status
+from . import analysis, cancel, config, i18n, membership, llm as llm_module, notify, state, status as fleet_status
+from .i18n import gettext as _
 from .log_checker import run_log_checks
 from .updater import UpdateResult, run_updates, wait_for_self_update
 
@@ -56,6 +61,17 @@ def _notify(cfg: dict, text: str) -> None:
         logger.error("could not deliver report: %s", e)
 
 
+def _language(cfg: dict) -> str:
+    return (cfg.get("telegram") or {}).get("language") or i18n.DEFAULT
+
+
+def _sweep_body(results, offline, clean: bool) -> str:
+    if clean:
+        return _("All clear — {checked} checked, {asleep} asleep.",
+                 checked=len(results) - len(offline), asleep=len(offline))
+    return analysis.format_findings(results)
+
+
 def run_log_sweep(cfg: dict) -> Outcome:
     results = run_log_checks(cfg)
 
@@ -73,21 +89,24 @@ def run_log_sweep(cfg: dict) -> Outcome:
     if stopped:
         summary += f" — stopped by the operator after {len(results)} hosts"
 
+    language = _language(cfg)
+    # One assessment, written in Telegram's language — it is read there first, and a second
+    # model call only to have an English copy in the archive is not worth its cost.
     written = analysis.analyze(
-        llm_module.LLMConfig.from_dict(cfg.get("llm")), cfg, results, config.load_notes()
+        llm_module.LLMConfig.from_dict(cfg.get("llm")), cfg, results, config.load_notes(),
+        language=language,
     )
     clean = not with_issues and not unreachable
-    body = (
-        f"All clear — {len(results) - len(offline)} checked, {len(offline)} asleep."
-        if clean else analysis.format_findings(results)
-    )
-
-    lines = [f"<b>{TITLES[LOG_SWEEP]}</b>", ""]
-    if written:
-        lines += [f"<i>{notify.escape(written)}</i>", ""]
+    with i18n.using(i18n.DEFAULT):
+        body = _sweep_body(results, offline, clean)
+    with i18n.using(language):
+        lines = [f"<b>{_(TITLES[LOG_SWEEP])}</b>", ""]
+        if written:
+            lines += [f"<i>{notify.escape(written)}</i>", ""]
+        message = _sweep_body(results, offline, clean)
     # The findings block is preformatted so the column alignment survives; the all-clear line is
     # one sentence and reads better without it.
-    lines.append(body if clean else f"<pre>{notify.escape(body)}</pre>")
+    lines.append(message if clean else f"<pre>{notify.escape(message)}</pre>")
 
     _notify(cfg, "\n".join(lines))
     return Outcome(summary, f"{written}\n\n{body}" if written else body)
@@ -131,14 +150,25 @@ def _update_outcome(cfg: dict, results: list[UpdateResult]) -> Outcome:
     if stopped:
         summary += " — stopped by the operator"
 
+    with i18n.using(i18n.DEFAULT):
+        rows = _update_rows(results, stopped)
+    with i18n.using(_language(cfg)):
+        lines = [f"<b>{_(TITLES[UPDATE])}</b>", ""] + [notify.escape(row)
+                                                        for row in _update_rows(results, stopped)]
+    _notify(cfg, "\n".join(lines))
+    return Outcome(summary, "\n".join(rows))
+
+
+def _update_rows(results: list[UpdateResult], stopped: bool) -> list[str]:
     rows = []
     for r in results:
         if r.skipped:
-            rows.append(f"— {r.server}: skipped ({r.error})")
+            rows.append("— " + _("{server}: skipped ({reason})", server=r.server, reason=r.error))
         elif r.success:
             # Whether the machine was woken for this is the detail an operator checks first when
             # a machine they expected to find asleep is running.
-            note = f" ({r.note})" if r.note else ("" if r.was_running else " (woken, updated, shut down again)")
+            note = (f" ({r.note})" if r.note
+                    else "" if r.was_running else f" ({_('woken, updated, shut down again')})")
             rows.append(f"✅ {r.server}{note}")
         else:
             # Not truncated here. The failure text is already bounded where it is produced, and
@@ -147,11 +177,9 @@ def _update_outcome(cfg: dict, results: list[UpdateResult]) -> Outcome:
             rows.append(f"❌ {r.server}: {r.error.strip()}".replace("\n", "\n    "))
 
     if stopped:
-        rows.append("⏹ Stopped by the operator: the machines after the last one listed were not "
-                    "reached and are not updated.")
-    lines = [f"<b>{TITLES[UPDATE]}</b>", ""] + [notify.escape(row) for row in rows]
-    _notify(cfg, "\n".join(lines))
-    return Outcome(summary, "\n".join(rows))
+        rows.append("⏹ " + _("Stopped by the operator: the machines after the last one listed were "
+                             "not reached and are not updated."))
+    return rows
 
 
 RUNNERS = {LOG_SWEEP: run_log_sweep, UPDATE: run_update}

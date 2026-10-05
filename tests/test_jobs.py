@@ -108,3 +108,40 @@ class TestUpdateReport:
             UpdateResult(server="web-01", success=True),
         ])
         assert "❌ db-01: stdout: it broke\n    stderr: noise" in outcome.report
+
+
+class TestTelegramLanguage:
+    """Telegram speaks `telegram.language`; the stored copy stays English for whoever reads it later."""
+
+    CFG = {"telegram": {"token": "t", "chat_id": "1", "language": "tr"}}
+
+    @pytest.fixture
+    def sent(self, monkeypatch):
+        messages = []
+        monkeypatch.setattr(jobs.notify, "send", lambda token, chat, text: messages.append(text))
+        return messages
+
+    def test_sweep_message_is_turkish_and_the_report_english(self, sweep, sent):
+        outcome = sweep([LogResult(server="web-01", success=True, disk_issues=["/: 91%"]),
+                         LogResult(server="gpu-01", success=True, offline=True)], cfg=self.CFG)
+        assert "Log taraması" in sent[0]
+        assert "gpu-01: kapalı, kontrol edilmedi" in sent[0]
+        assert "disk: /: 91%" in sent[0]
+        assert "gpu-01: offline, not checked" in outcome.report
+        assert outcome.summary == "1 with findings, 0 unreachable, 1 asleep"
+
+    def test_all_clear_is_turkish(self, sweep, sent):
+        sweep([LogResult(server="web-01", success=True)], cfg=self.CFG)
+        assert "Her şey yolunda — 1 kontrol edildi, 0 uykuda." in sent[0]
+
+    def test_update_message_is_turkish_and_the_report_english(self, update, sent):
+        outcome = update([UpdateResult(server="nas", success=True, skipped=True, error="left out"),
+                          UpdateResult(server="gpu-01", success=True, was_running=False)], cfg=self.CFG)
+        assert "nas: atlandı (left out)" in sent[0]
+        assert "uyandırıldı, güncellendi, yeniden kapatıldı" in sent[0]
+        assert "nas: skipped (left out)" in outcome.report
+
+    def test_no_language_means_english(self, sweep, sent):
+        sweep([LogResult(server="web-01", success=True)],
+              cfg={"telegram": {"token": "t", "chat_id": "1"}})
+        assert "All clear" in sent[0]

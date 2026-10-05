@@ -163,6 +163,7 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "llm_has_key": bool(llm_cfg.get("api_key")),
         "telegram_chat_id": telegram_cfg.get("chat_id", ""),
         "telegram_has_token": bool(telegram_cfg.get("token")),
+        "telegram_language": telegram_cfg.get("language") or i18n.DEFAULT,
         "providers": llm_module.PROVIDERS,
         "anthropic_default": llm_module.DEFAULTS[llm_module.ANTHROPIC]["model"],
         "version": release.current_version(),
@@ -460,7 +461,9 @@ async def test_telegram():
     cfg = config.load()
     telegram_cfg = cfg.get("telegram") or {}
     try:
-        notify.send_test(telegram_cfg.get("token", ""), telegram_cfg.get("chat_id", ""))
+        # In the language the reports will arrive in, so the test also shows that choice.
+        with i18n.using(telegram_cfg.get("language")):
+            notify.send_test(telegram_cfg.get("token", ""), telegram_cfg.get("chat_id", ""))
     except notify.NotifyError as e:
         return HTMLResponse(f'<span class="error">{_escape(str(e))}</span>')
     return HTMLResponse(f'<span class="ok">{_escape(_("Sent — check your chat."))}</span>')

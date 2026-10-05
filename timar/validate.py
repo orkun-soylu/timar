@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlsplit
 
-from .i18n import gettext as _
+from .i18n import DEFAULT, LANGUAGES, gettext as _
 from .network import split_address
 from .platforms import PLATFORMS
 
@@ -394,9 +394,16 @@ def telegram(form: dict, existing: dict | None) -> dict | None:
         errors.append(_("Bot token is required."))
     if not chat_id:
         errors.append(_("Chat ID is required."))
+    language = (form.get("language") or "").strip() or (existing or {}).get("language") or DEFAULT
+    if language not in LANGUAGES:
+        errors.append(_("Unknown language: {code}", code=language))
     if errors:
         raise ValidationError(errors)
-    return {"token": token, "chat_id": chat_id}
+    entry = {"token": token, "chat_id": chat_id}
+    # English is what an entry without the key already means; writing it would only add a line.
+    if language != DEFAULT:
+        entry["language"] = language
+    return entry
 
 
 def schedules(form: dict, job_names) -> dict:

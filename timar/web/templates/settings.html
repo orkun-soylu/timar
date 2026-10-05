@@ -65,6 +65,12 @@
                placeholder="{{ _("stored") if telegram_has_token else _("not set") }}"></label>
       <label><span>{{ _("Chat ID") }}</span>
         <input name="chat_id" value="{{ telegram_chat_id }}"></label>
+      <label><span>{{ _("Message language") }}</span>
+        <select name="language">
+          {% for code, name in languages.items() %}
+          <option value="{{ code }}"{% if code == telegram_language %} selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select></label>
     </div>
     <div class="actions">
       <button type="submit">{{ _("Save") }}</button>
@@ -120,6 +126,8 @@
     <dd>{{ _("From Telegram's @BotFather when you create the bot. Never shown again once saved — the box only says <em>stored</em> or <em>not set</em>. Leave it empty to keep the stored token, type a new one to replace it.") }}</dd>
     <dt>{{ _("Chat ID") }}</dt>
     <dd>{{ _("Where the reports go: your own chat with the bot, or a group it belongs to. Send the bot a message first — a bot cannot open a conversation — then read the id from <code>https://api.telegram.org/bot&lt;token&gt;/getUpdates</code>.") }}</dd>
+    <dt>{{ _("Message language") }}</dt>
+    <dd>{{ _("The language reports arrive in, including the model's assessment. Independent of the language of this page; the findings kept under Reports stay in English.") }}</dd>
     <dt>{{ _("Send test message") }}</dt>
     <dd>{{ _("Sends one message with the saved token and chat ID, so save first.") }}</dd>
     <dt>{{ _("Saving") }}</dt>
