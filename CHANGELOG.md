@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.31] — 2026-10-06
+
+### Fixed
+
+- **Turkish spelling.** *Container* is *konteyner* (*Konteynerler* in the menu), and *host*
+  takes its suffixes without an apostrophe (*hostta*, not *host'ta*): in Turkish the apostrophe
+  marks proper nouns only.
+
 ## [0.2.30] — 2026-10-05
 
 ### Added
