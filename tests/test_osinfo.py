@@ -127,6 +127,7 @@ def test_every_logo_has_a_symbol_in_the_sprite():
     symbols = set(re.findall(r'<symbol id="([a-z0-9]+)"', sprite))
     from timar.containers import APP_LOGOS
     assert set(osinfo.LOGOS) <= symbols
+    assert set(osinfo.DEVICE_LOGOS) <= symbols
     assert set(APP_LOGOS) <= symbols
 
 

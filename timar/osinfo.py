@@ -41,6 +41,9 @@ DEVICE_LOGOS = {
     "synology": "Synology", "qnap": "QNAP", "truenas": "TrueNAS", "unraid": "Unraid",
     "tplink": "TP-Link", "ubiquiti": "Ubiquiti", "mikrotik": "MikroTik", "netgear": "NETGEAR",
     "asus": "ASUS",
+    # From Simple Icons 12.4.0 (CC0); later releases dropped Microsoft's marks. For a desktop timar
+    # only wakes and watches.
+    "windows": "Windows",
 }
 
 
