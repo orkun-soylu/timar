@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.32] — 2026-10-11
+
 ### Added
 - **A Windows logo for watched-only devices** (`ssh: false`): a Windows desktop timar only wakes
   and watches no longer shows the Linux logo.
