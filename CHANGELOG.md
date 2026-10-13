@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.33] — 2026-10-14
+
 ### Changed
 - **The fleet is probed every minute, not every ten seconds.** Every SSH server logs each probe,
   so the interval was also ~7,600 lines a day in every host's auth log (measured). A wake or
