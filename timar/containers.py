@@ -31,7 +31,7 @@ from .ssh import connect, run
 
 # Read like the host probe (see `status`): the background task refreshes, pages read the last
 # answer, and a request asks for itself only when there is none or it is older than this.
-STALE_AFTER = 60.0
+STALE_AFTER = fleet_status.STALE_AFTER
 MAX_PARALLEL = 8
 SSH_TIMEOUT = 15
 HEALTH_TIMEOUT = 4.0

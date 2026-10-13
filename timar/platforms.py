@@ -29,6 +29,10 @@ class Platform:
     # `enroll._install_key`.
     authorized_keys = ".ssh/authorized_keys"
 
+    # Ask the web ports (`status.WEB_PORTS`) before SSH when checking whether the host is up.
+    # For a platform whose SSH server logs every bare connect somewhere it hurts.
+    quiet_probe = False
+
     # `None` means "this platform has no safe default"; the operator must supply one.
     #
     # `--with-new-pkgs`: plain `upgrade` holds back anything that needs a package it does not
@@ -126,6 +130,12 @@ class OpenWrt(Platform):
     # dropbear, not OpenSSH: it reads this path and ignores ~/.ssh/authorized_keys entirely.
     # A key appended to the usual location on a router is written successfully and never used.
     authorized_keys = "/etc/dropbear/authorized_keys"
+
+    # dropbear writes two syslog lines for every bare TCP connect, and a router's syslog is a
+    # ring buffer in RAM. Measured on two routers probed every ten seconds: 91% and 100% of the
+    # buffer was the probe, so the log sweep read little else. uhttpd answers on 80/443 and
+    # logs nothing; SSH is asked only if neither answers.
+    quiet_probe = True
 
     # Deliberately no default. `apk upgrade` on a router can exhaust the overlay partition or
     # pull a kernel-module mismatch, and the machine that breaks is the one carrying the SSH

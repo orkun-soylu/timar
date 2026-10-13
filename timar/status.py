@@ -19,9 +19,15 @@ from dataclasses import dataclass
 
 from . import config, osinfo, power, validate
 from .network import address_key, is_host_up
+from .platforms import get as get_platform
 
-REFRESH_EVERY = 10.0
-STALE_AFTER = 60.0
+# Every SSH server on the fleet logs each probe ("Connection closed by ... [preauth]"), so the
+# interval is also how much noise timar writes into every host's auth log: every ten seconds
+# was ~7,600 lines a day per host, measured. A minute keeps the page current enough to act
+# on — a wake or shutdown from timar invalidates the cache and shows at once.
+REFRESH_EVERY = 60.0
+# Longer than REFRESH_EVERY, or every page request would find the answer stale and probe itself.
+STALE_AFTER = 180.0
 MAX_PARALLEL = 16
 # A machine that is up answers its SSH port in milliseconds — on the LAN and through a tunnel
 # alike — so a second is ample. The timeout is what an *off* machine costs.
@@ -85,8 +91,13 @@ WEB_PORTS = (443, 80)
 
 
 def _probe_key(server: dict) -> str:
-    """The cache key and the target: the address itself, or `web:<address>` for a web probe."""
-    return server["host"] if config.has_ssh(server) else "web:" + server["host"]
+    """The cache key and the target: the address itself, `web:<address>` for a web probe, or
+    `quiet:<address>` for a host whose platform is asked on its web ports before SSH."""
+    if not config.has_ssh(server):
+        return "web:" + server["host"]
+    if get_platform(server.get("platform")).quiet_probe:
+        return "quiet:" + server["host"]
+    return server["host"]
 
 
 def _probe(host: str, fresh: bool = False) -> bool:
@@ -100,6 +111,12 @@ def _probe(host: str, fresh: bool = False) -> bool:
         explicit = "]:" in address if address.startswith("[") else address.count(":") == 1
         ports = [None] if explicit else list(WEB_PORTS)
         up = any(is_host_up(address, port=port, timeout=PROBE_TIMEOUT) for port in ports)
+    elif host.startswith("quiet:"):
+        # SSH last, so a router without a web server still shows up — at the cost of the log
+        # lines this order exists to avoid.
+        address = host[6:]
+        up = any(is_host_up(address, port=port, timeout=PROBE_TIMEOUT)
+                 for port in (*WEB_PORTS, None))
     else:
         up = is_host_up(host, timeout=PROBE_TIMEOUT)
     _cache[host] = (time.monotonic(), up)

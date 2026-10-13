@@ -38,6 +38,33 @@ def test_it_is_probed_on_its_web_port_not_ssh(monkeypatch):
     assert asked == [("10.0.0.7", None)]             # an SSH host is asked as before
 
 
+ROUTER = {"name": "router", "host": "10.0.0.1", "user": "root", "platform": "openwrt"}
+
+
+def test_a_router_is_asked_on_its_web_ports_before_ssh(monkeypatch):
+    """dropbear logs every bare connect into a syslog in RAM; uhttpd logs nothing."""
+    asked = []
+    monkeypatch.setattr(status, "is_host_up", lambda host, port=None, timeout=3.0: asked.append((host, port)) or port == 443)
+    status.invalidate()
+    assert status._probe(status._probe_key(ROUTER)) is True
+    assert asked == [("10.0.0.1", 443)]               # answered on the web port: SSH never asked
+
+
+def test_a_router_without_a_web_server_is_still_found_on_ssh(monkeypatch):
+    asked = []
+    monkeypatch.setattr(status, "is_host_up", lambda host, port=None, timeout=3.0: asked.append((host, port)) or port is None)
+    status.invalidate()
+    assert status._probe(status._probe_key(ROUTER)) is True
+    assert asked == [("10.0.0.1", 443), ("10.0.0.1", 80), ("10.0.0.1", None)]
+
+
+def test_the_background_refresh_beats_the_staleness_check():
+    """Otherwise every page request finds the answer stale and probes the fleet itself."""
+    from timar import containers
+    assert status.STALE_AFTER > status.REFRESH_EVERY
+    assert containers.STALE_AFTER > status.REFRESH_EVERY
+
+
 def test_its_logo_and_system_come_from_its_entry():
     assert osinfo.logo(AP, {}) == "tplink" and osinfo.system(AP, {}) == "TP-Link"
     nameless = {**AP}

@@ -350,7 +350,7 @@ continuous traffic to every machine in the rack.
 The state light in front of a server's name is its OS's logo, drawn in the state's colour, so
 the three states still read at a glance. The OS is read by `osinfo.DETECT` on connections timar
 already makes: enrolment's key check, the log sweep and the update run. It is never read by the
-status probe, which is a bare TCP connect every ten seconds and must stay one. The result is
+status probe, which is a bare TCP connect every minute and must stay one. The result is
 kept in `ssh/os.json`, keyed by address like `ssh/enrolled`. A rename does not lose it, and
 it stays out of `state.json`, which the scheduler rewrites constantly.
 
