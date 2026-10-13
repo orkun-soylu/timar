@@ -248,7 +248,7 @@ tick, adjust, **Add selected**. All ticked rows go in, or, if any is wrong, none
 </picture>
 
 - **State** comes from one `docker ps -a` per host over SSH, grouped by the compose
-  working-directory label, read in the background every ten seconds — the page shows the last
+  working-directory label, read in the background every minute — the page shows the last
   answer and never waits for it. Green is running; yellow is running but a
   container's healthcheck fails, a container exited with an error (a one-shot that exited 0 does
   not count), or the optional *health check* address does not answer below HTTP 500; grey is

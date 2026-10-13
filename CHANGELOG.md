@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+- **The fleet is probed every minute, not every ten seconds.** Every SSH server logs each probe,
+  so the interval was also ~7,600 lines a day in every host's auth log (measured). A wake or
+  shutdown from timar still shows at once; a machine switched off by hand shows within a minute.
+
+### Fixed
+- **Routers keep their own logs.** OpenWrt hosts are now probed on their web interface (443,
+  then 80) before SSH: dropbear logs every bare connect into a syslog that lives in RAM, and on
+  two routers the probe was 91% and 100% of it — the log sweep read the probe and little else.
+
 ## [0.2.32] — 2026-10-11
 
 ### Added
