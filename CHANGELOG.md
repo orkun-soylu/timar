@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.35] — 2026-10-16
+
 ### Fixed
 - **A machine woken for an update goes back to sleep even when the update fails.** A failed
   connection returned early, before the shutdown, so the machine stayed on until someone noticed —
