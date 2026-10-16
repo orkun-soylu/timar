@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.36] — 2026-10-16
+
 ### Added
 - **Hardware page.** A new place in the menu for what the fleet table cannot show — boards,
   cards, disks, MACs — kept as Markdown documents in `/data/hardware/`. **+** uploads a `.md`
