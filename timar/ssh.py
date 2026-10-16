@@ -9,6 +9,7 @@ host on every connection and wrote nothing down. That is not weaker protection t
 none, and it looked identical from the outside.
 """
 import logging
+import time
 from contextlib import contextmanager
 
 import paramiko
@@ -80,3 +81,29 @@ def run(client, command, timeout=120):
     _, stdout, stderr = client.exec_command(command, timeout=timeout)
     exit_code = stdout.channel.recv_exit_status()
     return stdout.read().decode(), stderr.read().decode(), exit_code
+
+
+def run_bounded(client, command, timeout: float) -> tuple[str, str, int | None]:
+    """Like `run`, but gives up after `timeout` seconds: (stdout, stderr, None) then.
+
+    `run`'s timeout only bounds each read, and `recv_exit_status` waits as long as the command
+    does — fine for the commands Timar writes itself, wrong for ones an operator wrote, where one
+    check that hangs (a stale NFS mount is the classic) would stall the whole sweep. The remote
+    side cannot be trusted to have `timeout(1)` either: BusyBox builds on routers often lack it.
+    """
+    _, stdout, stderr = client.exec_command(command)
+    channel = stdout.channel
+    deadline = time.monotonic() + timeout
+    out, err = bytearray(), bytearray()
+    while True:
+        while channel.recv_ready():
+            out += channel.recv(65536)
+        while channel.recv_stderr_ready():
+            err += channel.recv_stderr(65536)
+        if channel.exit_status_ready() and not channel.recv_ready() and not channel.recv_stderr_ready():
+            break
+        if time.monotonic() > deadline:
+            channel.close()
+            return out.decode(errors="replace"), err.decode(errors="replace"), None
+        time.sleep(0.05)
+    return out.decode(errors="replace"), err.decode(errors="replace"), channel.recv_exit_status()

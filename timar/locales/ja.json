@@ -368,5 +368,11 @@
   "{server}: clean": "{server}：問題なし",
   "{server}: could not be reached over SSH — {error}": "{server}：SSH で到達できません — {error}",
   "{server}: offline, not checked": "{server}：オフライン、未確認",
-  "{server}: skipped ({reason})": "{server}：スキップ（{reason}）"
+  "{server}: skipped ({reason})": "{server}：スキップ（{reason}）",
+  "check {name}: {state}": "チェック {name}：{state}",
+  "WARNING": "警告",
+  "CRITICAL": "重大",
+  "UNKNOWN": "不明",
+  "{name} is down — no answer since {since}.": "{name} が停止しています — {since} から応答がありません。",
+  "{name} is back — it was down from {since} for {minutes} minutes.": "{name} が復旧しました — {since} から {minutes} 分間停止していました。"
 }

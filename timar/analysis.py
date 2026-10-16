@@ -110,6 +110,14 @@ def format_findings(results) -> str:
         for path, hits in r.log_file_issues.items():
             lines.append("  " + _("log {path}: {n} matching lines, first few:", path=path, n=len(hits)))
             lines.extend(f"    {line[:200]}" for line in hits[:3])
+        for c in r.checks:
+            if c.ok:
+                continue
+            # Literal calls, not a lookup table: the state names are words the reader sees, and
+            # the catalog test finds messages by their literal `_()` calls.
+            state = {"warning": _("WARNING"), "critical": _("CRITICAL")}.get(c.state) or _("UNKNOWN")
+            lines.append("  " + _("check {name}: {state}", name=c.name, state=state))
+            lines.extend(f"    {line}" for line in c.output.splitlines())
 
     return "\n".join(lines)
 

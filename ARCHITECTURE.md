@@ -77,6 +77,36 @@ The markers are configuration (`job_logs: [{path, started_marker, completed_mark
 constants. Any job that brackets its output with a recognisable start and finish line can be
 watched this way.
 
+## The operator's own checks: the exit code decides, not the model
+
+Some facts about a host are not in any log: that a NAS mount is still there, that last night's
+backup of every service is younger than a day, that a router's WireGuard peer shook hands this
+hour. `checks: [{name, cmd, timeout?}]` lets the operator ask them in the shell they already
+know, and reads the answer the way every monitoring tool does — the **Nagios plugin
+convention**: exit 0 is OK, 1 WARNING, 2 CRITICAL, the first lines of output the reason.
+
+The verdict is the exit code, never the model's reading of the output. A model asked whether
+`df` output "looks fine" is a model that can be wrong about it, and one that is fed yesterday's
+open findings can repeat a fault that has cleared — a predecessor of this feature did exactly
+that for five days. The model still sees failing checks in the sweep it summarises; it does not
+decide them.
+
+Anything that is not a clean 0/1/2 — another exit code, a command that cannot be started, a
+check that outlives its `timeout` (default 60 s) — is reported as UNKNOWN. A check that cannot
+answer is not a check that passed. The timeout is enforced on Timar's side
+(`ssh.run_bounded`): the remote cannot be assumed to have `timeout(1)` (BusyBox routers often
+do not), and one hung `stat` on a dead NFS mount must not stall the whole sweep.
+
+## Down alerts are kept until they can be sent
+
+The sweep is daily; an outage an hour after it would be news a day later. `alerts.watch` reads
+the minute-by-minute status probe and reports a machine that should be up — `down`, never
+`asleep` — once it has stayed down `down_alert_minutes`, and again when it is back. The message
+that matters most is the one most likely to fail to send: an inline sensor or the router dying
+takes the internet with it. So an undelivered alert is kept in `alerts.json` and goes out with
+the next attempt, a minute later, carrying the time it really started. Its own file, because it
+is written every minute beside jobs that rewrite `state.json`.
+
 ## The model is configuration, not a dependency
 
 Log sweeps are summarised by a model the operator chooses: Anthropic, any OpenAI-compatible

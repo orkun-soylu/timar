@@ -44,6 +44,17 @@ servers:
     # watch_logs:
     #   - /var/log/myapp.log
 
+    # Optional: your own checks, run over SSH in every log sweep. The exit code is the verdict
+    # (the Nagios plugin convention): 0 OK, 1 WARNING, 2 CRITICAL; the first lines of output are
+    # the reason shown in the report. Anything else -- another exit code, a timeout -- is reported
+    # as UNKNOWN. Only failing checks appear in the report. `timeout` defaults to 60 seconds.
+    # checks:
+    #   - name: nas-mount
+    #     cmd: 'test -f /mnt/backup/.online && echo "mounted" || { echo "NAS not mounted"; exit 2; }'
+    #   - name: last-backup
+    #     cmd: 'find /mnt/backup -maxdepth 2 -name "*.tar.gz" -mtime -1 | grep -q . || { echo "no backup from the last day"; exit 1; }'
+    #     timeout: 20
+
     # Optional: use a specific key instead of the one Timar generated for itself.
     # ssh_key: ~/.ssh/id_ed25519
 
@@ -138,6 +149,12 @@ containers:
 log_check:
   journal_hours: 6      # how far back to read the system log
   disk_threshold: 85    # percent full before a filesystem is reported
+
+# Optional: a machine that should be up (not on-demand) and stays down this many minutes is
+# reported on Telegram at once, and again when it answers -- not in the next day's sweep. Read
+# from the status probe that already runs every minute. Messages that cannot be delivered (the
+# outage took the internet with it) are kept and sent when they can. 0 switches it off.
+# down_alert_minutes: 5
 
 # Optional. Without it, waking, updating and the log sweep all still work -- you just get the
 # raw findings instead of a written assessment.

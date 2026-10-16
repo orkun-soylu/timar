@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Your own checks in the log sweep** (`checks:` per server, `config.yaml` only). Each is a shell
+  command run over SSH; the exit code is the verdict — 0 OK, 1 WARNING, 2 CRITICAL, the Nagios
+  plugin convention — and its first lines of output are the reason. Failing checks appear in the
+  report and the Telegram message, passing ones do not. Any other exit code, or a check that
+  outlives its `timeout` (default 60 s, enforced by Timar, not the remote), is reported as
+  UNKNOWN rather than taken as a pass. Saving the server form keeps them.
+- **Down alerts.** A machine that should be up (not on-demand) and gives no answer for
+  `down_alert_minutes` (default 5, `0` switches it off) is reported on Telegram right away, and
+  again when it is back, with how long it was gone — not in the next day's sweep. It reads the
+  status probe that already runs every minute. A message that cannot be delivered is kept and
+  sent with the next one: the outage that matters most can take the internet with it.
+
 ## [0.2.33] — 2026-10-14
 
 ### Changed
