@@ -178,6 +178,7 @@ another. The fleet's own description must not depend on which page you are looki
   state.json      last run results, heartbeats
   reports/        one JSON file per finished run — the archive behind /reports
   notes.md        operator-authored standing context for the log analysis
+  hardware/       the hardware pages' Markdown documents, one file each (may be a bind mount)
   ssh/id_ed25519  the key this installation presents to every managed host
 ```
 

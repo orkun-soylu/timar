@@ -1,6 +1,6 @@
-{# In every page's header, including setup and sign-in: whoever cannot read the setup page is the
-   one who most needs to find this. It used to sit at the foot of the page, which on the
-   dashboard is below the jobs table — out of sight, and it was not found.
+{# In the header of the setup and sign-in pages: whoever cannot read the setup page is the one
+   who most needs to find this. Signed in, it is a panel under settings instead. (It once sat at
+   the foot of every page, which on the dashboard is below the jobs table — it was not found.)
    A plain GET form so it works without scripting; the select submits itself when there is. #}
 <form method="get" action="/lang" class="lang">
   <input type="hidden" name="next"
