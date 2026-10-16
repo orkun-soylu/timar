@@ -379,7 +379,6 @@
   "Add a document": "添加文档",
   "Changed": "修改时间",
   "Delete {name}?": "删除 {name}？",
-  "Document": "文档",
   "Give the document a name, or choose a file.": "请为文档命名，或选择一个文件。",
   "Hardware": "硬件",
   "Language": "语言",
@@ -393,5 +392,6 @@
   "optional with a file": "选择文件时可选",
   "Not a document name: lower-case letters, digits and hyphens.": "文档名无效：只能使用小写字母、数字和连字符。",
   "Too large: a document can be at most 1 MB.": "太大：文档最多 1 MB。",
-  "A document with this name already exists.": "已存在同名文档。"
+  "A document with this name already exists.": "已存在同名文档。",
+  "Documents": "文档"
 }

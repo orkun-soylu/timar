@@ -379,7 +379,6 @@
   "Add a document": "Belge ekle",
   "Changed": "Değişti",
   "Delete {name}?": "{name} silinsin mi?",
-  "Document": "Belge",
   "Give the document a name, or choose a file.": "Belgeye bir ad ver ya da bir dosya seç.",
   "Hardware": "Donanım",
   "Language": "Dil",
@@ -393,5 +392,6 @@
   "optional with a file": "dosyayla isteğe bağlı",
   "Not a document name: lower-case letters, digits and hyphens.": "Geçerli bir belge adı değil: küçük harf, rakam ve tire.",
   "Too large: a document can be at most 1 MB.": "Çok büyük: bir belge en fazla 1 MB olabilir.",
-  "A document with this name already exists.": "Bu adda bir belge zaten var."
+  "A document with this name already exists.": "Bu adda bir belge zaten var.",
+  "Documents": "Belgeler"
 }

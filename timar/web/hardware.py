@@ -1,8 +1,10 @@
 """The hardware pages: the inventory documents, read as pages and edited as Markdown.
 
-Read first, edit on request: the documents are looked up far more often than they are written,
-and a page that opens as a text box invites accidental edits. The "+" on the list takes an
-uploaded `.md` file or starts an empty one.
+One tab per document, the first one open — usually a parts list for people and a page of notes
+beside it, and whoever opens the page wants the first, not a list to pick it from. Read first,
+edit on request: the documents are looked up far more often than they are written, and a page
+that opens as a text box invites accidental edits. The "+" takes an uploaded `.md` file or starts
+an empty one.
 """
 from __future__ import annotations
 
@@ -38,10 +40,20 @@ def _doc(slug: str) -> dict:
     return doc
 
 
-def _listing(request: Request, error: str | None = None, name: str = "", status_code: int = 200):
+def _page(request: Request, doc: dict | None, error: str | None = None, name: str = "",
+          status_code: int = 200):
+    """The tabs, with `doc` open — or the first document when none is named."""
+    docs = hardware.listing()
+    if doc is None and docs:
+        doc = hardware.get(docs[0]["slug"])
     return TEMPLATES.TemplateResponse(request, "hardware.html", {
-        "docs": hardware.listing(), "error": error, "name": name,
+        "docs": docs, "doc": doc, "html": hardware.render(doc["text"]) if doc else "",
+        "error": error, "name": name,
     }, status_code=status_code)
+
+
+def _listing(request: Request, error: str, name: str, status_code: int):
+    return _page(request, None, error, name, status_code)
 
 
 def _to(slug: str, suffix: str = "") -> RedirectResponse:
@@ -53,7 +65,7 @@ def _to(slug: str, suffix: str = "") -> RedirectResponse:
 
 @router.get("", response_class=HTMLResponse)
 async def index(request: Request):
-    return _listing(request)
+    return _page(request, None)
 
 
 @router.post("")
@@ -86,10 +98,7 @@ async def add(request: Request):
 
 @router.get("/{slug}", response_class=HTMLResponse)
 async def view(request: Request, slug: str):
-    doc = _doc(slug)
-    return TEMPLATES.TemplateResponse(request, "hardware_doc.html", {
-        "doc": doc, "html": hardware.render(doc["text"]),
-    })
+    return _page(request, _doc(slug))
 
 
 def _editor(request: Request, doc: dict, text: str, base: str, error: str | None = None,

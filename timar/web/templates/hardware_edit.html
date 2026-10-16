@@ -6,7 +6,7 @@
 {% if error %}<div class="panel notice bad">{{ error }}</div>{% endif %}
 
 <section class="panel">
-  <h2><a href="/hardware">{{ _("Hardware") }}</a> · {{ doc.title }}</h2>
+  <h2><a href="/hardware/{{ doc.slug }}">{{ doc.title }}</a></h2>
   <form method="post" action="/hardware/{{ doc.slug }}" class="stack">
     <input type="hidden" name="base" value="{{ base }}">
     <textarea name="text" class="doc-source" spellcheck="false" aria-label="Markdown">{{ text }}</textarea>

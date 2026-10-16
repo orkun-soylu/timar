@@ -74,7 +74,7 @@ def split_front_matter(text: str) -> tuple[dict, str]:
     """`key: value` lines between `---` fences, if the file starts with them, and the rest.
 
     Read loosely, a line at a time: these are notes, and a fence written by hand must not make
-    the page fail to open. Only `title` is used.
+    the page fail to open. Only `title` and `order` are used.
     """
     match = _FRONT_MATTER.match(text)
     if not match:
@@ -95,8 +95,14 @@ def _title(slug: str, text: str) -> str:
     return heading.group(1) if heading else slug
 
 
+def _order(text: str) -> int:
+    """`order:` in the front matter, for documents that should come first; unset ones go last."""
+    value = split_front_matter(text)[0].get("order", "")
+    return int(value) if value.lstrip("-").isdigit() else 1_000_000
+
+
 def listing() -> list[dict]:
-    """Every document, by title."""
+    """Every document, by `order:` and then by title — the order of the tabs."""
     d = directory()
     if not d.is_dir():
         return []
@@ -106,8 +112,8 @@ def listing() -> list[dict]:
             continue
         text = p.read_text(encoding="utf-8", errors="replace")
         docs.append({"slug": p.stem, "title": _title(p.stem, text),
-                     "modified": _modified(p)})
-    return sorted(docs, key=lambda doc: doc["title"].lower())
+                     "modified": _modified(p), "order": _order(text)})
+    return sorted(docs, key=lambda doc: (doc["order"], doc["title"].lower()))
 
 
 def _modified(p: Path) -> str:

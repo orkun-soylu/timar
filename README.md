@@ -289,8 +289,8 @@ else that exited still is, registered or not.
 ## Hardware
 
 The **hardware** page keeps what the fleet table cannot show — boards, cards, disks, which MAC
-moved to which box — as Markdown documents. **+** uploads a `.md` file or starts an empty one;
-a document opens as a page, and the pencil switches it to a text box.
+moved to which box — as Markdown documents, one tab each, the first one open. **+** uploads a
+`.md` file or starts an empty one; the pencil switches a document to a text box.
 
 - The files are the store: `/data/hardware/<name>.md`, nothing else. Bind-mount that directory
   (`- ./hardware:/data/hardware` beside the volume) to keep it in git or edit it with your own
@@ -299,7 +299,9 @@ a document opens as a page, and the pencil switches it to a text box.
   not overwritten without you seeing it. Saving again replaces it.
 - HTML in a document is shown as text, and links may only point at the web or at pages of the
   same site — the page belongs to an app that holds an SSH key to every machine.
-- `title:` in a leading `---` block, or the first `#` heading, names a document in the list.
+- `title:` in a leading `---` block, or the first `#` heading, names a document's tab; `order:`
+  (a number) puts tabs first, the rest follow by title. A parts list for people as `order: 1` and
+  a page of detailed notes for your scripts or agents beside it works well.
 
 ## Supported platforms
 
