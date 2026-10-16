@@ -94,3 +94,70 @@ def test_an_always_on_machine_that_is_off_still_fails(monkeypatch):
     server = {"name": "web-01", "host": "10.0.0.1", "user": "op", "platform": "linux"}
     [result] = updater.update_server(server, {"web-01": server})
     assert not result.success and not result.skipped
+
+
+class _Woken:
+    """A machine the run wakes: refuses `refusals` logins, then lets them in. Records commands."""
+
+    def __init__(self, monkeypatch, refusals=0, update_fails=False):
+        from contextlib import contextmanager
+        from timar import updater
+        self.commands, self.logins, self.refusals = [], 0, refusals
+        monkeypatch.setattr(updater, "is_host_up", lambda host, **kw: False)
+        monkeypatch.setattr(updater, "_wake_and_wait", lambda *a, **kw: True)
+        monkeypatch.setattr(updater, "wait_for_host", lambda *a, **kw: True)
+        monkeypatch.setattr(updater, "_wait_offline", lambda *a, **kw: None)
+        monkeypatch.setattr(updater, "resolve_ssh_key", lambda cfg: None)
+        monkeypatch.setattr(updater.time, "sleep", lambda s: None)
+        monkeypatch.setattr(updater.osinfo, "note", lambda *a, **kw: None)
+
+        outer = self
+
+        @contextmanager
+        def connect(host, user, key):
+            outer.logins += 1
+            if outer.logins <= outer.refusals:
+                raise RuntimeError("Access denied by PAM account configuration")
+            yield host
+        monkeypatch.setattr(updater, "connect", connect)
+
+        def run(ssh, cmd, timeout=None):
+            outer.commands.append((ssh, cmd))
+            if update_fails and "apt" in cmd:
+                raise RuntimeError("Authentication failed: transport shut down or saw EOF")
+            return "", "", 0
+        monkeypatch.setattr(updater, "run", run)
+
+
+SERVER = {"name": "gpu", "host": "10.0.0.7", "user": "op", "platform": "linux",
+          "wol_mac": "aa:bb:cc:dd:ee:ff", "update_cmd": "sudo apt-get upgrade"}
+
+
+def test_a_woken_machine_gets_time_to_accept_logins(monkeypatch):
+    """Its SSH port opens before pam_nologin lets anyone in; one refused login is not a failure."""
+    from timar import updater
+    woken = _Woken(monkeypatch, refusals=3)
+    [result] = updater.update_server(SERVER, {"gpu": SERVER})
+    assert result.success, result.error
+    assert any("apt" in c for _, c in woken.commands)
+
+
+def test_a_failed_update_still_puts_the_woken_machine_back_to_sleep(monkeypatch):
+    """2026-10-16: the update failed, the run returned early, and the machine stayed on all day."""
+    from timar import updater
+    woken = _Woken(monkeypatch, update_fails=True)
+    [result] = updater.update_server(SERVER, {"gpu": SERVER})
+    assert not result.success
+    assert any("shutdown" in c or "poweroff" in c for _, c in woken.commands)
+
+
+def test_a_vm_the_run_started_is_shut_down_even_when_its_update_failed(monkeypatch):
+    from timar import updater
+    woken = _Woken(monkeypatch, update_fails=True)
+    host = {"name": "pve", "host": "10.0.0.4", "user": "root", "platform": "linux",
+            "update_cmd": "true", "manages_vms": [{"vm_id": 106, "server_name": "dev"}]}
+    vm = {"name": "dev", "host": "10.0.0.42", "user": "op", "platform": "linux",
+          "update_cmd": "sudo apt-get upgrade"}
+    results = updater.update_server(host, {"pve": host, "dev": vm})
+    assert [r.server for r in results if not r.success] == ["dev"]
+    assert ("10.0.0.4", "qm shutdown 106") in woken.commands
