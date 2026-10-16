@@ -103,6 +103,45 @@ def _wake_and_wait(server_cfg, servers_map: dict | None = None) -> bool:
     return True
 
 
+# A machine that was just woken answers on its SSH port before it lets anyone log in: until
+# systemd-user-sessions has run, pam_nologin refuses every login ("Access denied ... by PAM account
+# configuration"). Measured on an Ubuntu host woken by the 2026-10-16 run: 49 refusals between 9 and
+# 20 seconds after boot — and the run, which connected once, recorded "Authentication failed" and
+# left the machine on, because the shutdown was after the update it never got to.
+LOGIN_GRACE = 120
+LOGIN_RETRY = 10
+
+
+def _wait_for_login(host: str, user: str, ssh_key, grace: float = LOGIN_GRACE) -> None:
+    """Give a freshly woken machine until `grace` runs out to accept a login. Returns either way:
+    if it never does, the real connection that follows fails with its own error."""
+    deadline = time.monotonic() + grace
+    while True:
+        try:
+            with connect(host, user, ssh_key):
+                return
+        except Exception as e:
+            if time.monotonic() >= deadline:
+                return
+            logger.info("%s is up but not accepting logins yet (%s), retrying", host, e)
+            time.sleep(LOGIN_RETRY)
+
+
+def _shutdown_woken(name: str, host: str, server_cfg: dict, platform) -> None:
+    """Put a machine this run woke back to sleep — after a failed update as much as after a good
+    one: a run that could not update it has still no business leaving it on."""
+    logger.info("Shutting down %s (was offline before update) ...", name)
+    try:
+        key = resolve_ssh_key(server_cfg)
+        _wait_for_login(host, server_cfg["user"], key)
+        with connect(host, server_cfg["user"], key) as ssh:
+            _shutdown_host(ssh, platform, user=server_cfg["user"])
+        _wait_offline(host)
+        logger.info("%s is down", name)
+    except Exception as e:
+        logger.warning("Could not shutdown %s: %s", name, e)
+
+
 def _shutdown_host(ssh, platform, user: str = "root"):
     try:
         run(ssh, platform.shutdown_cmd(user), timeout=10)
@@ -198,6 +237,7 @@ def update_server(server_cfg: dict, servers_map: dict,
         if not _wake_and_wait(server_cfg, servers_map):
             return [UpdateResult(server=name, success=False, was_running=False,
                                  error="Host did not come up after WOL")]
+        _wait_for_login(host, server_cfg["user"], resolve_ssh_key(server_cfg))
 
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
@@ -210,6 +250,8 @@ def update_server(server_cfg: dict, servers_map: dict,
     except Exception as e:
         logger.exception("update %s", name)
         results.append(UpdateResult(server=name, success=False, was_running=was_running, error=str(e)))
+        if not was_running:
+            _shutdown_woken(name, host, server_cfg, platform)
         return results
 
     # handle VMs managed by this host
@@ -255,6 +297,7 @@ def update_server(server_cfg: dict, servers_map: dict,
                     results.append(UpdateResult(server=vm_name, success=False, was_running=False,
                                                 error="VM did not come up after qm start"))
                     continue
+                _wait_for_login(vm_host, vm_cfg["user"], resolve_ssh_key(vm_cfg))
             except Exception as e:
                 results.append(UpdateResult(server=vm_name, success=False, was_running=False, error=str(e)))
                 continue
@@ -271,7 +314,8 @@ def update_server(server_cfg: dict, servers_map: dict,
             logger.exception("update vm %s", vm_name)
             results.append(UpdateResult(server=vm_name, success=False,
                                         was_running=vm_was_running, error=str(e)))
-            continue
+            # No `continue` before the shutdown: a VM the run started goes back down whether or
+            # not its update worked.
 
         if not vm_was_running:
             logger.info("Shutting down VM %s ...", vm_name)
@@ -284,14 +328,7 @@ def update_server(server_cfg: dict, servers_map: dict,
                 logger.warning("Could not shutdown VM %s: %s", vm_name, e)
 
     if not was_running:
-        logger.info("Shutting down %s (was offline before update) ...", name)
-        try:
-            with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
-                _shutdown_host(ssh, platform, user=server_cfg["user"])
-            _wait_offline(host)
-            logger.info("%s is down", name)
-        except Exception as e:
-            logger.warning("Could not shutdown %s: %s", name, e)
+        _shutdown_woken(name, host, server_cfg, platform)
 
     return results
 
