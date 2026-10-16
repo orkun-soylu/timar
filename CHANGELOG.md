@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.34] — 2026-10-16
+
 ### Added
 - **Your own checks in the log sweep** (`checks:` per server, `config.yaml` only). Each is a shell
   command run over SSH; the exit code is the verdict — 0 OK, 1 WARNING, 2 CRITICAL, the Nagios
