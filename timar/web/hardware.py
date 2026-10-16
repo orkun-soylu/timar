@@ -44,6 +44,13 @@ def _listing(request: Request, error: str | None = None, name: str = "", status_
     }, status_code=status_code)
 
 
+def _to(slug: str, suffix: str = "") -> RedirectResponse:
+    """Back to a document just written, addressed by the name on disk (see `stored_name`)."""
+    name = hardware.stored_name(slug)
+    target = f"/hardware/{quote(name)}{suffix}" if name else "/hardware"
+    return RedirectResponse(target, status_code=SEE_OTHER)
+
+
 @router.get("", response_class=HTMLResponse)
 async def index(request: Request):
     return _listing(request)
@@ -74,8 +81,7 @@ async def add(request: Request):
         hardware.save(slug, text, None)
     except hardware.HardwareError as e:
         return _listing(request, str(e), name, 400)
-    target = f"/hardware/{quote(slug)}" + ("" if has_file else "/edit")
-    return RedirectResponse(target, status_code=SEE_OTHER)
+    return _to(slug, "" if has_file else "/edit")
 
 
 @router.get("/{slug}", response_class=HTMLResponse)
@@ -117,7 +123,7 @@ async def save(request: Request, slug: str):
             "replaces the other change — open the page in another tab to compare first."), 409)
     except hardware.HardwareError as e:
         return _editor(request, doc, text, str(form.get("base") or ""), str(e), 400)
-    return RedirectResponse(f"/hardware/{quote(slug)}", status_code=SEE_OTHER)
+    return _to(slug)
 
 
 @router.post("/{slug}/delete")

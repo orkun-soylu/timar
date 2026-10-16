@@ -127,6 +127,17 @@ def exists(slug: str) -> bool:
     return _file(slug).is_file()
 
 
+def stored_name(slug: str) -> str | None:
+    """The name of the file on disk that `slug` refers to, or None.
+
+    For building addresses: the caller gets the directory's own spelling, never the request
+    value — even one that was checked first.
+    """
+    if not SLUG.match(slug):
+        return None
+    return next((p.stem for p in directory().glob("*.md") if p.stem == slug), None)
+
+
 def save(slug: str, text: str, base_digest: str | None) -> None:
     """Write a document, refusing if it changed since `base_digest` was read.
 
