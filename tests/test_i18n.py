@@ -168,8 +168,11 @@ class TestPages:
         assert i18n.COOKIE not in response.cookies
 
     @pytest.mark.parametrize("code", list(i18n.LANGUAGES))
-    def test_every_page_renders_in_every_language(self, client, code):
+    def test_every_page_renders_in_every_language(self, client, monkeypatch, code):
         """Catches a translation whose placeholders make `format` raise at render time."""
+        from timar import status as fleet_status
+        monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: False)
+        fleet_status.invalidate()
         client.cookies.set(i18n.COOKIE, code)
         client.post("/setup", data={"username": "op", "password": "correct-horse-battery"})
         from timar import config

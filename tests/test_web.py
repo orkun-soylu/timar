@@ -1531,7 +1531,9 @@ class TestTopNav:
         """Beside the name, in the sticky header — not under the table, out of sight."""
         from timar import config, status as fleet_status
         complete_setup(client)
+        from timar import containers
         monkeypatch.setattr(fleet_status, "is_host_up", lambda host, **kw: True)   # gets a power button
+        monkeypatch.setattr(containers, "_ps", lambda server: containers.HostContainers(by_dir={}))
         fleet_status.invalidate()
         config.save({"servers": [{"name": "web-01", "host": "10.0.0.1", "user": "op"}],
                      "containers": [{"name": "app", "server": "web-01", "path": "/srv/app"}]})
