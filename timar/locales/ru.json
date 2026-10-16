@@ -379,7 +379,6 @@
   "Add a document": "Добавить документ",
   "Changed": "Изменён",
   "Delete {name}?": "Удалить {name}?",
-  "Document": "Документ",
   "Give the document a name, or choose a file.": "Дайте документу имя или выберите файл.",
   "Hardware": "Оборудование",
   "Language": "Язык",
@@ -393,5 +392,6 @@
   "optional with a file": "необязательно при файле",
   "Not a document name: lower-case letters, digits and hyphens.": "Недопустимое имя документа: строчные буквы, цифры и дефисы.",
   "Too large: a document can be at most 1 MB.": "Слишком большой: документ может быть не больше 1 МБ.",
-  "A document with this name already exists.": "Документ с таким именем уже существует."
+  "A document with this name already exists.": "Документ с таким именем уже существует.",
+  "Documents": "Документы"
 }

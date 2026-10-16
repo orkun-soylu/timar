@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Hardware") }} — timar{% endblock %}
+{% block title %}{{ doc.title if doc else _("Hardware") }} — timar{% endblock %}
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav("hardware") }}
 {% from "_icons.html" import icon %}
@@ -7,20 +7,28 @@
 
 {% if error %}<div class="panel notice bad">{{ error }}</div>{% endif %}
 
+{# One tab per document, in `order:` then title order (timar.hardware.listing). #}
+{% if docs %}
+<nav class="tabs" aria-label="{{ _("Documents") }}">
+  {% for d in docs %}
+  <a href="/hardware/{{ d.slug }}"{% if doc and d.slug == doc.slug %} class="selected" aria-current="page"{% endif %}>
+    <span class="label">{{ d.title }}</span>
+    <span class="sub">{{ _("Changed") }} {{ when(d.modified) }}</span></a>
+  {% endfor %}
+</nav>
+{% endif %}
+
 <section class="panel">
-  <h2 class="with-action">{{ _("Hardware") }}
-    <button type="button" class="icon-btn" popovertarget="hardware-add"
-            title="{{ _("Add a document") }}" aria-label="{{ _("Add a document") }}">{{ icon("add") }}</button></h2>
-  {% if docs %}
-  <table>
-    <thead><tr><th>{{ _("Document") }}</th><th style="text-align:right">{{ _("Changed") }}</th></tr></thead>
-    <tbody>
-    {% for doc in docs %}
-      <tr><td><a href="/hardware/{{ doc.slug }}">{{ doc.title }}</a></td>
-          <td class="muted" style="text-align:right; white-space:nowrap">{{ when(doc.modified) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <h2 class="with-action"><span>{{ doc.title if doc else _("Hardware") }}</span>
+    <span class="heading-actions">
+      {% if doc %}<a href="/hardware/{{ doc.slug }}/edit" class="icon-btn"
+         title="{{ _("edit") }}" aria-label="{{ _("edit") }}">{{ icon("edit") }}</a>{% endif %}
+      <button type="button" class="icon-btn" popovertarget="hardware-add"
+              title="{{ _("Add a document") }}" aria-label="{{ _("Add a document") }}">{{ icon("add") }}</button>
+    </span></h2>
+  {% if doc %}
+  {# Rendered by timar.hardware, which escapes any HTML in the source. #}
+  <article class="doc">{{ html | safe }}</article>
   {% else %}
   <p class="empty">{{ _("No documents yet. Use <em>+</em> to upload a Markdown file or start an empty one.") }}</p>
   {% endif %}

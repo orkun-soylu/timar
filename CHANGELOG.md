@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+- **Hardware documents are tabs.** `/hardware` opens the first document instead of a list, with
+  one tab per document; `order:` in a document's front matter sets the tab order (the rest follow
+  by title). Edit and **+** sit on the open document's heading.
+
 ## [0.2.36] — 2026-10-16
 
 ### Added

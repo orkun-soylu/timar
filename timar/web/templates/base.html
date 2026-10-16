@@ -213,7 +213,7 @@
        navigation would dilute it. */
     .tabs { display: flex; gap: 0.7rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .tabs a {
-      flex: 1 1 16rem; padding: 0.75rem 1rem; border-radius: 10px;
+      flex: 1 1 10rem; padding: 0.75rem 1rem; border-radius: 10px;
       border: 1px solid var(--line); background: none; text-decoration: none;
       color: var(--muted);
     }
@@ -320,7 +320,7 @@
     /* A hardware document: prose inside a panel, set like the rest of the page. Headings keep
        their own sizes here — the small upper-case style is for panel titles, not for a document,
        hence the `section.panel` in front: it has to outweigh that rule. */
-    .doc { padding: 0.25rem 1rem 0; overflow-wrap: anywhere; }
+    .doc { padding: 0.25rem 1rem 0; overflow-wrap: break-word; }
     .doc h1 { font-size: 1.3rem; margin: 1rem 0 0.5rem; }
     section.panel .doc h2 { font-size: 1.1rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.6rem 0 0.5rem; padding: 0 0 0.25rem; border-bottom: 1px solid var(--line); }
     section.panel .doc h3 { font-size: 0.95rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.2rem 0 0.4rem; }
