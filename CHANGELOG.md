@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.38] — 2026-10-16
+
 ### Fixed
 - **The hover bar under *sign out* has square ends** like the menu links beside it; it took the
   rounded corners of a button.
