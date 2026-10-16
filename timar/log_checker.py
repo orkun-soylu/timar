@@ -1,4 +1,5 @@
-"""Read-only health sweep of a host: system log, disk, containers, scheduled-job logs.
+"""Read-only health sweep of a host: system log, disk, containers, scheduled-job logs, and the
+operator's own checks.
 
 Every command is chosen by the host's `Platform` (see platforms.py) rather than hardcoded, so
 pointing this at an OpenWrt router does not silently produce an all-clear.
@@ -11,13 +12,19 @@ from datetime import date
 from .network import is_host_up
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
-from .ssh import connect, run
+from .ssh import connect, run, run_bounded
 from . import cancel, membership, osinfo
 from .containers import parse_ps
 
 logger = logging.getLogger(__name__)
 
 ERROR_KEYWORDS = ("error", "fail", "critical", "panic", "oom", "killed")
+
+CHECK_TIMEOUT = 60
+# The Nagios plugin convention, because operators already write checks that way and every
+# monitoring tool reads it: the exit code is the verdict, the first line of output the reason.
+CHECK_STATES = {0: "ok", 1: "warning", 2: "critical"}
+CHECK_OUTPUT_LINES = 5
 
 
 @dataclass
@@ -35,6 +42,19 @@ class JobLogResult:
 
 
 @dataclass
+class CheckResult:
+    """One operator-defined check: what its exit code said, and what it printed."""
+
+    name: str
+    state: str          # ok | warning | critical | unknown
+    output: str = ""
+
+    @property
+    def ok(self) -> bool:
+        return self.state == "ok"
+
+
+@dataclass
 class LogResult:
     server: str
     success: bool
@@ -44,6 +64,7 @@ class LogResult:
     containers_stopped: list = field(default_factory=list)
     job_logs: dict = field(default_factory=dict)      # path -> JobLogResult
     log_file_issues: dict = field(default_factory=dict)  # path -> [lines]
+    checks: list = field(default_factory=list)           # [CheckResult], in config order
     error: str = ""
 
     @property
@@ -54,6 +75,7 @@ class LogResult:
             or self.containers_stopped
             or self.log_file_issues
             or any(not r.healthy for r in self.job_logs.values())
+            or any(not c.ok for c in self.checks)
         )
 
 
@@ -101,6 +123,23 @@ def _check_log_file(ssh, path: str) -> list[str]:
         if any(kw in line.lower() for kw in ERROR_KEYWORDS)
     ]
     return hits[-20:]
+
+
+def run_check(ssh, check: dict) -> CheckResult:
+    """Run one `checks:` entry. Exit 0 is OK, 1 WARNING, 2 CRITICAL; anything else — another
+    code, a timeout, a command that could not be started — is UNKNOWN, which is reported too:
+    a check that cannot answer is not a check that passed."""
+    name = check.get("name") or check.get("cmd", "?")[:40]
+    try:
+        out, err, rc = run_bounded(ssh, check["cmd"], float(check.get("timeout", CHECK_TIMEOUT)))
+    except Exception as e:      # the connection broke mid-sweep, or the entry has no `cmd`
+        return CheckResult(name, "unknown", f"could not run: {e}")
+    text = (out.strip() or err.strip())
+    lines = [l.rstrip()[:200] for l in text.splitlines() if l.strip()][:CHECK_OUTPUT_LINES]
+    if rc is None:
+        return CheckResult(name, "unknown", "\n".join([f"timed out after {check.get('timeout', CHECK_TIMEOUT)} s"] + lines))
+    return CheckResult(name, CHECK_STATES.get(rc, "unknown"),
+                       "\n".join(lines) if rc in CHECK_STATES else "\n".join([f"exit {rc}"] + lines))
 
 
 def stopped_containers(output: str, on_demand_dirs=frozenset()) -> list[str]:
@@ -163,6 +202,8 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
                 if hits := _check_log_file(ssh, path):
                     log_file_issues[path] = hits
 
+            checks = [run_check(ssh, c) for c in server_cfg.get("checks", [])]
+
             return LogResult(
                 server=name,
                 success=True,
@@ -171,6 +212,7 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
                 containers_stopped=containers_stopped,
                 job_logs=job_logs,
                 log_file_issues=log_file_issues,
+                checks=checks,
             )
     except Exception as e:
         logger.exception("log check failed for %s", name)

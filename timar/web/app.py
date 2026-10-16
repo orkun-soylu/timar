@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, i18n, jobs, power, reports, state, status as fleet_status
+from .. import alerts, config, i18n, jobs, power, reports, state, status as fleet_status
 from .. import containers as container_status
 from ..i18n import gettext as _
 from ..scheduler import scheduler
@@ -55,7 +55,8 @@ async def lifespan(_: FastAPI):
 
 
 async def _keep_status_fresh() -> None:
-    """Probe the fleet and read the containers in the background, so no page waits for either.
+    """Probe the fleet and read the containers in the background, so no page waits for either —
+    and say when a machine that should be up stays down (`alerts`).
 
     The pages read whatever this found last; see `status` for what happens if it stops.
     """
@@ -64,6 +65,8 @@ async def _keep_status_fresh() -> None:
             cfg = config.load()
             await asyncio.to_thread(fleet_status.refresh, cfg)
             await asyncio.to_thread(container_status.refresh, cfg)
+            # Right after the probe, while its answers are fresh: see `alerts`.
+            await asyncio.to_thread(lambda: alerts.watch(cfg, fleet_status.fleet(cfg)))
         except asyncio.CancelledError:
             raise
         except Exception:

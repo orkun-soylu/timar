@@ -368,5 +368,11 @@
   "{server}: clean": "{server}: temiz",
   "{server}: could not be reached over SSH — {error}": "{server}: SSH ile ulaşılamadı — {error}",
   "{server}: offline, not checked": "{server}: kapalı, kontrol edilmedi",
-  "{server}: skipped ({reason})": "{server}: atlandı ({reason})"
+  "{server}: skipped ({reason})": "{server}: atlandı ({reason})",
+  "check {name}: {state}": "kontrol {name}: {state}",
+  "WARNING": "UYARI",
+  "CRITICAL": "KRİTİK",
+  "UNKNOWN": "BİLİNMİYOR",
+  "{name} is down — no answer since {since}.": "{name} çöktü — {since} itibarıyla cevap vermiyor.",
+  "{name} is back — it was down from {since} for {minutes} minutes.": "{name} geri geldi — {since} itibarıyla {minutes} dakika kapalıydı."
 }

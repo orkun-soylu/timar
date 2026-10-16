@@ -368,5 +368,11 @@
   "{server}: clean": "{server}：正常",
   "{server}: could not be reached over SSH — {error}": "{server}：无法通过 SSH 访问 — {error}",
   "{server}: offline, not checked": "{server}：离线，未检查",
-  "{server}: skipped ({reason})": "{server}：已跳过（{reason}）"
+  "{server}: skipped ({reason})": "{server}：已跳过（{reason}）",
+  "check {name}: {state}": "检查 {name}：{state}",
+  "WARNING": "警告",
+  "CRITICAL": "严重",
+  "UNKNOWN": "未知",
+  "{name} is down — no answer since {since}.": "{name} 已宕机 — 自 {since} 起无响应。",
+  "{name} is back — it was down from {since} for {minutes} minutes.": "{name} 已恢复 — 自 {since} 起宕机 {minutes} 分钟。"
 }

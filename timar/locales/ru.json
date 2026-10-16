@@ -368,5 +368,11 @@
   "{server}: clean": "{server}: чисто",
   "{server}: could not be reached over SSH — {error}": "{server}: недоступен по SSH — {error}",
   "{server}: offline, not checked": "{server}: выключен, не проверен",
-  "{server}: skipped ({reason})": "{server}: пропущен ({reason})"
+  "{server}: skipped ({reason})": "{server}: пропущен ({reason})",
+  "check {name}: {state}": "проверка {name}: {state}",
+  "WARNING": "ПРЕДУПРЕЖДЕНИЕ",
+  "CRITICAL": "КРИТИЧНО",
+  "UNKNOWN": "НЕИЗВЕСТНО",
+  "{name} is down — no answer since {since}.": "{name} недоступен — нет ответа с {since}.",
+  "{name} is back — it was down from {since} for {minutes} minutes.": "{name} снова доступен — был недоступен с {since} в течение {minutes} мин."
 }

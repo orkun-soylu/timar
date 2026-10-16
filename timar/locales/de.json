@@ -368,5 +368,11 @@
   "{server}: clean": "{server}: sauber",
   "{server}: could not be reached over SSH — {error}": "{server}: per SSH nicht erreichbar — {error}",
   "{server}: offline, not checked": "{server}: aus, nicht geprüft",
-  "{server}: skipped ({reason})": "{server}: übersprungen ({reason})"
+  "{server}: skipped ({reason})": "{server}: übersprungen ({reason})",
+  "check {name}: {state}": "Prüfung {name}: {state}",
+  "WARNING": "WARNUNG",
+  "CRITICAL": "KRITISCH",
+  "UNKNOWN": "UNBEKANNT",
+  "{name} is down — no answer since {since}.": "{name} ist ausgefallen — keine Antwort seit {since}.",
+  "{name} is back — it was down from {since} for {minutes} minutes.": "{name} ist wieder da — ab {since} für {minutes} Minuten ausgefallen."
 }
