@@ -185,17 +185,26 @@ class TestPages:
             assert response.status_code == 200, path
             assert f'<html lang="{code}">' in response.text or path.startswith("/fragments")
 
-    @pytest.mark.parametrize("path", ["/setup", "/login", "/", "/settings", "/reports"])
-    def test_the_switch_is_in_the_header(self, client, path):
+    @pytest.mark.parametrize("path", ["/setup", "/login"])
+    def test_the_switch_is_in_the_header_before_sign_in(self, client, path):
         """At the foot of the page it sat below the jobs table on the dashboard and went unfound."""
         if path != "/setup":
             client.post("/setup", data={"username": "op", "password": "correct-horse-battery"})
-        if path == "/login":
             client.cookies.clear()
         body = client.get(path).text
         header = body[body.index("<header"):body.index("</header>")]
         assert 'action="/lang"' in header
         assert body.count('action="/lang"') == 1
+
+    def test_signed_in_the_switch_is_under_settings_only(self, client):
+        client.post("/setup", data={"username": "op", "password": "correct-horse-battery"})
+        for path in ("/", "/reports", "/hardware"):
+            assert 'action="/lang"' not in client.get(path).text, path
+        body = client.get("/settings").text
+        assert body.count('action="/lang"') == 1
+        # Above the timar panel, and it comes back to settings.
+        assert body.index('action="/lang"') < body.index('popovertarget="help-version"')
+        assert 'name="next" value="/settings"' in body
 
     def test_form_errors_come_back_translated(self, client):
         client.cookies.set(i18n.COOKIE, "de")

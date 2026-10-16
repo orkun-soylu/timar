@@ -317,6 +317,31 @@
     .popover .default-cmd p { margin: 0.35rem 0 0; }
     form.lang { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
     form.lang select { width: auto; padding: 0.25rem 0.45rem; font-size: 0.8rem; color: var(--muted); }
+    /* A hardware document: prose inside a panel, set like the rest of the page. Headings keep
+       their own sizes here — the small upper-case style is for panel titles, not for a document,
+       hence the `section.panel` in front: it has to outweigh that rule. */
+    .doc { padding: 0.25rem 1rem 0; overflow-wrap: anywhere; }
+    .doc h1 { font-size: 1.3rem; margin: 1rem 0 0.5rem; }
+    section.panel .doc h2 { font-size: 1.1rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.6rem 0 0.5rem; padding: 0 0 0.25rem; border-bottom: 1px solid var(--line); }
+    section.panel .doc h3 { font-size: 0.95rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.2rem 0 0.4rem; }
+    .doc h4 { font-size: 0.9rem; margin: 1rem 0 0.3rem; color: var(--muted); }
+    .doc p, .doc ul, .doc ol { margin: 0.5rem 0; }
+    .doc blockquote { margin: 0.75rem 0; padding: 0.1rem 0.9rem; border-left: 3px solid var(--accent); color: var(--muted); }
+    .doc .table-scroll { margin: 0.75rem 0; border: 1px solid var(--line); border-radius: 7px; }
+    .doc table { font-size: 0.875rem; }
+    .doc th, .doc td { padding: 0.4rem 0.7rem; vertical-align: top; }
+    .doc tbody tr:last-child td { border-bottom: none; }
+    .doc pre { padding: 0.8rem 1rem; border-radius: 7px; background: var(--bg); border: 1px solid var(--line); overflow-x: auto; }
+    .doc pre code { color: var(--text); }
+    .doc code { color: var(--text); }
+    .doc hr { border: none; border-top: 1px solid var(--line); margin: 1.5rem 0; }
+    section.panel h2 a { color: inherit; text-decoration: none; }
+    section.panel h2 a:hover { color: var(--text); }
+    textarea.doc-source {
+      width: 100%; min-height: 70vh; padding: 0.8rem 0.9rem; border-radius: 7px; margin-bottom: 1rem;
+      border: 1px solid var(--line); background: var(--bg); color: var(--text); resize: vertical;
+      font: 0.85rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; tab-size: 4;
+    }
   </style>
 </head>
 <body>

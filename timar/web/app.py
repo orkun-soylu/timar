@@ -26,7 +26,7 @@ from .. import alerts, config, i18n, jobs, power, reports, state, status as flee
 from .. import containers as container_status
 from ..i18n import gettext as _
 from ..scheduler import scheduler
-from . import assets, auth, outcome, settings
+from . import assets, auth, hardware as hardware_pages, outcome, settings
 from .auth import require_operator as current_operator
 
 HERE = Path(__file__).parent
@@ -77,6 +77,7 @@ async def _keep_status_fresh() -> None:
 app = FastAPI(title="timar", docs_url=None, redoc_url=None, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
 app.include_router(settings.router)
+app.include_router(hardware_pages.router)
 
 
 def _set_session(response, username: str) -> None:

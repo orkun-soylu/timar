@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Hardware page.** A new place in the menu for what the fleet table cannot show — boards,
+  cards, disks, MACs — kept as Markdown documents in `/data/hardware/`. **+** uploads a `.md`
+  file or starts an empty one; a document reads as a page and the pencil turns it into a text
+  box. A save is refused if the file changed meanwhile, HTML in a document shows as text, and the
+  directory can be bind-mounted to keep it in git. New dependency: `markdown`.
+
+### Changed
+- **The language picker moved to Settings** (a *Page language* panel above timar's own). It
+  stays in the header of the sign-in and setup pages, which have no menu.
+
 ## [0.2.35] — 2026-10-16
 
 ### Fixed

@@ -82,6 +82,25 @@
   </form>
 </section>
 
+{# The page's language, remembered by this browser — not the Telegram one under Notifications.
+   A plain GET form like the one on the sign-in page; the select submits itself when there is
+   scripting. #}
+<section class="panel">
+  <h2>{{ _("Page language") }}</h2>
+  <form method="get" action="/lang" class="stack">
+    <input type="hidden" name="next" value="/settings">
+    <div class="row">
+      <label style="flex: 0 1 20rem"><span>{{ _("Language") }}</span>
+        <select name="code" onchange="this.form.submit()">
+          {% for code, name in languages.items() %}
+          <option value="{{ code }}" {{ "selected" if code == current_lang() }}>{{ name }}</option>
+          {% endfor %}
+        </select></label>
+    </div>
+    <noscript><div class="actions"><button type="submit">OK</button></div></noscript>
+  </form>
+</section>
+
 <section class="panel">
   <h2 class="with-action">timar
     <button type="button" class="help" popovertarget="help-version"

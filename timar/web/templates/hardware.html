@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Hardware") }} — timar{% endblock %}
+{% block body %}
+{% from "_nav.html" import nav with context %}{{ nav("hardware") }}
+{% from "_icons.html" import icon %}
+{% from "_when.html" import when %}
+
+{% if error %}<div class="panel notice bad">{{ error }}</div>{% endif %}
+
+<section class="panel">
+  <h2 class="with-action">{{ _("Hardware") }}
+    <button type="button" class="icon-btn" popovertarget="hardware-add"
+            title="{{ _("Add a document") }}" aria-label="{{ _("Add a document") }}">{{ icon("add") }}</button></h2>
+  {% if docs %}
+  <table>
+    <thead><tr><th>{{ _("Document") }}</th><th style="text-align:right">{{ _("Changed") }}</th></tr></thead>
+    <tbody>
+    {% for doc in docs %}
+      <tr><td><a href="/hardware/{{ doc.slug }}">{{ doc.title }}</a></td>
+          <td class="muted" style="text-align:right; white-space:nowrap">{{ when(doc.modified) }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">{{ _("No documents yet. Use <em>+</em> to upload a Markdown file or start an empty one.") }}</p>
+  {% endif %}
+</section>
+
+<div id="hardware-add" popover class="popover">
+  <h3>{{ _("Add a document") }}</h3>
+  <form method="post" action="/hardware" enctype="multipart/form-data" class="stack" style="padding:0.75rem 0 0">
+    <label><span>{{ _("Markdown file") }} <em class="muted">{{ _("optional") }}</em></span>
+      <input type="file" name="file" accept=".md,.markdown,text/markdown,text/plain"></label>
+    <label><span>{{ _("Name") }} <em class="muted">{{ _("optional with a file") }}</em></span>
+      <input name="name" value="{{ name }}" autocomplete="off" placeholder="inventory"></label>
+    <p class="hint">{{ _("With a file, its text becomes the document. Without one, an empty document opens for editing.") }}</p>
+    <div class="actions">
+      <button type="submit">{{ _("Add") }}</button>
+      <button type="button" class="secondary" popovertarget="hardware-add" popovertargetaction="hide">{{ _("close") }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

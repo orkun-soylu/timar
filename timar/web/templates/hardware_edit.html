@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — timar{% endblock %}
+{% block body %}
+{% from "_nav.html" import nav with context %}{{ nav("hardware") }}
+
+{% if error %}<div class="panel notice bad">{{ error }}</div>{% endif %}
+
+<section class="panel">
+  <h2><a href="/hardware">{{ _("Hardware") }}</a> · {{ doc.title }}</h2>
+  <form method="post" action="/hardware/{{ doc.slug }}" class="stack">
+    <input type="hidden" name="base" value="{{ base }}">
+    <textarea name="text" class="doc-source" spellcheck="false" aria-label="Markdown">{{ text }}</textarea>
+    <div class="actions">
+      <button type="submit">{{ _("Save") }}</button>
+      <a href="/hardware/{{ doc.slug }}" class="linkish-link">{{ _("cancel") }}</a>
+      <button type="submit" class="secondary danger push-right"
+              formaction="/hardware/{{ doc.slug }}/delete"
+              onclick='return confirm({{ _("Delete {name}?", name=doc.title) | tojson }})'>{{ _("remove") }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
