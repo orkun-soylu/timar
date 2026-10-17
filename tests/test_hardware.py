@@ -91,7 +91,7 @@ class TestStore:
         hardware.save("inv", "a\r\nb\r\n", None)
         assert (data / "hardware" / "inv.md").read_bytes() == b"a\nb\n"
 
-    @pytest.mark.parametrize("slug", ["../config", "Inv", "", "a/b", "-x"])
+    @pytest.mark.parametrize("slug", ["../config", "Inv", "", "a/b", "-x", "inv\n"])
     def test_names_cannot_leave_the_directory(self, data, slug):
         with pytest.raises(hardware.HardwareError):
             hardware.save(slug, "x", None)

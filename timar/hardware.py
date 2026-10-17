@@ -61,7 +61,7 @@ def slugify(name: str) -> str:
 
 
 def _file(slug: str) -> Path:
-    if not SLUG.match(slug):
+    if not SLUG.fullmatch(slug):
         raise HardwareError(_("Not a document name: lower-case letters, digits and hyphens."))
     return directory() / f"{slug}.md"
 
@@ -108,7 +108,7 @@ def listing() -> list[dict]:
         return []
     docs = []
     for p in d.glob("*.md"):
-        if not SLUG.match(p.stem):
+        if not SLUG.fullmatch(p.stem):
             continue
         text = p.read_text(encoding="utf-8", errors="replace")
         docs.append({"slug": p.stem, "title": _title(p.stem, text),
@@ -139,7 +139,7 @@ def stored_name(slug: str) -> str | None:
     For building addresses: the caller gets the directory's own spelling, never the request
     value — even one that was checked first.
     """
-    if not SLUG.match(slug):
+    if not SLUG.fullmatch(slug):
         return None
     return next((p.stem for p in directory().glob("*.md") if p.stem == slug), None)
 
