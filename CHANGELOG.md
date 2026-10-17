@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.39] — 2026-10-17
+
+### Fixed
+- **A hardware document name must match in full.** The name check also accepted a trailing
+  newline (`/hardware/inv%0A`); it could not leave the `hardware/` directory, but it was looser
+  than intended.
+
 ## [0.2.38] — 2026-10-16
 
 ### Fixed
