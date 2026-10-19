@@ -45,7 +45,7 @@ It all lands in `config.yaml` in the `timar-data` volume, which you can also edi
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/server-dialog-dark.png">
-  <img width="560" alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, and More settings folded. SSH access: user, and a password used only to enrol with the Enrol button beside it; passwordless sudo below. Save, cancel, and remove on the right." src="docs/images/server-dialog-light.png">
+  <img width="560" alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, and More settings folded. SSH access: a 'No SSH — only watch it and link to it' box, the user, and a password used only to enrol with the Enrol button beside it; passwordless sudo below. Save, cancel, and remove on the right." src="docs/images/server-dialog-light.png">
 </picture>
 
 A VM has no wake address of its own, so it names the hypervisor that starts it and inherits
@@ -193,7 +193,7 @@ first step of the job, and shutting it back down is the last.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/report-sweep-dark.png">
-  <img alt="An archived log sweep: one machine with findings, one unreachable, two asleep. A written assessment at the top: nas-01's /srv at 91 percent and climbing, and its grafana container failing a healthcheck; build-01 did not answer. Below it, the raw findings for nas-01 — disk, the unhealthy container, a drive reporting pending sectors — then 'clean' for three hosts, build-01 unreachable, and 'asleep — not checked' for the two that were off." src="docs/images/report-sweep-light.png">
+  <img alt="An archived log sweep: one machine with findings, one unreachable, two asleep. A written assessment at the top: nas-01's /srv at 91 percent and climbing, and its grafana container failing a healthcheck; build-01 did not answer. Below it, the raw findings for nas-01 — disk, the unhealthy container, a drive reporting pending sectors — then 'clean' for four hosts, build-01 unreachable, and 'asleep — not checked' for the two that were off." src="docs/images/report-sweep-light.png">
 </picture>
 
 The written assessment sits above the findings it came from, never instead of them. A machine
@@ -217,7 +217,7 @@ The **reports** page holds the two jobs at the top and every run they finished b
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/job-dialog-dark.png">
-  <img width="560" alt="The update run's dialog: its weekly Sunday 04:00 schedule, then three lists. Runs on: build-01, gpu-01, hv-01, nas-01, vm-01, each with a minus button. Left out: router, with a plus button. Not enrolled: laptop, with a link to enrol it from its card." src="docs/images/job-dialog-light.png">
+  <img width="560" alt="The update run's dialog: its weekly Sunday 04:00 schedule, then three lists. Runs on: build-01, gpu-01, hv-01, nas-01, vm-01, vm-02, each with a minus button. Left out: router, with a plus button. Not enrolled: laptop, with a link to enrol it from its card." src="docs/images/job-dialog-light.png">
 </picture>
 
 A job runs on every server that is **enrolled** — timar has logged in to it with its key — and
@@ -230,7 +230,7 @@ A report opens over the list, so comparing runs does not lose your place:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/report-update-dark.png">
-  <img alt="An archived update run: nas-01 and five of its compose projects updated, one project pulled and left stopped, timar's own project skipped, three machines woken, updated and shut down again, build-01 failed to come up, the router skipped as left out and the laptop as not enrolled." src="docs/images/report-update-light.png">
+  <img alt="An archived update run: nas-01 and five of its compose projects updated, one project pulled and left stopped, timar's own project skipped, four machines woken, updated and shut down again, build-01 failed to come up, the router skipped as left out and the laptop as not enrolled." src="docs/images/report-update-light.png">
 </picture>
 
 ## Containers
