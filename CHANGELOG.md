@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.40] — 2026-10-20
+
 ### Added
 - **Windows.** A new platform, `windows`, for Windows 10/11 running its own OpenSSH Server with
   PowerShell as the login shell (the README shows the setup; the key is placed by hand). The sweep
