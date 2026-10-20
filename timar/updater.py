@@ -79,7 +79,7 @@ def failure_detail(stdout: str, stderr: str) -> str:
 
 
 # An update command may end its output with one line saying what it did — "timar: Windows: 3
-# installed; Steam: Apex Legends updated" — and the report shows it after the machine's name.
+# installed" — and the report shows it after the machine's name.
 NOTE_PREFIX = "timar:"
 NOTE_MAX = 200
 

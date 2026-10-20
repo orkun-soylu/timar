@@ -48,13 +48,9 @@ class TestCommand:
         # Drivers are left to their vendor's tool.
         assert "Type='Software'" in script
 
-    def test_the_owners_steam_task_is_started_and_kept(self):
-        """It holds the Windows password the run does not have; removing it would end the
-        nightly game updates after the first."""
-        script = windows.decode(windows.UPDATE)
-        assert "Start-ScheduledTask -TaskName 'timar-steam-user'" in script
-        assert "Stop-ScheduledTask -TaskName 'timar-steam-user'" in script
-        assert "Unregister-ScheduledTask -TaskName 'timar-steam-user'" not in script
+    def test_the_update_leaves_steam_alone(self):
+        """Steam cannot sign in from a task while nobody is at the desktop (ARCHITECTURE.md)."""
+        assert "steam.exe" not in windows.decode(windows.UPDATE).lower()
 
 
 # -- the platform ------------------------------------------------------------------------------
