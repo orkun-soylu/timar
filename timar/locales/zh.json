@@ -393,5 +393,6 @@
   "Not a document name: lower-case letters, digits and hyphens.": "文档名无效：只能使用小写字母、数字和连字符。",
   "Too large: a document can be at most 1 MB.": "太大：文档最多 1 MB。",
   "A document with this name already exists.": "已存在同名文档。",
-  "Documents": "文档"
+  "Documents": "文档",
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} 需要你自己把 timar 的密钥放到 {path} —— 方法见 README。然后将密码留空并点击接入以检查。"
 }

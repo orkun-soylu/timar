@@ -393,5 +393,6 @@
   "Not a document name: lower-case letters, digits and hyphens.": "ドキュメント名が正しくありません：小文字、数字、ハイフンのみ。",
   "Too large: a document can be at most 1 MB.": "大きすぎます：ドキュメントは最大 1 MB です。",
   "A document with this name already exists.": "同じ名前のドキュメントがすでにあります。",
-  "Documents": "ドキュメント"
+  "Documents": "ドキュメント",
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} では timar の鍵を自分で {path} に置きます — 手順は README にあります。その後、パスワードを空のまま登録を押して確認してください。"
 }

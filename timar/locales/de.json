@@ -393,5 +393,6 @@
   "Not a document name: lower-case letters, digits and hyphens.": "Kein gültiger Dokumentname: Kleinbuchstaben, Ziffern und Bindestriche.",
   "Too large: a document can be at most 1 MB.": "Zu groß: Ein Dokument darf höchstens 1 MB groß sein.",
   "A document with this name already exists.": "Ein Dokument mit diesem Namen gibt es bereits.",
-  "Documents": "Dokumente"
+  "Documents": "Dokumente",
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "Bei {platform} legst du timars Schlüssel selbst ab, in {path} — wie, steht in der README. Dann zum Prüfen mit leerem Passwort auf Einbinden drücken."
 }

@@ -310,6 +310,7 @@ moved to which box — as Markdown documents, one tab each, the first one open. 
 | Linux (systemd) | `journalctl` | ✅ | Docker | ✅ |
 | Proxmox VE | `journalctl` | ✅ | — (guests via `qm`) | ✅ |
 | OpenWrt | `logread` | ✅ | — | off by default |
+| Windows 10/11 | Event Log (System, Application) | ✅ | — | ✅ Windows Update + Steam games |
 
 Each platform's update command, used when a server's own `update_cmd` is empty (the server
 form shows them under *platform default*):
@@ -319,6 +320,7 @@ form shows them under *platform default*):
 | Linux (systemd) | `sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=--force-confold upgrade --with-new-pkgs && sudo apt-get autoremove -y && sudo apt-get clean` |
 | Proxmox VE | `apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y && apt-get autoremove -y` |
 | OpenWrt | none |
+| Windows | Windows Update (software, not drivers) as SYSTEM, then every installed Steam game — each through a task that lasts the run |
 
 `--with-new-pkgs` matters: plain `apt-get upgrade` holds back any update that needs a package
 it does not have yet — a kernel ABI bump, a driver metapackage — so security kernels sit "kept
@@ -329,6 +331,55 @@ one will answer.
 OpenWrt has no default update command on purpose: an unattended `apk upgrade` can fill the
 overlay or land a kernel-module mismatch on the machine carrying the SSH session you would
 repair it from. Set `update_cmd` yourself if you want it.
+
+### Windows
+
+Windows needs its own OpenSSH Server, PowerShell as the login shell, and timar's key placed by
+hand — enrolment by password appends with POSIX commands Windows does not have. In an
+administrator PowerShell on the machine:
+
+```powershell
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0   # minutes; it comes from Windows Update
+Set-Service sshd -StartupType Automatic; Start-Service sshd
+# An administrator's keys are read from this file only, never from ~\.ssh\authorized_keys:
+Set-Content $env:ProgramData\ssh\administrators_authorized_keys "<timar's public key>" -Encoding ascii
+icacls $env:ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F
+New-ItemProperty HKLM:\SOFTWARE\OpenSSH -Name DefaultShell -PropertyType String -Force `
+  -Value $env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe
+Restart-Service sshd
+```
+
+timar's public key is on the settings page. Add the server with platform `windows` and an
+administrator account, then press **Enrol** with the password left empty to check the key.
+
+**The update** runs Windows Update as SYSTEM — an SSH login can search for updates but is
+refused the download — and then, if Steam is installed, starts Steam as the SSH user without a
+desktop, waits until every installed game is fully updated, and stops it again. Steam signs in
+with the token it saved the last time someone signed in on the desktop; if that has expired the
+run says so. Drivers are left out on purpose. Before it starts, a game running out of a Steam
+library makes the machine *in use*: skipped, tried again next time. A restart the update asks
+for is done straight away when nobody is signed in — and before the shutdown, if the run woke
+the machine — and left pending, with a note in the report, when someone is.
+
+### Update windows
+
+A machine that should only be updated at certain hours — a gaming PC at night — gets a window
+of its own in `config.yaml`:
+
+```yaml
+  - name: gaming-pc
+    platform: windows
+    wol_mac: "aa:bb:cc:dd:ee:ff"
+    update_window: "03:00-07:00"     # may cross midnight: "23:00-05:00"
+    update_every_days: 7             # default
+    update_timeout: 14400
+```
+
+The fleet's update run then leaves it out (its report says when it was last updated), and it is
+updated on its own the first night its window is open once `update_every_days` have passed:
+woken if asleep, updated, put back. One attempt per window; a run that does not end in an update
+— in use, did not wake, an update failed — is tried again the next night. Each of those runs is
+archived and sent like any update run.
 
 ## Development
 

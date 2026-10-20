@@ -146,7 +146,7 @@ def test_the_sweep_reads_the_os_on_the_connection_it_already_has(monkeypatch):
     monkeypatch.setattr(log_checker, "connect", lambda *a, **kw: Conn())
     monkeypatch.setattr(log_checker, "resolve_ssh_key", lambda s: "key")
     monkeypatch.setattr(log_checker, "run", lambda *a, **kw: ("", "", 0))
-    monkeypatch.setattr(log_checker.osinfo, "note", lambda ssh, host: noted.append((ssh, host)))
+    monkeypatch.setattr(log_checker.osinfo, "note", lambda ssh, host, platform=None: noted.append((ssh, host)))
     log_checker.check_server({"name": "web-01", "host": "10.0.0.7", "user": "op", "platform": "linux"})
     assert noted == [("ssh", "10.0.0.7")]
 

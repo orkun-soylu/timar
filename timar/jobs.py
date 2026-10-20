@@ -20,6 +20,7 @@ import logging
 from typing import NamedTuple
 
 from . import analysis, cancel, config, i18n, membership, llm as llm_module, notify, state, status as fleet_status
+from . import update_window
 from .i18n import gettext as _
 from .log_checker import run_log_checks
 from .updater import UpdateResult, run_updates, wait_for_self_update
@@ -117,12 +118,14 @@ def _handoff(results: list[UpdateResult], host: str, unit: str, deadline: float)
                                "host": host, "unit": unit, "deadline": deadline})
 
 
-def run_update(cfg: dict) -> Outcome:
-    results = run_updates(cfg, on_handoff=_handoff)
+def run_update(cfg: dict, only: str | None = None) -> Outcome:
+    """The fleet's update run, or with `only` one machine's run in its own window."""
+    results = run_updates(cfg, on_handoff=_handoff, only=only)
     # A wake or a shutdown makes every cached probe wrong, and a dashboard that still shows a
     # machine asleep ten minutes after Timar woke it is worse than one that shows nothing.
     fleet_status.invalidate()
-    return _update_outcome(cfg, results)
+    update_window.record(cfg, results)
+    return _update_outcome(cfg, results, only=only)
 
 
 def finish_handed_off_update(cfg: dict, handoff: dict) -> Outcome:
@@ -141,11 +144,13 @@ def finish_handed_off_update(cfg: dict, handoff: dict) -> Outcome:
     return _update_outcome(cfg, results)
 
 
-def _update_outcome(cfg: dict, results: list[UpdateResult]) -> Outcome:
+def _update_outcome(cfg: dict, results: list[UpdateResult], only: str | None = None) -> Outcome:
     failed = [r for r in results if not r.success]
     skipped = [r for r in results if r.skipped]
     updated = [r for r in results if r.success and not r.skipped]
     summary = f"{len(updated)} updated, {len(failed)} failed, {len(skipped)} skipped"
+    if only:
+        summary = f"{only}, in its own window: {summary}"
     stopped = cancel.requested(UPDATE)
     if stopped:
         summary += " — stopped by the operator"
@@ -153,8 +158,9 @@ def _update_outcome(cfg: dict, results: list[UpdateResult]) -> Outcome:
     with i18n.using(i18n.DEFAULT):
         rows = _update_rows(results, stopped)
     with i18n.using(_language(cfg)):
-        lines = [f"<b>{_(TITLES[UPDATE])}</b>", ""] + [notify.escape(row)
-                                                        for row in _update_rows(results, stopped)]
+        title = _(TITLES[UPDATE]) + (f" — {only}" if only else "")
+        lines = [f"<b>{notify.escape(title)}</b>", ""] + [notify.escape(row)
+                                                          for row in _update_rows(results, stopped)]
     _notify(cfg, "\n".join(lines))
     return Outcome(summary, "\n".join(rows))
 
@@ -166,10 +172,12 @@ def _update_rows(results: list[UpdateResult], stopped: bool) -> list[str]:
             rows.append("— " + _("{server}: skipped ({reason})", server=r.server, reason=r.error))
         elif r.success:
             # Whether the machine was woken for this is the detail an operator checks first when
-            # a machine they expected to find asleep is running.
-            note = (f" ({r.note})" if r.note
-                    else "" if r.was_running else f" ({_('woken, updated, shut down again')})")
-            rows.append(f"✅ {r.server}{note}")
+            # a machine they expected to find asleep is running. A note of the run's own (a
+            # project pulled and left stopped, what a Windows update installed) goes beside it.
+            parts = [r.note] if r.note else []
+            if not r.was_running:
+                parts.append(_("woken, updated, shut down again"))
+            rows.append(f"✅ {r.server}" + (f" ({'; '.join(parts)})" if parts else ""))
         else:
             # Not truncated here. The failure text is already bounded where it is produced, and
             # the 300 characters this used to keep were spent on whichever stream came first —

@@ -64,6 +64,53 @@ Three consequences, each of which is a test in `tests/test_platforms.py`:
 server's entry should cost that server the right commands, not abort the run for every other
 server.
 
+### Windows
+
+Measured on Windows 11 Pro (build 26300), its own OpenSSH Server, Windows PowerShell 5.1 as the
+login shell. `windows.py` holds the PowerShell; these are the facts it is built on:
+
+| | Result |
+|---|---|
+| a script as base64 in `& ([scriptblock]::Create(...))` | ✅ runs in the login shell; `exit 3` arrives as exit status 3 |
+| the same script through a second `powershell -EncodedCommand` | ❌ exit status 1, and CLIXML progress records on stderr |
+| a 29,784-character command line | ✅ (CreateProcess stops at 32,767) |
+| Windows Update search from the SSH session | ✅ 24 s |
+| Windows Update download, or `Microsoft.Update.SystemInfo`, from the SSH session | ❌ E_ACCESSDENIED |
+| the same from a scheduled task running as SYSTEM | ✅ |
+| `steam.exe -silent` from an S4U task, nobody signed in to Windows | ✅ session 0, signed in with its saved token, library loaded |
+| `steam.exe -shutdown` from the SSH session | ✅ Steam gone within 20 s |
+| System + Application errors over 24 h on a gaming PC | 6, all one DCOM timeout |
+
+Hence the shape of the update: the SSH session writes a worker script, registers a task to run
+it, waits for its result file and removes the task; then the same for Steam, as the SSH user and
+with no stored password. **Nothing is installed and nothing outlives the run**, which keeps the
+"agentless" promise on a system where the natural answer would have been a resident service.
+
+Steam's manifests say a game is fully installed (`StateFlags` 4) until Steam has signed in and
+learned that an update exists, so a library that looks finished the moment Steam starts proves
+nothing. The script waits for the sign-in line in Steam's own connection log, then a minute, and
+only then for every manifest to reach 4.
+
+**Restarts.** Timar does not restart Linux hosts. Windows is different because the last part of
+an update happens *during* the restart, so a machine woken, updated and shut down would carry
+the half-finished update into its owner's morning. A restart is done when the registry says one
+is pending and no `explorer.exe` runs — nobody is signed in — and otherwise reported, never
+forced on a session.
+
+## Update windows
+
+`update_window` takes a machine out of the fleet's run and gives it one of its own, from a loop
+beside the job loops (`scheduler._window_loop`, heartbeat `update-window`). It runs through the
+update job's lock, so a machine's run and the fleet's never overlap; a run refused because the
+fleet's holds the lock is not counted, and the next tick asks again.
+
+**One attempt per window, the next night for a retry.** The opening of the window last tried is
+kept in `state.json`; a run that did not end in an update leaves the machine due for the next
+window, not for the next tick. Retrying inside the window would mean waking a machine whose
+owner has just sat down at it, every few minutes, until the window closed. "Due again" is
+`update_every_days` minus twelve hours, so a run that started at 03:40 is due at 03:00 a week
+later rather than drifting later each week until it falls out of the window.
+
 ## Scheduled jobs are watched for absence, not errors
 
 `log_checker._check_job_log` asks two questions about a job's log: did it start today, and did
