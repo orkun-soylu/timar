@@ -356,7 +356,19 @@ administrator account, then press **Enrol** with the password left empty to chec
 refused the download — and then, if Steam is installed, starts Steam as the SSH user without a
 desktop, waits until every installed game is fully updated, and stops it again. Steam signs in
 with the token it saved the last time someone signed in on the desktop; if that has expired the
-run says so. Drivers are left out on purpose. Before it starts, a game running out of a Steam
+run says so. That token is encrypted with the Windows password, which an SSH login does not
+have: for Steam to sign in while nobody is at the desktop, register a task holding it, once (and
+again after a password change) — in an administrator PowerShell, as the SSH user:
+
+```powershell
+$steam = (Get-ItemProperty HKLM:\SOFTWARE\WOW6432Node\Valve\Steam).InstallPath + "\steam.exe"
+$password = Read-Host "Windows password" -AsSecureString   # a Microsoft account's password, not the PIN
+Register-ScheduledTask timar-steam-user -Action (New-ScheduledTaskAction -Execute $steam -Argument -silent) `
+  -User "$env:USERDOMAIN\$env:USERNAME" -Password ([Net.NetworkCredential]::new("", $password).Password) -Force
+```
+
+Timar starts and stops that task and never removes it; without it, Steam updates only on nights
+when someone is signed in. Drivers are left out on purpose. Before it starts, a game running out of a Steam
 library makes the machine *in use*: skipped, tried again next time. A restart the update asks
 for is done straight away when nobody is signed in — and before the shutdown, if the run woke
 the machine — and left pending, with a note in the report, when someone is.

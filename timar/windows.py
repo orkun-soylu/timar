@@ -169,7 +169,11 @@ if (-not (Test-Path $wuOut)) {
   else { $said += 'Windows up to date' }
 }
 
-# --- Steam games, as the signed-in-or-not user ---
+# --- Steam games, as the SSH user ---
+# Steam's saved sign-in is encrypted with the user's Windows password (DPAPI), so a task that
+# runs without it (S4U) signs in only while that user is also at the desktop. The task the README
+# has the owner register once, with the password stored by Task Scheduler, works at any time; it
+# is started and stopped, never removed. Without it, a task lasting the run is the fallback.
 $steamDir = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Valve\Steam' -ErrorAction SilentlyContinue).InstallPath
 if ($steamDir -and (Test-Path (Join-Path $steamDir 'steam.exe'))) {
   $steamExe = Join-Path $steamDir 'steam.exe'
@@ -191,7 +195,10 @@ if ($steamDir -and (Test-Path (Join-Path $steamDir 'steam.exe'))) {
   $log = Join-Path $steamDir 'logs\connection_log.txt'
   $seen = if (Test-Path $log) { @(Get-Content $log).Count } else { 0 }
   $ours = -not (Get-Process steam -ErrorAction SilentlyContinue)
-  if ($ours) {
+  $saved = [bool](Get-ScheduledTask -TaskName 'timar-steam-user' -ErrorAction SilentlyContinue)
+  if ($ours -and $saved) {
+    Start-ScheduledTask -TaskName 'timar-steam-user'
+  } elseif ($ours) {
     $me = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
     Start-RunTask 'steam' $steamExe '-silent' $me 3
   }
@@ -203,7 +210,8 @@ if ($steamDir -and (Test-Path (Join-Path $steamDir 'steam.exe'))) {
     if (Test-Path $log) { $signedIn = [bool](Get-Content $log | Select-Object -Skip $seen | Select-String "RecvMsgClientLogOnResponse\(\) : \S+ 'OK'") }
   }
   if (-not $signedIn) {
-    'Steam did not sign in within 3 minutes - sign in to Steam on the desktop once'
+    if ($saved) { 'Steam did not sign in within 3 minutes - sign in to Steam on the desktop once; after a Windows password change, register the timar-steam-user task again' }
+    else { 'Steam did not sign in within 3 minutes - with nobody at the desktop it needs the timar-steam-user task (README, Windows)' }
     $said += 'Steam could not sign in'; $failed = $true
   } else {
     Start-Sleep 60
@@ -222,7 +230,8 @@ if ($steamDir -and (Test-Path (Join-Path $steamDir 'steam.exe'))) {
     & $steamExe -shutdown
     $until = (Get-Date).AddSeconds(60)
     while ((Get-Process steam -ErrorAction SilentlyContinue) -and (Get-Date) -lt $until) { Start-Sleep 3 }
-    Remove-RunTask 'steam'
+    if ($saved) { Stop-ScheduledTask -TaskName 'timar-steam-user' -ErrorAction SilentlyContinue }
+    else { Remove-RunTask 'steam' }
   }
 }
 
