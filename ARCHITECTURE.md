@@ -77,14 +77,18 @@ login shell. `windows.py` holds the PowerShell; these are the facts it is built 
 | Windows Update search from the SSH session | ✅ 24 s |
 | Windows Update download, or `Microsoft.Update.SystemInfo`, from the SSH session | ❌ E_ACCESSDENIED |
 | the same from a scheduled task running as SYSTEM | ✅ |
-| `steam.exe -silent` from an S4U task, nobody signed in to Windows | ✅ session 0, signed in with its saved token, library loaded |
+| `steam.exe -silent` from an S4U task, its user also signed in at the desktop | ✅ session 0, signed in with its saved token, library loaded |
+| the same after a fresh boot, nobody signed in | ❌ connects, never signs in: the token is DPAPI-encrypted, an S4U logon has no password to open it |
 | `steam.exe -shutdown` from the SSH session | ✅ Steam gone within 20 s |
 | System + Application errors over 24 h on a gaming PC | 6, all one DCOM timeout |
 
 Hence the shape of the update: the SSH session writes a worker script, registers a task to run
-it, waits for its result file and removes the task; then the same for Steam, as the SSH user and
-with no stored password. **Nothing is installed and nothing outlives the run**, which keeps the
-"agentless" promise on a system where the natural answer would have been a resident service.
+it, waits for its result file and removes the task; then the same for Steam, as the SSH user.
+**Nothing is installed and nothing outlives the run**, which keeps the "agentless" promise on a
+system where the natural answer would have been a resident service — with one exception the
+owner makes: Steam needs the Windows password to read its own sign-in, and timar should not hold
+it. So the owner registers a task with it once (`timar-steam-user`, Task Scheduler keeps the
+password), and the run starts and stops that task instead of making its own.
 
 Steam's manifests say a game is fully installed (`StateFlags` 4) until Steam has signed in and
 learned that an update exists, so a library that looks finished the moment Steam starts proves

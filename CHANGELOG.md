@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+- **Windows: Steam games update when nobody is signed in.** Steam's saved sign-in is encrypted
+  with the Windows password, which the run's own task does not have, so Steam signed in only on
+  nights when its user was also at the desktop. The run now starts a task the owner registers
+  once with the password, `timar-steam-user` (the README shows how), and keeps it; without it,
+  the old way is the fallback and its failure names the task.
+
 ## [0.2.40] — 2026-10-20
 
 ### Added
