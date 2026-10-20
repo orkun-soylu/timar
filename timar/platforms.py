@@ -230,8 +230,8 @@ class Windows(Platform):
     whoami_cmd = "whoami"
 
     default_update_cmd = windows.UPDATE
-    default_update_label = ("Windows Update (software, not drivers) as SYSTEM, then every "
-                            "installed Steam game — each through a task that lasts the run")
+    default_update_label = ("Windows Update (software, not drivers), as SYSTEM through a task "
+                            "that lasts the run")
     busy_cmd = windows.BUSY
     restart_needed_cmd = windows.RESTART_NEEDED
     detect_cmd = windows.DETECT

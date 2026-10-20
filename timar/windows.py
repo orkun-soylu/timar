@@ -13,12 +13,15 @@ Windows 11 (build 26300) over OpenSSH:
 
 **Why the update runs as scheduled tasks.** A login over SSH can *search* Windows Update but not
 download or install: `CreateUpdateDownloader` and `Microsoft.Update.SystemInfo` both fail with
-E_ACCESSDENIED in that session, and work from a task running as SYSTEM. Steam is the other half:
-it needs the user's profile (its saved sign-in lives there) but not a desktop — started by an S4U
-task (the user's identity, no stored password) on a machine nobody has signed in to, it signed in
-with its saved token and loaded its library, and `steam.exe -shutdown` from the SSH session
-stopped it. So both run as tasks that exist only for the length of the run: registered, started,
-waited for, removed. Nothing is installed on the machine and nothing outlives the run.
+E_ACCESSDENIED in that session, and work from a task running as SYSTEM. So it runs as a task that
+exists only for the length of the run: registered, started, waited for, removed. Nothing is
+installed on the machine and nothing outlives the run.
+
+**Games are left to their launcher.** Steam's saved sign-in is encrypted with the user's Windows
+password (DPAPI). Started from a task without that password it connects but never signs in, unless
+the same user is signed in at the desktop; a passwordless Microsoft account has no password to
+give a task, and a separate local account's Steam stalled waiting for the Steam Client Service,
+which a standard user may not start. Steam updates its games itself when someone opens it.
 """
 from __future__ import annotations
 
@@ -167,72 +170,6 @@ if (-not (Test-Path $wuOut)) {
   elseif (@($r.failed).Count) { $failed = $true; $said += "Windows: $(@($r.installed).Count) installed, $(@($r.failed).Count) failed" }
   elseif (@($r.installed).Count) { $said += "Windows: $(@($r.installed).Count) installed" }
   else { $said += 'Windows up to date' }
-}
-
-# --- Steam games, as the SSH user ---
-# Steam's saved sign-in is encrypted with the user's Windows password (DPAPI), so a task that
-# runs without it (S4U) signs in only while that user is also at the desktop. The task the README
-# has the owner register once, with the password stored by Task Scheduler, works at any time; it
-# is started and stopped, never removed. Without it, a task lasting the run is the fallback.
-$steamDir = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Valve\Steam' -ErrorAction SilentlyContinue).InstallPath
-if ($steamDir -and (Test-Path (Join-Path $steamDir 'steam.exe'))) {
-  $steamExe = Join-Path $steamDir 'steam.exe'
-  $libraries = @($steamDir)
-  $vdf = Join-Path $steamDir 'steamapps\libraryfolders.vdf'
-  if (Test-Path $vdf) {
-    $libraries = @(Select-String -Path $vdf -Pattern '"path"\s+"([^"]+)"' | ForEach-Object { $_.Matches[0].Groups[1].Value -replace '\\\\', '\' })
-  }
-  function Get-SteamApps {
-    foreach ($lib in $libraries) {
-      Get-ChildItem (Join-Path $lib 'steamapps\appmanifest_*.acf') -ErrorAction SilentlyContinue | ForEach-Object {
-        $text = Get-Content $_.FullName -Raw
-        $field = { param($k) if ($text -match ('"' + $k + '"\s+"([^"]*)"')) { $Matches[1] } }
-        [pscustomobject]@{ Id = & $field 'appid'; Name = & $field 'name'; State = [int](& $field 'StateFlags'); Build = & $field 'buildid' }
-      }
-    }
-  }
-  $before = @{}; foreach ($a in Get-SteamApps) { $before[$a.Id] = $a.Build }
-  $log = Join-Path $steamDir 'logs\connection_log.txt'
-  $seen = if (Test-Path $log) { @(Get-Content $log).Count } else { 0 }
-  $ours = -not (Get-Process steam -ErrorAction SilentlyContinue)
-  $saved = [bool](Get-ScheduledTask -TaskName 'timar-steam-user' -ErrorAction SilentlyContinue)
-  if ($ours -and $saved) {
-    Start-ScheduledTask -TaskName 'timar-steam-user'
-  } elseif ($ours) {
-    $me = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
-    Start-RunTask 'steam' $steamExe '-silent' $me 3
-  }
-  # Signed in, then a minute for it to learn which games have an update: until then every
-  # manifest still says "fully installed" and a finished-looking library proves nothing.
-  $deadline = (Get-Date).AddMinutes(3); $signedIn = -not $ours
-  while (-not $signedIn -and (Get-Date) -lt $deadline) {
-    Start-Sleep 5
-    if (Test-Path $log) { $signedIn = [bool](Get-Content $log | Select-Object -Skip $seen | Select-String "RecvMsgClientLogOnResponse\(\) : \S+ 'OK'") }
-  }
-  if (-not $signedIn) {
-    if ($saved) { 'Steam did not sign in within 3 minutes - sign in to Steam on the desktop once; after a Windows password change, register the timar-steam-user task again' }
-    else { 'Steam did not sign in within 3 minutes - with nobody at the desktop it needs the timar-steam-user task (README, Windows)' }
-    $said += 'Steam could not sign in'; $failed = $true
-  } else {
-    Start-Sleep 60
-    $deadline = (Get-Date).AddHours(2)
-    while ((@(Get-SteamApps | Where-Object { $_.State -ne 4 }).Count) -and (Get-Date) -lt $deadline) { Start-Sleep 20 }
-    $apps = @(Get-SteamApps)
-    $updated = @($apps | Where-Object { $before.ContainsKey($_.Id) -and $before[$_.Id] -ne $_.Build })
-    $pending = @($apps | Where-Object { $_.State -ne 4 })
-    foreach ($a in $updated) { "Steam: $($a.Name) updated, build $($before[$a.Id]) -> $($a.Build)" }
-    foreach ($a in $pending) { "Steam: $($a.Name) not finished (StateFlags $($a.State))" }
-    if ($pending.Count) { $said += "Steam: $($pending.Count) not finished"; $failed = $true }
-    elseif ($updated.Count) { $said += 'Steam: ' + (($updated | ForEach-Object Name) -join ', ') + ' updated' }
-    else { $said += 'Steam games up to date' }
-  }
-  if ($ours) {
-    & $steamExe -shutdown
-    $until = (Get-Date).AddSeconds(60)
-    while ((Get-Process steam -ErrorAction SilentlyContinue) -and (Get-Date) -lt $until) { Start-Sleep 3 }
-    if ($saved) { Stop-ScheduledTask -TaskName 'timar-steam-user' -ErrorAction SilentlyContinue }
-    else { Remove-RunTask 'steam' }
-  }
 }
 
 'timar: ' + ($said -join '; ')
