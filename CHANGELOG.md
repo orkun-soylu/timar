@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.41] — 2026-10-20
+
 ### Removed
 - **Windows: Steam games are no longer updated.** Steam signed in from the run's task only while
   its user was also signed in at the desktop — on a machine woken at night it never did, and the
