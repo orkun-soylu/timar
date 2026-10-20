@@ -138,7 +138,8 @@ def _server_form(request: Request, *, edit: str | None = None, submitted: dict |
         "values": _server_values(servers, guest_of, editing, submitted),
         "platforms": list(PLATFORMS),
         "device_logos": sorted({**osinfo_module.DEVICE_LOGOS, **osinfo_module.LOGOS}.items(), key=lambda kv: kv[1].casefold()),
-        "platform_defaults": [(p.id, p.label, p.default_update_cmd) for p in PLATFORMS.values()],
+        "platform_defaults": [(p.id, p.label, p.default_update_label or p.default_update_cmd)
+                              for p in PLATFORMS.values()],
         "default_update_timeout": updater.DEFAULT_UPDATE_TIMEOUT,
         "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
         "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,

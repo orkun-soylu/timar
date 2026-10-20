@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 
 from . import cancel, config, containers as container_module, membership, osinfo
+from . import update_window
 from .network import is_host_up, wait_for_host
 from .platforms import get as get_platform
 from .config import resolve_ssh_key
@@ -77,11 +78,34 @@ def failure_detail(stdout: str, stderr: str) -> str:
     return "\n".join(parts) or "the command failed without printing anything"
 
 
-def _do_update(ssh, cmd: str, timeout: int = DEFAULT_UPDATE_TIMEOUT):
+# An update command may end its output with one line saying what it did — "timar: Windows: 3
+# installed; Steam: Apex Legends updated" — and the report shows it after the machine's name.
+NOTE_PREFIX = "timar:"
+NOTE_MAX = 200
+
+
+def note_from(stdout: str) -> str:
+    lines = [line.strip() for line in (stdout or "").splitlines() if line.strip()]
+    if lines and lines[-1].startswith(NOTE_PREFIX):
+        return lines[-1][len(NOTE_PREFIX):].strip()[:NOTE_MAX]
+    return ""
+
+
+def _update_host(ssh, cmd: str, timeout: int = DEFAULT_UPDATE_TIMEOUT) -> tuple[bool, str, str]:
+    """(ok, failure detail, note) — the note from the command's own last line, if it wrote one."""
     stdout, stderr, rc = run(ssh, cmd, timeout=timeout)
     if rc != 0:
-        return False, failure_detail(stdout, stderr)
-    return True, ""
+        detail = failure_detail(stdout, stderr)
+        if note := note_from(stdout):
+            # The summary names what failed; the tail below it is the evidence.
+            detail = f"{note}\n{detail}"
+        return False, detail, ""
+    return True, "", note_from(stdout)
+
+
+def _do_update(ssh, cmd: str, timeout: int = DEFAULT_UPDATE_TIMEOUT):
+    ok, err, _note = _update_host(ssh, cmd, timeout)
+    return ok, err
 
 
 def _wake_and_wait(server_cfg, servers_map: dict | None = None) -> bool:
@@ -140,6 +164,30 @@ def _shutdown_woken(name: str, host: str, server_cfg: dict, platform) -> None:
         logger.info("%s is down", name)
     except Exception as e:
         logger.warning("Could not shutdown %s: %s", name, e)
+
+
+RESTART_GRACE = 900     # Windows finishing an update after a restart: "Working on updates" for minutes
+
+
+def _restart(name: str, host: str, server_cfg: dict, platform) -> str:
+    """Restart a machine whose update asked for it, and wait until it accepts a login again.
+
+    Returns "" when it is back, or what went wrong. Only for a machine nobody is signed in to —
+    the caller has asked `restart_needed_cmd` — and only on a platform that names a restart.
+    """
+    logger.info("Restarting %s to finish its update ...", name)
+    key = resolve_ssh_key(server_cfg)
+    try:
+        with connect(host, server_cfg["user"], key) as ssh:
+            run(ssh, platform.restart_cmd(server_cfg["user"]), timeout=10)
+    except Exception:
+        pass    # the connection drops as it goes down
+    _wait_offline(host, max_wait=300)
+    if not wait_for_host(host, max_wait=RESTART_GRACE):
+        return f"did not come back within {RESTART_GRACE // 60} minutes of the restart"
+    _wait_for_login(host, server_cfg["user"], key, grace=RESTART_GRACE)
+    logger.info("%s is back", name)
+    return ""
 
 
 def _shutdown_host(ssh, platform, user: str = "root"):
@@ -239,20 +287,44 @@ def update_server(server_cfg: dict, servers_map: dict,
                                  error="Host did not come up after WOL")]
         _wait_for_login(host, server_cfg["user"], resolve_ssh_key(server_cfg))
 
+    restart = ""
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
-            logger.info("Updating %s ...", name)
-            osinfo.note(ssh, host)
-            ok, err = _do_update(ssh, update_cmd, timeout=_timeout_for(server_cfg))
-            results.append(UpdateResult(server=name, success=ok, was_running=was_running,
-                                        error=err if not ok else ""))
-            results.extend(_update_containers(ssh, server_cfg, (containers_by_server or {}).get(name, [])))
+            osinfo.note(ssh, host, platform)
+            busy = ""
+            if platform.busy_cmd:
+                busy = run(ssh, platform.busy_cmd, timeout=60)[0].strip()
+            if busy:
+                # Skipped, not failed: the next run tries again, and a red mark for a machine
+                # someone was using would only teach the operator to ignore red.
+                logger.info("%s is in use (%s), not updating it", name, busy)
+                results.append(UpdateResult(server=name, success=True, skipped=True,
+                                            was_running=was_running, error=f"in use — {busy[:200]}"))
+            else:
+                logger.info("Updating %s ...", name)
+                ok, err, note = _update_host(ssh, update_cmd, timeout=_timeout_for(server_cfg))
+                if platform.restart_needed_cmd:
+                    restart = run(ssh, platform.restart_needed_cmd, timeout=60)[0].strip()
+                    if restart == "signed-in":
+                        note = "; ".join(filter(None, [note, "restart pending — someone is signed in"]))
+                results.append(UpdateResult(server=name, success=ok, was_running=was_running,
+                                            error=err if not ok else "", note=note))
+                results.extend(_update_containers(ssh, server_cfg, (containers_by_server or {}).get(name, [])))
     except Exception as e:
         logger.exception("update %s", name)
         results.append(UpdateResult(server=name, success=False, was_running=was_running, error=str(e)))
         if not was_running:
             _shutdown_woken(name, host, server_cfg, platform)
         return results
+
+    # A restart the update asked for, on a platform where timar does them: before the guests and
+    # before the shutdown, so a machine put back to sleep is not left half-updated — the last
+    # part of a Windows update happens during the restart, not during the shutdown after it.
+    if restart == "restart" and platform.restart_cmd(server_cfg["user"]):
+        if problem := _restart(name, host, server_cfg, platform):
+            results[0].success, results[0].error = False, problem
+        else:
+            results[0].note = "; ".join(filter(None, [results[0].note, "restarted"]))
 
     # handle VMs managed by this host
     for vm_entry in server_cfg.get("manages_vms", []):
@@ -305,7 +377,7 @@ def update_server(server_cfg: dict, servers_map: dict,
         try:
             with connect(vm_host, vm_cfg["user"], resolve_ssh_key(vm_cfg)) as ssh:
                 logger.info("Updating VM %s ...", vm_name)
-                osinfo.note(ssh, vm_host)
+                osinfo.note(ssh, vm_host, vm_platform)
                 ok, err = _do_update(ssh, vm_update_cmd, timeout=_timeout_for(vm_cfg))
                 results.append(UpdateResult(server=vm_name, success=ok, was_running=vm_was_running,
                                             error=err if not ok else ""))
@@ -466,7 +538,7 @@ def update_self(server_cfg: dict, entries: list[dict], done: list[UpdateResult],
     results: list[UpdateResult] = []
     try:
         with connect(server_cfg["host"], server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
-            osinfo.note(ssh, server_cfg["host"])
+            osinfo.note(ssh, server_cfg["host"], platform)
             # Before the packages: a dockerd restart stops this process, and a container project
             # updated afterwards would be updated by nobody.
             results.extend(_update_containers(ssh, server_cfg, entries))
@@ -488,9 +560,19 @@ def update_self(server_cfg: dict, entries: list[dict], done: list[UpdateResult],
     return results + [wait_for_self_update(server_cfg, unit, deadline)]
 
 
-def run_updates(cfg, on_handoff=None) -> list[UpdateResult]:
+def run_updates(cfg, on_handoff=None, only: str | None = None) -> list[UpdateResult]:
+    """Update the fleet — or, with `only`, that one machine: its own window's run."""
     servers = cfg.get("servers", [])
     servers_map = {s["name"]: s for s in servers}
+    if only is not None:
+        server = servers_map.get(only)
+        if server is None:
+            return [UpdateResult(server=only, success=False, error="not in the config any more")]
+        if reason := membership.skip_reason(cfg, "update", server):
+            return [UpdateResult(server=only, success=True, skipped=True, was_running=False,
+                                 error=reason)]
+        # The fleet's run below is not this: no other machine, and no hand-off — a machine with
+        # a window of its own is never the one timar runs on.
 
     # collect VM names so we don't update them directly (handled by their host)
     managed_vms = set()
@@ -501,6 +583,9 @@ def run_updates(cfg, on_handoff=None) -> list[UpdateResult]:
     containers_by_server: dict[str, list[dict]] = {}
     for entry in cfg.get("containers") or []:
         containers_by_server.setdefault(entry.get("server"), []).append(entry)
+
+    if only is not None:
+        return update_server(servers_map[only], servers_map, containers_by_server, cfg)
 
     # Last, after everything that is woken and shut down again: the step that may restart this
     # process is then the only one left. Its hypervisor goes before it in the ordinary order,
@@ -514,6 +599,10 @@ def run_updates(cfg, on_handoff=None) -> list[UpdateResult]:
             continue
         if not config.has_ssh(server):
             continue    # watched only: never part of a run, so not listed in its report either
+        if server.get("update_window"):
+            all_results.append(UpdateResult(server=server["name"], success=True, skipped=True,
+                                            was_running=False, error=update_window.describe(server)))
+            continue
         if cancel.requested("update"):
             logger.info("update run stopped by the operator before %s", server["name"])
             break

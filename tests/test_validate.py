@@ -59,7 +59,7 @@ class TestServer:
 
     def test_unknown_platform_rejected(self):
         with pytest.raises(ValidationError, match="Platform must be"):
-            server(MINIMAL | {"platform": "windows"}, set())
+            server(MINIMAL | {"platform": "solaris"}, set())
 
     @pytest.mark.parametrize("mac", ["aa:bb:cc:dd:ee", "zz:bb:cc:dd:ee:ff", "aabbccddeeff"])
     def test_malformed_mac_rejected(self, mac):

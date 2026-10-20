@@ -9,7 +9,7 @@ servers:
   - name: web-01
     host: 192.0.2.10          # IP or hostname; a non-standard SSH port goes after it: 192.0.2.10:2222
     user: deploy
-    platform: linux           # linux | openwrt | proxmox
+    platform: linux           # linux | openwrt | proxmox | windows
 
     # Optional: replaces the platform's default update command (the README lists them). The
     # Linux default is apt-get upgrade --with-new-pkgs with --force-confold, then autoremove and
@@ -82,6 +82,19 @@ servers:
     # itself runs on a bridge network. The relay must be always on, already enrolled, and have
     # python3 or wakeonlan.
     # wol_relay: web-01
+
+  # A Windows desktop, updated only at night. Windows needs OpenSSH Server, PowerShell as its login
+  # shell, and timar's key placed by hand -- see "Windows" in the README. `update_window` takes it
+  # out of the fleet's run and updates it on its own, the first night its window is open once
+  # `update_every_days` (default 7) have passed; a night that does not end in an update is tried
+  # again the next one.
+  - name: gaming-pc
+    host: 192.0.2.25
+    user: player
+    platform: windows
+    wol_mac: "aa:bb:cc:dd:ee:02"
+    update_window: "03:00-07:00"
+    update_timeout: 14400
 
   # A machine that is off on purpose but has no way to be woken -- a Wi-Fi board, a laptop,
   # anything switched on by hand. `on_demand: true` makes off read as "asleep" rather than

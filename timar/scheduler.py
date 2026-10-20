@@ -25,13 +25,15 @@ import logging
 import traceback
 from datetime import datetime
 
-from . import cancel, config, jobs, reports, schedule as schedule_module, state
+from . import cancel, config, jobs, reports, schedule as schedule_module, state, update_window
 
 logger = logging.getLogger(__name__)
 
 # How long a supervised loop waits before restarting after an unexpected exception. Long enough
 # that a persistent failure does not spin, short enough to recover from a transient one.
 RESTART_DELAY = 30.0
+
+WINDOW_LOOP = "update-window"
 
 # The loop wakes at least this often even when the next run is days away, so the heartbeat stays
 # fresh and a schedule edited in the UI is picked up without a restart.
@@ -56,6 +58,8 @@ class Scheduler:
             self._tasks.append(asyncio.create_task(
                 self._supervise(f"job:{name}", lambda n=name: self._job_loop(n))
             ))
+        self._tasks.append(asyncio.create_task(
+            self._supervise(WINDOW_LOOP, self._window_loop)))
 
     def _reconcile_interrupted(self) -> dict | None:
         """Close out any run the last process died in the middle of.
@@ -173,6 +177,23 @@ class Scheduler:
 
             await self.run(name)
 
+    async def _window_loop(self) -> None:
+        """Update each machine with an `update_window` in it, once it is due. See `update_window`.
+
+        Under the update job's own lock, through `run`: a machine's run and the fleet's never
+        overlap. A run refused because the fleet's is in progress is not counted as tried, so the
+        next tick asks again — the window is usually hours long.
+        """
+        while True:
+            state.beat(WINDOW_LOOP)
+            cfg = config.load()
+            now = datetime.now()
+            for name in update_window.due(cfg, now):
+                spec = next(s for s in cfg["servers"] if s["name"] == name)["update_window"]
+                if await self.run(jobs.UPDATE, only=name):
+                    update_window.mark_tried(name, spec, now)
+            await asyncio.sleep(TICK)
+
     # -- running a job -------------------------------------------------------
 
     def is_running(self, name: str) -> bool:
@@ -203,8 +224,10 @@ class Scheduler:
         reports.archive(name, title=jobs.TITLES.get(name, name), ok=ok, summary=summary,
                         error=error, report=report)
 
-    async def run(self, name: str) -> bool:
+    async def run(self, name: str, **kwargs) -> bool:
         """Run one job. Returns False if it was already running.
+
+        `kwargs` go to the job's runner — `only=` for one machine's update in its window.
 
         Non-blocking for the caller in the sense that matters: the work itself happens in a
         worker thread, so the event loop keeps serving the UI throughout.
@@ -222,7 +245,7 @@ class Scheduler:
             logger.info("%s started", name)
             try:
                 cfg = config.load()
-                outcome = await asyncio.to_thread(jobs.RUNNERS[name], cfg)
+                outcome = await asyncio.to_thread(jobs.RUNNERS[name], cfg, **kwargs)
                 self._record(name, ok=True, summary=outcome.summary, report=outcome.report)
                 logger.info("%s finished: %s", name, outcome.summary)
                 return True

@@ -178,7 +178,7 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
 
     try:
         with connect(host, server_cfg["user"], resolve_ssh_key(server_cfg)) as ssh:
-            osinfo.note(ssh, host)
+            osinfo.note(ssh, host, platform)
             journal_out, _, _ = run(ssh, platform.journal_cmd(hours))
             journal_errors = platform.parse_journal(journal_out)
 

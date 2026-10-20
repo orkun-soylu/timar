@@ -169,3 +169,15 @@ def last_run(name: str) -> datetime | None:
         return datetime.fromisoformat(raw)
     except ValueError:
         return None
+
+
+def update_windows() -> dict:
+    """Per server with an `update_window`: the window last tried, and the last update. See
+    `update_window`."""
+    return load().get("update_windows", {})
+
+
+def set_update_window(name: str, **fields: Any) -> None:
+    data = load()
+    data.setdefault("update_windows", {}).setdefault(name, {}).update(fields)
+    save(data)

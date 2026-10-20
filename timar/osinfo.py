@@ -33,6 +33,8 @@ LOGOS = {
     "linux": "Linux", "alpinelinux": "Alpine Linux", "archlinux": "Arch Linux",
     "fedora": "Fedora", "rockylinux": "Rocky Linux", "almalinux": "AlmaLinux",
     "opensuse": "openSUSE", "nixos": "NixOS", "linuxmint": "Linux Mint",
+    # From Simple Icons 12.4.0 (CC0); later releases dropped Microsoft's marks.
+    "windows": "Windows",
 }
 
 # For a device timar does not log in to (`ssh: false`), whose system cannot be read: its entry
@@ -41,9 +43,6 @@ DEVICE_LOGOS = {
     "synology": "Synology", "qnap": "QNAP", "truenas": "TrueNAS", "unraid": "Unraid",
     "tplink": "TP-Link", "ubiquiti": "Ubiquiti", "mikrotik": "MikroTik", "netgear": "NETGEAR",
     "asus": "ASUS",
-    # From Simple Icons 12.4.0 (CC0); later releases dropped Microsoft's marks. For a desktop timar
-    # only wakes and watches.
-    "windows": "Windows",
 }
 
 
@@ -127,11 +126,14 @@ def versions() -> dict[str, str]:
         return {k: v["version"] for k, v in _load().items() if v.get("version")}
 
 
-def note(ssh, address: str) -> None:
+def note(ssh, address: str, platform=None) -> None:
     """Read the OS over an open connection and remember it. Never raises: a logo is never
-    worth failing a sweep or an update over."""
+    worth failing a sweep or an update over.
+
+    `platform` supplies its own question where `DETECT`'s POSIX shell would not be understood —
+    Windows."""
     try:
-        out, _, _ = run(ssh, DETECT, timeout=15)
+        out, _, _ = run(ssh, (platform and platform.detect_cmd) or DETECT, timeout=30)
         slug = parse(out)
         if not slug:
             return
@@ -164,8 +166,8 @@ def logo(server: dict, known: dict[str, str] | None = None) -> str:
         # Nothing can be read without logging in: the entry says what it is.
         return server["logo"] if server.get("logo") in (LOGOS | DEVICE_LOGOS) else "linux"
     platform = server.get("platform", "linux")
-    if platform == "proxmox":
-        return "proxmox"    # its os-release says Debian; the platform says what it is
+    if platform in ("proxmox", "windows"):
+        return platform     # Proxmox's os-release says Debian; Windows has none to read
     if slug := (known if known is not None else seen()).get(address_key(server["host"])):
         return slug
     return "openwrt" if platform == "openwrt" else "linux"

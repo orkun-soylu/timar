@@ -9,6 +9,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Windows.** A new platform, `windows`, for Windows 10/11 running its own OpenSSH Server with
+  PowerShell as the login shell (the README shows the setup; the key is placed by hand). The sweep
+  reads the System and Application event logs and the fixed drives; shutdown works; the system is
+  shown as "Windows 11 Pro 26300". **The update** runs Windows Update as SYSTEM (software, not
+  drivers) and then updates every installed Steam game, starting Steam without a desktop and
+  stopping it again — each through a scheduled task that exists only for the run. A running game
+  skips the machine as *in use*; a restart the update asks for is done when nobody is signed in,
+  and noted in the report when someone is.
+- **Update windows.** `update_window: "03:00-07:00"` on a server takes it out of the fleet's update
+  run and updates it on its own, the first night its window is open once `update_every_days`
+  (default 7) have passed, retrying the next night when a run does not end in an update.
+- An update command's last line, when it starts with `timar:`, is shown after the machine's name
+  in the report.
+
 ## [0.2.39] — 2026-10-17
 
 ### Fixed

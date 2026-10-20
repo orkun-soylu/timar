@@ -172,6 +172,10 @@ def enroll(server: dict, password: str, *, grant_sudo: bool) -> Result:
     """Install Timar's key on a host, optionally granting it passwordless sudo."""
     platform = get_platform(server.get("platform"))
     result = Result()
+    if not platform.password_enrol:
+        raise EnrollError(_("{platform} is enrolled by placing timar's key on it yourself, in {path} — "
+                            "the README shows how. Then press Enrol with the password left empty to check it.",
+                            platform=platform.label, path=platform.authorized_keys))
 
     client = _connect(server["host"], server["user"], password)
     try:
@@ -219,9 +223,9 @@ def verify(server: dict) -> str:
         raise EnrollError(f"could not connect: {e}") from e
 
     membership.mark_enrolled(server["host"])
-    osinfo.note(client, server["host"])
+    osinfo.note(client, server["host"], platform)
     try:
-        out, _, _ = _run(client, "id -un")
+        out, _, _ = _run(client, platform.whoami_cmd)
         who = out.strip() or server["user"]
         if not platform.supports_sudo or who == "root":
             return f"connected with the key as {who}"

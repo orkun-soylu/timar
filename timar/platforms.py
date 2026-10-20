@@ -9,6 +9,8 @@ Adding a platform means subclassing `Platform` and registering it in `PLATFORMS`
 """
 from __future__ import annotations
 
+from . import windows
+
 
 class Platform:
     """Linux with systemd — the default. Debian, Ubuntu, Raspberry Pi OS, Arch, ..."""
@@ -117,6 +119,36 @@ class Platform:
     def shutdown_cmd(self, user: str) -> str:
         return "shutdown -h now" if user == "root" else "sudo shutdown -h now"
 
+    def restart_cmd(self, user: str) -> str | None:
+        """None: timar never restarts a machine of this platform. See `restart_needed_cmd`."""
+        return None
+
+    # -- the update run ------------------------------------------------------
+
+    # Shown as the platform default in the server form, where the command itself would not be
+    # readable. None shows the command.
+    default_update_label: str | None = None
+
+    # Prints a reason when the machine is in use and must not be updated now — empty when it is
+    # free. Asked before the update command; a busy machine is skipped, not failed.
+    busy_cmd: str | None = None
+
+    # Prints `restart` when the update left a restart pending and nobody would lose a session to
+    # it, `signed-in` when it is pending but someone is signed in, nothing otherwise. Linux has
+    # none: timar does not restart Linux hosts, and a kernel that waits for the next boot is
+    # how they are run.
+    restart_needed_cmd: str | None = None
+
+    # Asked over SSH by `osinfo`; None means the POSIX detection there.
+    detect_cmd: str | None = None
+
+    # The account timar is logged in as, for the enrolment check.
+    whoami_cmd = "id -un"
+
+    # False where timar cannot append its own key over a password login; the README says how to
+    # place it instead.
+    password_enrol = True
+
 
 class OpenWrt(Platform):
     """OpenWrt / busybox. No systemd, no sudo, no package manager we should drive by default."""
@@ -178,8 +210,60 @@ class Proxmox(Platform):
         return None
 
 
+class Windows(Platform):
+    """Windows 10/11 with its own OpenSSH Server, PowerShell as the login shell.
+
+    Every command is PowerShell, sent through `windows.command` — see `windows.py` for why, and
+    for what was measured.
+    """
+
+    id = "windows"
+    label = "Windows"
+
+    supports_sudo = False       # an administrator's SSH session is already elevated
+    supports_docker = False
+
+    # Windows' sshd reads an administrator's keys from this file only, never from the profile's
+    # `.ssh/authorized_keys` — the same silent trap as dropbear's.
+    authorized_keys = "C:/ProgramData/ssh/administrators_authorized_keys"
+    password_enrol = False      # nothing POSIX to append the key with; placed by hand
+    whoami_cmd = "whoami"
+
+    default_update_cmd = windows.UPDATE
+    default_update_label = ("Windows Update (software, not drivers) as SYSTEM, then every "
+                            "installed Steam game — each through a task that lasts the run")
+    busy_cmd = windows.BUSY
+    restart_needed_cmd = windows.RESTART_NEEDED
+    detect_cmd = windows.DETECT
+
+    def journal_cmd(self, hours: int) -> str:
+        return windows.journal(hours)
+
+    def disk_cmd(self) -> str:
+        return windows.DISK
+
+    def parse_disk(self, stdout: str, threshold: int = 85) -> list[str]:
+        """`windows.DISK` prints "C 16" per fixed drive."""
+        issues = []
+        for line in stdout.splitlines():
+            fields = line.split()
+            if len(fields) != 2 or not fields[1].isdigit():
+                continue
+            if int(fields[1]) >= threshold:
+                issues.append(f"{fields[0]}: {fields[1]}%")
+        return issues
+
+    def shutdown_cmd(self, user: str) -> str:
+        # /f: an application waiting on "save changes?" would otherwise hold the machine up
+        # indefinitely, with nobody there to answer it.
+        return "shutdown /s /t 0 /f"
+
+    def restart_cmd(self, user: str) -> str | None:
+        return "shutdown /r /t 0 /f"
+
+
 PLATFORMS: dict[str, Platform] = {
-    p.id: p() for p in (Platform, OpenWrt, Proxmox)
+    p.id: p() for p in (Platform, OpenWrt, Proxmox, Windows)
 }
 
 DEFAULT_PLATFORM = Platform.id

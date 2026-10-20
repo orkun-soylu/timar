@@ -1059,8 +1059,9 @@ class TestSettings:
         assert 'popovertarget="platform-defaults"' in form and 'id="platform-defaults" popover' in form
         for platform in PLATFORMS.values():
             assert platform.label in form
-            if platform.default_update_cmd:
-                assert html.escape(platform.default_update_cmd, quote=False) in form
+            # A label stands in where the command itself is not readable (Windows' is base64).
+            if shown := platform.default_update_label or platform.default_update_cmd:
+                assert html.escape(shown, quote=False) in form
         assert "None — swept, never updated." in form          # OpenWrt
 
     def test_edit_keeps_the_fields_the_form_does_not_show(self, client):
