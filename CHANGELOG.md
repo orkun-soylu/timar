@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.42] — 2026-10-22
+
 ### Changed
 - **The page's colours are GNOME's.** Neutral greys (`#1e1e1e` page, `#303030` panels) in the
   dark theme and their light counterparts, with GNOME's palette for the up/asleep/down/warn states.
