@@ -12,17 +12,18 @@
   <script src="{{ static_url('htmx.min.js') }}" defer></script>
   <style>
     :root {
-      --bg: #14161a; --panel: #1c1f26; --line: #2c313b;
-      --text: #e6e8ec; --muted: #8b93a3;
-      --up: #4ade80; --asleep: #64748b; --down: #f87171; --warn: #fbbf24;
+      /* GNOME's greys, with its palette's steps for the states. */
+      --bg: #1e1e1e; --panel: #303030; --line: #5e5c64;
+      --text: #deddda; --muted: #9a9996;
+      --up: #57e389; --asleep: #77767b; --down: #f66151; --warn: #f8e45c;
       /* The mark's amber, as on timar.tools: the name and the page you are on. */
       --accent: #e0a458;
     }
     @media (prefers-color-scheme: light) {
       :root {
-        --bg: #f6f7f9; --panel: #ffffff; --line: #e2e5ea;
-        --text: #1a1d23; --muted: #6b7280;
-        --up: #16a34a; --asleep: #94a3b8; --down: #dc2626; --warn: #d97706;
+        --bg: #fafafa; --panel: #ffffff; --line: #deddda;
+        --text: #1e1e1e; --muted: #5e5c64;
+        --up: #26a269; --asleep: #9a9996; --down: #c01c28; --warn: #c64600;
         /* The mark's amber is too faint on white to read as text; timar.tools uses this
            darker step of it in its light theme. */
         --accent: #9a5f0d;
@@ -108,8 +109,8 @@
       border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit;
     }
     button {
-      padding: 0.55rem 1.1rem; border-radius: 7px; border: 1px solid var(--line);
-      background: var(--text); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer;
+      padding: 0.55rem 1.1rem; border-radius: 7px; border: 1px solid var(--accent);
+      background: var(--accent); color: var(--bg); font: inherit; font-weight: 600; cursor: pointer;
     }
     .linkish { background: none; border: none; color: var(--muted); padding: 0; font-weight: 400; cursor: pointer; }
     /* One size for every row action, whether it is a link or a button, so a row with two
@@ -196,7 +197,7 @@
     label.inline input { width: auto; }
     label.inline span { margin: 0; color: var(--text); font-size: 0.9rem; }
     .actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-    button.secondary { background: none; color: var(--text); font-weight: 400; }
+    button.secondary { background: none; color: var(--text); border-color: var(--line); font-weight: 400; }
     .result { font-size: 0.875rem; }
     .result.htmx-request::after { content: "…"; color: var(--muted); }
     /* Findings keep their own line breaks and column alignment; the box scrolls rather than
