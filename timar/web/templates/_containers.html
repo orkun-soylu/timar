@@ -1,14 +1,29 @@
 {# Polled on its own by HTMX, so it must render standalone — no `extends`. The same shape as the
-   servers table: the light before the name, the name a link to the web interface while it runs,
-   the row's own actions on the right and the add button on the heading. #}
+   servers table above it: the counts on top, the light before the name, the name a link to the
+   web interface while it runs, the row's own actions on the right and the add button on the
+   heading. One line per row, so every row is as tall as a server's. #}
 {% from "_icons.html" import icon %}
 {% from "_table.html" import sortable %}
+{# Under the servers on the same page, so its order and filter have their own names (`csort`,
+   `cdir`, `cstate`), and `keep` carries the servers table's along on every link here. #}
+{% set keep = keep | default("") %}
+{% set query = (("&cstate=" ~ cstate) if cstate else "") ~ keep %}
+{% set q = "&csort=" ~ csort ~ "&cdir=" ~ ("desc" if cdescending else "asc") %}
+{% if ctotal %}
+<nav class="chip-bar" aria-label="{{ _("Filter by state") }}">
+  {%- for s in ("up", "asleep", "down", "unknown") if s != "unknown" or ccounts[s] or cstate == s %}
+  <a href="/?cstate={{ s }}{{ q }}{{ keep }}#containers" class="chip chip-{{ 'muted' if s == 'unknown' else s }}{% if not ccounts[s] %} chip-zero{% endif %}{% if cstate == s %} chip-on{% endif %}"
+     {%- if cstate == s %} aria-current="true"{% endif %}>{{ ccounts[s] }} {{ _(s) }}</a>
+  {%- endfor %}
+  {%- if cstate %}<a href="/?{{ q[1:] }}{{ keep }}#containers" class="chip chip-muted">{{ _("all") }} {{ ctotal }}</a>{% endif %}
+</nav>
+{% endif %}
 {% if projects %}
 <div class="table-scroll">
 <table>
   <thead>
-    <tr>{{ sortable("/containers", sort, descending, "name", _("Name"), "col-edge") }}{{ sortable("/containers", sort, descending, "host", _("Host / Path"), "col-mid") }}
-      <th class="col-mid wide">{{ _("Images") }}</th>
+    <tr>{{ sortable("/", csort, cdescending, "name", _("Container"), "col-edge", query, "c") }}{{ sortable("/", csort, cdescending, "host", _("Host"), "col-mid", query, "c") }}
+      <th class="col-mid wide">{{ _("Path") }}</th>
       <th class="col-edge actions-head"><span>{{ _("Actions") }}</span>
         <a href="/settings/containers/new" class="icon-btn" title="{{ _("Add a container") }}"
            aria-label="{{ _("Add a container") }}"
@@ -28,11 +43,8 @@
         {% if p.web_url and p.running -%}
         <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
         {%- else %}{{ p.name }}{% endif %}</td>
-      {# The host on its line, the directory under it: side by side, a long path pushed the images
-         column off the row. The path is dropped on a narrow screen, as before. #}
-      <td class="col-mid">{{ p.server }}<div class="wide"><code>{{ p.path }}</code></div></td>
-      <td class="col-mid wide muted">{% for name, tag, full, floating in p.image_rows %}<div><code title="{{ full }}{% if floating %} — {{ _("a floating tag: each update run moves it to the newest image") }}{% endif %}">{{ name }}
-          {%- if tag %}<span class="{{ 'tag-floating' if floating else 'tag' }}">{{ tag }}</span>{% endif %}</code></div>{% else %}—{% endfor %}</td>
+      <td class="col-mid">{{ p.server }}</td>
+      <td class="col-mid wide muted"><code class="one-line" title="{{ p.path }}">{{ p.path }}</code></td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
           <span class="icon-slot" title="{{ _("timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
@@ -62,6 +74,8 @@
   </tbody>
 </table>
 </div>
+{% elif ctotal %}
+<p class="empty">{{ _("No container is in this state right now.") }}</p>
 {% else %}
 <p class="empty">
   {{ _("No containers yet.") }}<br>

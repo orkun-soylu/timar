@@ -2,14 +2,26 @@
 {% block body %}
 {% from "_nav.html" import nav with context %}{{ nav("servers") }}
 
+{% set fleet_dir = 'desc' if descending else 'asc' %}
 <div class="panel"
-     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ 'desc' if descending else 'asc' }}{% if state %}&amp;state={{ state }}{% endif %}"
+     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ fleet_dir }}{% if state %}&amp;state={{ state }}{% endif %}{{ keep }}"
      hx-trigger="every 10s"
      hx-swap="innerHTML">
   {% include "_fleet.html" %}
 </div>
 
-{# Edit and add open here. Outside the polled panel, so the ten-second refresh cannot
-   wipe a half-typed form; closed with Esc, a click on the backdrop, or the panel's own cancel. #}
+{# The containers, as a second table under the servers: the same shape, its own counts, its own
+   order and filter (`csort`, `cdir`, `cstate`). Empty until it has asked for itself — reading
+   them may open an SSH session per host, and the servers above must not wait for that. #}
+<div class="panel" id="containers"
+     hx-get="/fragments/containers?{{ keep[1:] }}{{ fleet_keep }}"
+     hx-trigger="load, every 15s"
+     hx-swap="innerHTML">
+  {% if has_containers %}<p class="empty muted">{{ _("Reading the containers…") }}</p>
+  {% else %}{% include "_containers.html" %}{% endif %}
+</div>
+
+{# Edit and add open here. Outside the polled panels, so a refresh cannot wipe a half-typed
+   form; closed with Esc, a click on the backdrop, or the panel's own cancel. #}
 {% with label = _("Server") %}{% include "_dialog.html" %}{% endwith %}
 {% endblock %}

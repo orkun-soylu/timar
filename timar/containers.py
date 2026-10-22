@@ -84,48 +84,8 @@ class ProjectStatus:
         return APP_LOGOS.get(self.logo, "Docker")
 
     @property
-    def image_rows(self) -> list[tuple[str, str, str, bool]]:
-        """(name, tag, full, floating) per image: the table shows the short name and tag, the
-        tooltip the whole reference, and a floating tag is marked (`is_floating`)."""
-        rows = []
-        for image in self.images:
-            shown = short_image(image)
-            name, colon, tag = shown.rpartition(":") if ":" in shown and not shown.startswith("sha256:") else (shown, "", "")
-            rows.append((name, colon + tag, image.split("@")[0], is_floating(image)))
-        return rows
-
-
-    @property
     def running(self) -> bool:
         return self.state in ("up", "warn")
-
-
-def is_floating(image: str) -> bool:
-    """A tag that moves: `:latest`, or no tag at all on an image from a registry (Docker reads
-    that as `latest`). The update run replaces these with whatever is newest; a pinned tag
-    changes only when someone changes it. A local build with no tag is not pulled and does not
-    float, so it is not marked — `wol-api-wol-api` is not `wol-api-wol-api:latest` in any way
-    that matters here."""
-    ref = image.split("@")[0]
-    if ref.startswith("sha256:"):
-        return False
-    last = ref.rsplit("/", 1)[-1]
-    if ":" in last:
-        return last.rsplit(":", 1)[1] == "latest"
-    return "/" in ref
-
-
-def short_image(image: str) -> str:
-    """`ghcr.io/immich-app/immich-server:v2@sha256:…` → `immich-server:v2`.
-
-    The registry and the owner are dropped: the column is read for *what* runs and at which tag,
-    and the full reference, three times as long, pushed every row onto two lines. An image known
-    only by its id keeps twelve characters of it, as `docker ps` does.
-    """
-    ref = image.split("@")[0]
-    if ref.startswith("sha256:"):
-        return ref[:19]
-    return ref.rsplit("/", 1)[-1]
 
 
 # Slug → name, for each application symbol in `web/static/logos.svg` (Simple Icons, CC0).

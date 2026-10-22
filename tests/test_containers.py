@@ -190,39 +190,6 @@ class TestAppLogo:
         assert containers._remembered_logo("h:/srv/other", "other", ()) == "docker"
 
 
-class TestShortImage:
-    """The images column shows what runs and at which tag; the full reference is the tooltip."""
-
-    @pytest.mark.parametrize("image, shown", [
-        ("ghcr.io/immich-app/immich-server:v2", "immich-server:v2"),
-        ("ghcr.io/immich-app/postgres:14@sha256:" + "a" * 64, "postgres:14"),     # digest dropped
-        ("vaultwarden/server:1.34", "server:1.34"),
-        ("traefik:v3", "traefik:v3"),
-        ("localhost:5000/team/app:1.2", "app:1.2"),       # a registry port is not a tag
-        ("app-app-backend", "app-app-backend"),            # a local build, untouched
-        ("sha256:" + "68b2a218869a" + "0" * 52, "sha256:68b2a218869a"),   # known only by its id
-    ])
-    def test_shown(self, image, shown):
-        assert containers.short_image(image) == shown
-
-
-class TestFloatingTag:
-    """A tag the update run moves is marked; a pinned one, an id or a local build is not."""
-
-    @pytest.mark.parametrize("image, floating", [
-        ("traefik:latest", True),
-        ("vaultwarden/server:latest", True),
-        ("ollama/ollama", True),                         # from a registry, no tag: latest
-        ("localhost:5000/team/app", True),               # a registry port is not a tag
-        ("ghcr.io/immich-app/immich-server:v2", False),
-        ("postgres:14@sha256:" + "b" * 64, False),
-        ("app-app-backend", False),                      # a local build is not pulled
-        ("sha256:" + "a" * 64, False),
-    ])
-    def test_which(self, image, floating):
-        assert containers.is_floating(image) is floating
-
-
 class TestPage:
     @pytest.fixture
     def page(self, client, monkeypatch):
@@ -243,7 +210,7 @@ class TestPage:
     def test_rows_show_state_link_and_actions(self, page):
         rows = page.get("/fragments/containers").text
         assert '<tr class="up">' in rows and '<tr class="asleep">' in rows
-        assert '<a href="https://photos.lan" target="_blank"' in rows and "immich:v2" in rows
+        assert '<a href="https://photos.lan" target="_blank"' in rows
         assert "/containers/immich/stop" in rows and "/containers/immich/restart" in rows
         assert "/containers/odata/start" in rows
         assert 'hx-target="#toast"' in rows
@@ -257,29 +224,41 @@ class TestPage:
         asleep = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
         assert '#docker"></use>' in asleep and "· Docker" in asleep
 
-    def test_an_image_is_shown_short_with_the_whole_reference_on_hover(self, client, monkeypatch):
-        from timar import config
-        complete_setup(client)
-        config.save({"servers": [{"name": "docker-01", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
-                     "containers": [{"name": "photos", "server": "docker-01", "path": "/srv/photos"}]})
-        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host: True)
-        monkeypatch.setattr(containers, "self_container_id", lambda: None)
-        monkeypatch.setattr(containers, "_host_containers", lambda server: containers.HostContainers(
-            by_dir=containers.parse_ps(ps_line("/srv/photos", "immich-server",
-                                               image="ghcr.io/immich-app/immich-server:v2"))))
-        containers.invalidate()
-        rows = client.get("/fragments/containers").text
-        assert '<code title="ghcr.io/immich-app/immich-server:v2">immich-server<span class="tag">:v2</span></code>' in rows
-
-    def test_the_host_and_its_directory_are_on_two_lines(self, page):
+    def test_the_host_and_the_path_are_columns_of_their_own_and_no_images(self, page):
         rows = page.get("/fragments/containers").text
-        assert ">Host / Path<" in rows
-        assert 'docker-01<div class="wide"><code>/srv/immich</code></div>' in rows
+        assert ">Host<" in rows and ">Path<" in rows and ">Images<" not in rows
+        assert '<td class="col-mid">docker-01</td>' in rows
+        assert '<code class="one-line" title="/srv/immich">/srv/immich</code>' in rows
+        assert "immich:v2" not in rows
 
-    def test_the_page_carries_the_menu_and_requires_a_session(self, page):
-        assert 'aria-current="page">containers<' in page.get("/containers").text
+    def test_the_counts_head_the_table_and_filter_it(self, page):
+        rows = page.get("/fragments/containers").text
+        assert rows.index('class="chip-bar"') < rows.index("<table>")
+        assert ">1 up<" in rows and ">1 asleep<" in rows and ">0 down<" in rows
+        assert "unknown" not in rows.split("</nav>")[0]          # shown only when there is one
+        picked = page.get("/fragments/containers?cstate=asleep").text
+        assert "/settings/containers/odata/edit" in picked and "/settings/containers/immich/edit" not in picked
+        assert ">all 2<" in picked
+
+    def test_a_failing_health_check_is_counted_as_down(self, page, monkeypatch):
+        from timar import config
+        cfg = config.load()
+        cfg["containers"][0]["health_url"] = "https://photos.lan/ping"
+        config.save(cfg)
+        monkeypatch.setattr(containers, "_healthy", lambda url, fresh=False: False)
+        containers.invalidate()
+        rows = page.get("/fragments/containers").text
+        assert '<tr class="warn">' in rows and ">1 down<" in rows and ">0 up<" in rows
+
+    def test_they_live_under_the_servers_and_the_old_page_leads_there(self, page):
+        home = page.get("/").text
+        assert 'id="containers"' in home and 'hx-trigger="load, every 15s"' in home
+        assert home.index('hx-get="/fragments/fleet') < home.index('hx-get="/fragments/containers')
+        old = page.get("/containers", follow_redirects=False)
+        assert old.status_code == 303 and old.headers["location"] == "/#containers"
         page.cookies.clear()
         assert page.get("/containers").headers["location"] == "/login"
+        assert page.get("/fragments/containers").headers["location"] == "/login"
         assert page.post("/containers/immich/stop").headers["location"] == "/login"
 
     def test_the_host_list_offers_only_docker_hosts(self, page):
@@ -290,7 +269,7 @@ class TestPage:
         from timar import config
         response = page.post("/settings/containers", data={
             "name": "brain", "server": "docker-01", "path": "/srv/brain"})
-        assert response.headers["location"] == "/containers"
+        assert response.headers["location"] == "/"
         page.post("/settings/containers", data={
             "original_name": "brain", "name": "brain2", "server": "docker-01", "path": "/srv/brain"})
         assert [c["name"] for c in config.load()["containers"]] == ["immich", "odata", "brain2"]
@@ -455,7 +434,7 @@ class TestImport:
         response = page.post("/settings/containers/import", data={
             "server": "docker-01", "pick": ["0"], "name_0": "my-app", "path_0": "/srv/app",
             "web_0": "app.lan"})
-        assert response.headers["location"] == "/containers"
+        assert response.headers["location"] == "/"
         assert config.load()["containers"][-1] == {
             "name": "my-app", "server": "docker-01", "path": "/srv/app", "web_url": "https://app.lan"}
 
@@ -589,9 +568,24 @@ class TestSort:
                      "containers": [{"name": "b", "server": "h", "path": "/b"},
                                     {"name": "a", "server": "h", "path": "/a"}]})
         monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: False)
-        page = client.get("/containers?sort=host&dir=desc").text
-        assert 'href="/containers?sort=host&amp;dir=asc"' in page        # active column flips
-        assert 'href="/containers?sort=name&amp;dir=asc"' in page
-        assert 'hx-get="/fragments/containers?sort=host&amp;dir=desc"' in page
-        rows = client.get("/fragments/containers?sort=name&dir=desc").text
+        page = client.get("/?csort=host&cdir=desc").text
+        assert 'hx-get="/fragments/containers?csort=host&amp;cdir=desc"' in page
+        table = client.get("/fragments/containers?csort=host&cdir=desc").text
+        assert 'href="/?csort=host&amp;cdir=asc"' in table        # active column flips
+        assert 'href="/?csort=name&amp;cdir=asc"' in table
+        rows = client.get("/fragments/containers?csort=name&cdir=desc").text
         assert rows.index('href="/settings/containers/b/edit"') < rows.index('href="/settings/containers/a/edit"')
+
+    def test_each_table_keeps_the_other_s_order_and_filter(self, client, monkeypatch):
+        from timar import config
+        complete_setup(client)
+        config.save({"servers": [{"name": "h", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
+                     "containers": [{"name": "a", "server": "h", "path": "/a"}]})
+        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: False)
+        page = client.get("/?sort=address&dir=desc&cstate=unknown").text
+        assert 'hx-get="/fragments/fleet?sort=address&amp;dir=desc&amp;cstate=unknown"' in page
+        assert 'hx-get="/fragments/containers?cstate=unknown&amp;sort=address&amp;dir=desc"' in page
+        fleet = client.get("/fragments/fleet?sort=address&dir=desc&cstate=unknown").text
+        assert 'href="/?sort=name&amp;dir=asc&amp;cstate=unknown"' in fleet
+        table = client.get("/fragments/containers?cstate=unknown&sort=address&dir=desc").text
+        assert 'href="/?csort=host&amp;cdir=asc&amp;cstate=unknown&amp;sort=address&amp;dir=desc"' in table

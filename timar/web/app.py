@@ -276,22 +276,65 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
     }
 
 
+def _order(sort: str | None, dir: str | None, state: str | None,
+           sort_keys: tuple[str, ...], states: tuple[str, ...]) -> tuple[str, bool, str | None]:
+    """A table's sort, direction and filter from the URL; anything unrecognised is the default."""
+    return (sort if sort in sort_keys else "name", dir == "desc",
+            state if state in states else None)
+
+
+def _keep(prefix: str, sort: str, descending: bool, state: str | None) -> str:
+    """One table's order and filter as a query tail, for the links of the *other* table.
+
+    The servers and the containers share a page, each ordered and filtered in the URL; a click in
+    one must not reset the other. Only what differs from the default is carried.
+    """
+    tail = ""
+    if sort != "name" or descending:
+        tail += f"&{prefix}sort={sort}&{prefix}dir={'desc' if descending else 'asc'}"
+    if state:
+        tail += f"&{prefix}state={state}"
+    return tail
+
+
+def _container_keep(csort, cdir, cstate) -> str:
+    return _keep("c", *_order(csort, cdir, cstate, container_status.SORT_KEYS, CONTAINER_STATES))
+
+
+def _fleet_keep(sort, dir, state) -> str:
+    return _keep("", *_order(sort, dir, state, fleet_status.SORT_KEYS, fleet_status.STATES))
+
+
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, sort: str | None = None, dir: str | None = None,
-                    state: str | None = None, operator: str = Depends(current_operator)):
+                    state: str | None = None, csort: str | None = None, cdir: str | None = None,
+                    cstate: str | None = None, operator: str = Depends(current_operator)):
+    """The servers, and the containers under them as a second table.
+
+    The containers are not read here: that may open an SSH session per host, and the servers
+    table — which the background probe already has — would wait for it. Their panel asks for
+    itself as soon as the page is up.
+    """
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "servers": cfg.get("servers", []),
         **_fleet_view(cfg, sort, dir, state),
+        "keep": _container_keep(csort, cdir, cstate),
+        "fleet_keep": _fleet_keep(sort, dir, state),
+        "has_containers": bool(cfg.get("containers")),
     })
 
 
 @app.get("/fragments/fleet", response_class=HTMLResponse)
 async def fleet_fragment(request: Request, sort: str | None = None, dir: str | None = None,
-                         state: str | None = None, operator: str = Depends(current_operator)):
+                         state: str | None = None, csort: str | None = None,
+                         cdir: str | None = None, cstate: str | None = None,
+                         operator: str = Depends(current_operator)):
     """The status table alone — polled by HTMX so the page updates without a reload."""
-    return TEMPLATES.TemplateResponse(request, "_fleet.html",
-                                      _fleet_view(config.load(), sort, dir, state))
+    return TEMPLATES.TemplateResponse(request, "_fleet.html", {
+        **_fleet_view(config.load(), sort, dir, state),
+        "keep": _container_keep(csort, cdir, cstate),
+    })
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)
@@ -468,26 +511,43 @@ async def archived_report(request: Request, report_id: str,
 
 # -- containers ----------------------------------------------------------------------------
 
-async def _containers_view(sort: str | None, dir: str | None) -> dict:
+# Each container's light is counted under one of three words, as the servers are. A failing
+# health check is counted as down: the project runs, but what it serves does not answer, and
+# "0 down" has to be the line that says nothing is broken. "unknown" (its host is not up, or
+# did not answer) gets a word of its own, shown only when there is one.
+CONTAINER_STATES = ("up", "asleep", "down", "unknown")
+_COUNTED_AS = {"warn": "down"}
+
+
+async def _containers_view(sort: str | None, dir: str | None, state: str | None = None) -> dict:
     """The containers table in the order picked — in the URL, like the servers table's."""
-    key = sort if sort in container_status.SORT_KEYS else "name"
-    descending = dir == "desc"
+    key, descending, picked = _order(sort, dir, state, container_status.SORT_KEYS, CONTAINER_STATES)
     projects = await asyncio.to_thread(container_status.projects, config.load())
+    counted = {p.name: _COUNTED_AS.get(p.state, p.state) for p in projects}
+    counts = {s: sum(c == s for c in counted.values()) for s in CONTAINER_STATES}
+    if picked:
+        projects = [p for p in projects if counted[p.name] == picked]
     return {"projects": container_status.sort_projects(projects, key, descending),
-            "sort": key, "descending": descending}
+            "csort": key, "cdescending": descending, "cstate": picked,
+            "ccounts": counts, "ctotal": len(counted)}
 
 
-@app.get("/containers", response_class=HTMLResponse)
-async def containers_page(request: Request, sort: str | None = None, dir: str | None = None,
-                          operator: str = Depends(current_operator)):
-    return TEMPLATES.TemplateResponse(request, "containers.html", await _containers_view(sort, dir))
+@app.get("/containers")
+async def containers_page(operator: str = Depends(current_operator)):
+    """The containers moved under the servers; old links and bookmarks land there."""
+    return RedirectResponse("/#containers", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.get("/fragments/containers", response_class=HTMLResponse)
-async def containers_fragment(request: Request, sort: str | None = None, dir: str | None = None,
+async def containers_fragment(request: Request, csort: str | None = None, cdir: str | None = None,
+                              cstate: str | None = None, sort: str | None = None,
+                              dir: str | None = None, state: str | None = None,
                               operator: str = Depends(current_operator)):
     """The table alone, polled by HTMX. In a thread: it may open an SSH session per host."""
-    return TEMPLATES.TemplateResponse(request, "_containers.html", await _containers_view(sort, dir))
+    return TEMPLATES.TemplateResponse(request, "_containers.html", {
+        **await _containers_view(csort, cdir, cstate),
+        "keep": _fleet_keep(sort, dir, state),
+    })
 
 
 @app.post("/containers/{name}/{action}", response_class=HTMLResponse)

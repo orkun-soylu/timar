@@ -235,8 +235,12 @@ A report opens over the list, so comparing runs does not lose your place:
 
 ## Containers
 
-The **containers** page lists Docker Compose projects — one row per project directory, however
-many containers it starts. Add one with **+**: a name, the server it runs on, and the absolute
+Under the servers, a second table lists Docker Compose projects — one row per project
+directory, however many containers it starts, with its host and its path in columns of their
+own. Above it, as above the servers, a count per state that filters the table: a failing health
+check counts as *down*, and *unknown* (the host is not up) appears only when there is one. Each
+table keeps its own order and filter in the URL (`csort`, `cdir`, `cstate` for the containers).
+Add one with **+**: a name, the server it runs on, and the absolute
 path of the directory holding its `docker-compose.yml`. Or let **Find on a host**, at the top of
 that form, ask a server for its compose projects (`docker compose ls`): those not registered yet
 are listed with their name, directory and a web address guessed from a Traefik `Host()` rule —

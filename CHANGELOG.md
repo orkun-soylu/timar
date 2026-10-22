@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+- **The containers are on the servers page**, as a second table under the servers; the
+  *containers* menu entry is gone and `/containers` leads there. Host and path are columns of
+  their own, the images column is gone, and every row is one line, as tall as a server's. Over
+  the table, a count per state that filters it, like the servers': a failing health check counts
+  as *down*; *unknown* (host not up) shows only when there is one. Its order and filter live in
+  `csort`, `cdir` and `cstate`, so sorting one table keeps the other's.
+
 ## [0.2.42] — 2026-10-22
 
 ### Changed
