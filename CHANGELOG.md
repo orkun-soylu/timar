@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.43] — 2026-10-22
+
 ### Changed
 - **The containers are on the servers page**, as a second table under the servers; the
   *containers* menu entry is gone and `/containers` leads there. Host and path are columns of
