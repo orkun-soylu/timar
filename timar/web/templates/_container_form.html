@@ -87,7 +87,7 @@
       {% if in_dialog %}
         <button type="button" class="secondary" data-close-dialog>{{ _("cancel") }}</button>
       {% else %}
-        <a href="/containers" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
+        <a href="/" class="muted" style="margin-left:0.8rem">{{ _("cancel") }}</a>
       {% endif %}
       {% if editing %}
         {% set confirm_remove = _("Remove {name} from timar? The containers are not touched.", name=editing) %}

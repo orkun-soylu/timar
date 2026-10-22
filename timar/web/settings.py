@@ -639,7 +639,7 @@ def _container_form(request: Request, *, edit: str | None = None, submitted: dic
         "min_update_timeout": validate.MIN_UPDATE_TIMEOUT,
         "max_update_timeout": validate.MAX_UPDATE_TIMEOUT,
     }, title=_("Edit {name}", name=editing) if editing else _("Add a container"),
-       status_code=status_code, section="containers")
+       status_code=status_code, section="servers")
 
 
 def _find_container(name: str) -> dict:
@@ -685,7 +685,7 @@ async def save_container(request: Request):
     cfg["containers"] = entries
     config.save(cfg)
     container_status.invalidate()
-    return _done(request, "/containers")
+    return _done(request, "/")
 
 
 @router.post("/containers/{name}/delete")
@@ -695,7 +695,7 @@ async def delete_container(request: Request, name: str):
     cfg["containers"] = [c for c in cfg.get("containers") or [] if c["name"] != name]
     config.save(cfg)
     container_status.invalidate()
-    return _done(request, "/containers")
+    return _done(request, "/")
 
 
 def _discover_panel(request: Request, server_name: str, *, errors: list[str] | None = None,
@@ -715,7 +715,7 @@ def _discover_panel(request: Request, server_name: str, *, errors: list[str] | N
     return _panel(request, "_container_discover.html", {
         "server": server_name, "found": found, "error": error, "errors": errors or [],
         "submitted": submitted or {}, "picked": picked or [],
-    }, title=_("Find on a host"), status_code=status_code, section="containers")
+    }, title=_("Find on a host"), status_code=status_code, section="servers")
 
 
 @router.get("/containers/discover", response_class=HTMLResponse)
@@ -755,4 +755,4 @@ async def import_containers(request: Request):
     cfg["containers"] = entries + added
     config.save(cfg)
     container_status.invalidate()
-    return _done(request, "/containers")
+    return _done(request, "/")
