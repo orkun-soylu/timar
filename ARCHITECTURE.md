@@ -451,10 +451,10 @@ reads it). After them comes `/etc/rpi-issue`, then `ID`, then `ID_LIKE`. The com
 
 A platform of `proxmox` is drawn as Proxmox whatever was read. A machine never connected to
 falls back to its platform, then to Linux. The logos are Simple Icons (CC0), sixteen symbols in
-one sprite (`static/logos.svg`, shared with the containers table, 52 symbols, 82 KB) with `fill: currentColor`, so CSS colours them. They are
+one sprite (`static/logos.svg`, shared with the container rows, 52 symbols, 82 KB) with `fill: currentColor`, so CSS colours them. They are
 vendored for the same reason as htmx: an air-gapped rack gets the same page.
 
-The containers table uses the same sprite for the application's logo (`containers.app_logo`).
+The container rows use the same sprite for the application's logo (`containers.app_logo`).
 It opens no connection of its own: it reads the project's name, then each image's name and
 owner. Four rules come from real projects:
 
