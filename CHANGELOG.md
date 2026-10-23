@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.44] — 2026-10-23
+
+### Fixed
+- **Row buttons sit against the right wall.** The servers table's two buttons are narrower than
+  the *Actions* heading, and they were left-aligned under it, leaving a button-wide gap on the
+  right; edit now sits under add, as it does in the containers table.
+
 ## [0.2.43] — 2026-10-22
 
 ### Changed
