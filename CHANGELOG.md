@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.45] — 2026-10-23
+
+### Changed
+- **Flat cards, rocmUI's width and type.** Panels lose their border; the rules between rows,
+  under a panel's title and between sections are drawn in the page's colour, so they read as
+  gaps through the card. The page is wider (1100px), follows rocmUI's font stack, and a panel's
+  title is a bright 15px heading instead of the small upper-case one (column heads keep it).
+
 ## [0.2.44] — 2026-10-23
 
 ### Fixed
