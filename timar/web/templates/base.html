@@ -18,6 +18,8 @@
       --up: #57e389; --asleep: #77767b; --down: #f66151; --warn: #f8e45c;
       /* The mark's amber, as on timar.tools: the name and the page you are on. */
       --accent: #e0a458;
+      /* A panel's title, a step brighter than the body text — as on rocmUI. */
+      --heading: #ffffff;
     }
     @media (prefers-color-scheme: light) {
       :root {
@@ -27,6 +29,7 @@
         /* The mark's amber is too faint on white to read as text; timar.tools uses this
            darker step of it in its light theme. */
         --accent: #9a5f0d;
+        --heading: #1e1e1e;
       }
     }
     * { box-sizing: border-box; }
@@ -35,23 +38,26 @@
        content jumps sideways every time the menu moves between them. */
     html { scrollbar-gutter: stable; }
     body {
-      margin: 0; padding: 2rem 1rem; background: var(--bg); color: var(--text);
-      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      margin: 0; padding: 1.25rem 1.5rem 2rem; background: var(--bg); color: var(--text);
+      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Cantarell, sans-serif;
     }
-    main { max-width: 62rem; margin: 0 auto; }
+    /* rocmUI's width and type, so the two pages read as one family. */
+    main { max-width: 68.75rem; margin: 0 auto; }
     header { display: flex; align-items: baseline; gap: 0.5rem 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
     h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; }
     .spacer { flex: 1; }
     .muted { color: var(--muted); font-size: 0.875rem; }
+    /* A panel is a flat card: no border of its own. The rules between its rows are drawn in the
+       page's colour, so they read as gaps through the card rather than lines on it. */
     .panel {
-      background: var(--panel); border: 1px solid var(--line);
-      border-radius: 10px; overflow: hidden;
+      background: var(--panel); border-radius: 10px; overflow: hidden;
     }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
-    /* One heading style for the whole content area: a table's column heads, a panel's title, a
-       form section's title and a popover's all read alike — small, upper case, muted. */
-    th, section.panel h2, section.panel h3, .form-section-head h3, .popover h3 {
+    th, td { text-align: left; padding: 0.7rem 1.125rem; border-bottom: 1px solid var(--bg); }
+    /* One small heading style for the content area: a table's column heads, a form section's
+       title and a popover's all read alike — small, upper case, muted. A panel's own title is
+       the larger, brighter one below. */
+    th, section.panel h3, .form-section-head h3, .popover h3 {
       font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
       font-weight: 600;
     }
@@ -71,9 +77,9 @@
     .warn .os { color: var(--warn); }
     /* A guest under its hypervisor (sorted by name): indented by about one logo, with a thin
        line back to the parent so the nesting reads without a word. */
-    tr.guest td:first-child { padding-left: 2.6rem; position: relative; }
+    tr.guest td:first-child { padding-left: 2.725rem; position: relative; }
     tr.guest td:first-child::before {
-      content: ""; position: absolute; left: 1.55rem; top: 0; bottom: 50%; width: 0.6rem;
+      content: ""; position: absolute; left: 1.675rem; top: 0; bottom: 50%; width: 0.6rem;
       border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-bottom-left-radius: 4px;
     }
     /* A summary's counts (web/outcome.py): a pill per count, tinted with its state's colour. */
@@ -89,12 +95,12 @@
     .chip-tail { color: var(--muted); font-size: 0.8rem; }
     .chip-asleep { color: var(--asleep); }
     /* The containers sit under the servers as a second table of the same shape. */
-    .panel + .panel { margin-top: 1.5rem; }
+    .panel + .panel { margin-top: 1rem; }
     /* A container's path stays on its line, so its row is as tall as a server's. */
     code.one-line { white-space: nowrap; }
     /* A row of counts that filter — the servers summary, the reports' jobs. A zero stays,
        dimmed; the picked one is filled. */
-    .chip-bar { padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+    .chip-bar { padding: 0.75rem 1.125rem; border-bottom: 1px solid var(--bg); }
     .chip-bar a.chip { text-decoration: none; }
     .chip-bar a.chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
     .chip-zero { opacity: 0.45; }
@@ -151,6 +157,7 @@
     @media (max-width: 640px) {
       .wide { display: none; }
       th, td { padding: 0.6rem 0.6rem; }
+      body { padding-left: 1rem; padding-right: 1rem; }
     }
 
     dialog {
@@ -169,12 +176,15 @@
     @media (prefers-reduced-motion: reduce) { .icon-btn.waking { animation: none; opacity: 0.5; } }
     .empty { padding: 2rem 1rem; text-align: center; color: var(--muted); }
 
-    section.panel { margin-bottom: 1.25rem; padding: 0 0 1.25rem; }
-    /* The same padding as a table's heading row, so a titled panel and a table start alike. */
-    section.panel h2 { margin: 0; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); }
+    section.panel { margin-bottom: 1rem; padding: 0 0 1.25rem; }
+    /* The same inset as a table's cells, so a titled panel and a table start alike. */
+    section.panel h2 {
+      margin: 0; padding: 0.9rem 1.125rem 0.7rem; border-bottom: 1px solid var(--bg);
+      font-size: 1rem; font-weight: 600; color: var(--heading);
+    }
     section.panel h3 { margin: 0 0 0.25rem; }
-    .stack { padding: 1.25rem 1rem 0; }
-    .stack + .stack { border-top: 1px solid var(--line); margin-top: 1rem; }
+    .stack { padding: 1.25rem 1.125rem 0; }
+    .stack + .stack { border-top: 1px solid var(--bg); margin-top: 1rem; }
     .row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .row > label { flex: 1 1 14rem; }
     .field-with-action { flex: 1 1 14rem; display: flex; gap: 0.6rem; align-items: flex-end; }
@@ -207,7 +217,7 @@
     /* Findings keep their own line breaks and column alignment; the box scrolls rather than
        the page, so one long device name cannot push the whole layout sideways. */
     pre.report {
-      margin: 0 1rem; padding: 0.9rem 1rem; border-radius: 7px;
+      margin: 0 1.125rem; padding: 0.9rem 1rem; border-radius: 7px;
       background: var(--bg); border: 1px solid var(--line);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem;
       line-height: 1.5; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
@@ -263,7 +273,7 @@
     }
     .toast.shown, .toast.htmx-request { opacity: 1; }
     header.topnav .brand {
-      color: var(--accent); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
+      color: var(--accent); font-size: 1.375rem; font-weight: 600;
       text-decoration: none;
     }
     header.topnav nav { display: flex; gap: 1rem; }
@@ -281,7 +291,7 @@
     .form-section + .form-section { margin-top: 1.5rem; }
     .form-section-head {
       display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; margin-bottom: 1rem;
+      border-bottom: 1px solid var(--bg); padding-bottom: 0.4rem; margin-bottom: 1rem;
     }
     .form-section-head h3 { margin: 0; }
     button.help {
@@ -294,7 +304,7 @@
     .actions .push-right { margin-left: auto; }
     /* A server in a job's lists: its name and address, its one action on the right. */
     .host-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-                padding: 0.3rem 0; border-bottom: 1px solid var(--line); }
+                padding: 0.3rem 0; border-bottom: 1px solid var(--bg); }
     .host-row:last-child { border-bottom: none; }
     .linkish-link { font-size: 0.875rem; color: var(--muted); }
     table.discover td { padding: 0.4rem 0.5rem; vertical-align: middle; }
@@ -328,19 +338,19 @@
        hence the `section.panel` in front: it has to outweigh that rule. */
     .doc { padding: 0.25rem 1rem 0; overflow-wrap: break-word; }
     .doc h1 { font-size: 1.3rem; margin: 1rem 0 0.5rem; }
-    section.panel .doc h2 { font-size: 1.1rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.6rem 0 0.5rem; padding: 0 0 0.25rem; border-bottom: 1px solid var(--line); }
+    section.panel .doc h2 { font-size: 1.1rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.6rem 0 0.5rem; padding: 0 0 0.25rem; border-bottom: 1px solid var(--bg); }
     section.panel .doc h3 { font-size: 0.95rem; text-transform: none; letter-spacing: normal; color: var(--text); margin: 1.2rem 0 0.4rem; }
     .doc h4 { font-size: 0.9rem; margin: 1rem 0 0.3rem; color: var(--muted); }
     .doc p, .doc ul, .doc ol { margin: 0.5rem 0; }
     .doc blockquote { margin: 0.75rem 0; padding: 0.1rem 0.9rem; border-left: 3px solid var(--accent); color: var(--muted); }
-    .doc .table-scroll { margin: 0.75rem 0; border: 1px solid var(--line); border-radius: 7px; }
+    .doc .table-scroll { margin: 0.75rem 0; }
     .doc table { font-size: 0.875rem; }
     .doc th, .doc td { padding: 0.4rem 0.7rem; vertical-align: top; }
     .doc tbody tr:last-child td { border-bottom: none; }
     .doc pre { padding: 0.8rem 1rem; border-radius: 7px; background: var(--bg); border: 1px solid var(--line); overflow-x: auto; }
     .doc pre code { color: var(--text); }
     .doc code { color: var(--text); }
-    .doc hr { border: none; border-top: 1px solid var(--line); margin: 1.5rem 0; }
+    .doc hr { border: none; border-top: 1px solid var(--bg); margin: 1.5rem 0; }
     section.panel h2 a { color: inherit; text-decoration: none; }
     section.panel h2 a:hover { color: var(--text); }
     textarea.doc-source {
