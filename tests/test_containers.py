@@ -227,7 +227,7 @@ class TestPage:
     def test_the_host_and_the_path_are_columns_of_their_own_and_no_images(self, page):
         rows = page.get("/fragments/containers").text
         assert ">Host<" in rows and ">Path<" in rows and ">Images<" not in rows
-        assert '<td class="col-mid">docker-01</td>' in rows
+        assert '<td class="col-mid muted"><code class="one-line">docker-01</code></td>' in rows
         assert '<code class="one-line" title="/srv/immich">/srv/immich</code>' in rows
         assert "immich:v2" not in rows
 

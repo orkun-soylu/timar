@@ -43,7 +43,7 @@
         {% if p.web_url and p.running -%}
         <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
         {%- else %}{{ p.name }}{% endif %}</td>
-      <td class="col-mid">{{ p.server }}</td>
+      <td class="col-mid muted"><code class="one-line">{{ p.server }}</code></td>
       <td class="col-mid wide muted"><code class="one-line" title="{{ p.path }}">{{ p.path }}</code></td>
       <td class="col-edge"><div class="icon-row">
         {%- if p.is_self %}
