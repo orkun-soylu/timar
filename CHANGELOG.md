@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.46] — 2026-10-24
+
+### Changed
+- **Host, address and system in the path's type.** The containers' host and the servers' address
+  and system are set like a container's path: small, muted, monospace, on one line.
+
 ## [0.2.45] — 2026-10-23
 
 ### Changed
