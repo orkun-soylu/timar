@@ -60,8 +60,8 @@
         {#- A chained wake runs in the background, long after its toast has faded; when it fails,
             the row is the only place left to say so. #}
         {%- if host.wake_error %}<div class="error row-note">{{ host.wake_error }}</div>{% endif %}</td>
-      <td class="col-mid"><code>{{ host.host }}</code></td>
-      <td class="col-mid muted wide">{{ host.system }}</td>
+      <td class="col-mid muted"><code class="one-line">{{ host.host }}</code></td>
+      <td class="col-mid muted wide"><code class="one-line">{{ host.system }}</code></td>
       {# Power first, then the row's own management. The power slot is kept even when it is
          empty, so edit sits in the same place on every row. Enrolment and removal are in the
          edit form. #}
