@@ -212,14 +212,12 @@
   "Catches what the container state cannot: every container up and the application behind them returning 502.": "コンテナの状態では分からないものを捉えます: コンテナはすべて稼働しているのに、背後のアプリケーションが 502 を返している場合など。",
   "Compose directory": "Compose ディレクトリ",
   "Compose directory must be an absolute path, such as /srv/immich.": "Compose ディレクトリは /srv/immich のような絶対パスにしてください。",
-  "Container": "コンテナ",
   "Container info": "コンテナ情報",
   "Forgets the entry. The containers on the host are not touched.": "登録を削除します。ホスト上のコンテナには触れません。",
   "Green: running. Yellow: running, but a healthcheck fails, a container exited with an error, or the health check does not answer. Grey: stopped and on-demand, or its host is not up. Red: should run and does not.": "緑: 稼働中。黄: 稼働中だが、ヘルスチェックの失敗、エラー終了したコンテナ、またはヘルスチェックの無応答がある。灰: オンデマンドで停止中、またはホストが起動していない。赤: 稼働しているべきなのに稼働していない。",
   "Health check": "ヘルスチェック",
   "Host": "ホスト",
   "Host must be one of the configured servers.": "ホストは設定済みのサーバーのいずれかにしてください。",
-  "No containers yet.": "コンテナはまだありません。",
   "Remove": "削除",
   "Remove {name} from timar? The containers are not touched.": "{name} を timar から削除しますか? コンテナには触れません。",
   "Stop {name}?": "{name} を停止しますか?",
@@ -389,8 +387,5 @@
   "Too large: a document can be at most 1 MB.": "大きすぎます：ドキュメントは最大 1 MB です。",
   "A document with this name already exists.": "同じ名前のドキュメントがすでにあります。",
   "Documents": "ドキュメント",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} では timar の鍵を自分で {path} に置きます — 手順は README にあります。その後、パスワードを空のまま登録を押して確認してください。",
-  "Path": "パス",
-  "No container is in this state right now.": "現在この状態のコンテナはありません。",
-  "Reading the containers…": "コンテナを読み込み中…"
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} では timar の鍵を自分で {path} に置きます — 手順は README にあります。その後、パスワードを空のまま登録を押して確認してください。"
 }

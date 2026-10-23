@@ -212,14 +212,12 @@
   "Catches what the container state cannot: every container up and the application behind them returning 502.": "Repère ce que l’état des conteneurs ne montre pas : tous les conteneurs tournent et l’application derrière renvoie 502.",
   "Compose directory": "Répertoire compose",
   "Compose directory must be an absolute path, such as /srv/immich.": "Le répertoire compose doit être un chemin absolu, par exemple /srv/immich.",
-  "Container": "Conteneur",
   "Container info": "Infos conteneur",
   "Forgets the entry. The containers on the host are not touched.": "Oublie l’entrée. Les conteneurs sur l’hôte ne sont pas touchés.",
   "Green: running. Yellow: running, but a healthcheck fails, a container exited with an error, or the health check does not answer. Grey: stopped and on-demand, or its host is not up. Red: should run and does not.": "Vert : en marche. Jaune : en marche, mais un healthcheck échoue, un conteneur s’est arrêté en erreur ou le contrôle de santé ne répond pas. Gris : arrêté et à la demande, ou son hôte n’est pas allumé. Rouge : devrait tourner et ne tourne pas.",
   "Health check": "Contrôle de santé",
   "Host": "Hôte",
   "Host must be one of the configured servers.": "L’hôte doit être l’un des serveurs configurés.",
-  "No containers yet.": "Aucun conteneur pour l’instant.",
   "Remove": "Retirer",
   "Remove {name} from timar? The containers are not touched.": "Retirer {name} de timar ? Les conteneurs ne sont pas touchés.",
   "Stop {name}?": "Arrêter {name} ?",
@@ -389,8 +387,5 @@
   "Too large: a document can be at most 1 MB.": "Trop volumineux : un document ne peut dépasser 1 Mo.",
   "A document with this name already exists.": "Un document portant ce nom existe déjà.",
   "Documents": "Documents",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "Sur {platform}, la clé de timar se dépose à la main, dans {path} — le README explique comment. Puis appuyez sur Enrôler avec le mot de passe vide pour la vérifier.",
-  "Path": "Chemin",
-  "No container is in this state right now.": "Aucun conteneur n’est dans cet état pour le moment.",
-  "Reading the containers…": "Lecture des conteneurs…"
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "Sur {platform}, la clé de timar se dépose à la main, dans {path} — le README explique comment. Puis appuyez sur Enrôler avec le mot de passe vide pour la vérifier."
 }

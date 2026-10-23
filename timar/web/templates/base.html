@@ -82,6 +82,9 @@
       content: ""; position: absolute; left: 1.675rem; top: 0; bottom: 50%; width: 0.6rem;
       border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-bottom-left-radius: 4px;
     }
+    /* A container on a guest — docker on a VM: one more step in, the same line back. */
+    tr.guest.deep td:first-child { padding-left: 4.325rem; }
+    tr.guest.deep td:first-child::before { left: 3.275rem; }
     /* A summary's counts (web/outcome.py): a pill per count, tinted with its state's colour. */
     .chips { margin-top: 0.25rem; }
     .chip {
@@ -94,7 +97,6 @@
     .chip-down { color: var(--down); } .chip-muted { color: var(--muted); }
     .chip-tail { color: var(--muted); font-size: 0.8rem; }
     .chip-asleep { color: var(--asleep); }
-    /* The containers sit under the servers as a second table of the same shape. */
     .panel + .panel { margin-top: 1rem; }
     /* A container's path stays on its line, so its row is as tall as a server's. */
     code.one-line { white-space: nowrap; }
@@ -131,6 +133,8 @@
     .icon-btn:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
     .icon-btn:disabled { opacity: 0.4; cursor: default; }
     .icon-btn.danger:hover:not(:disabled) { color: var(--down); border-color: var(--down); }
+    /* A logo in place of a glyph — the whale on "add a container". */
+    .icon-btn svg.logo { width: 16px; height: 16px; fill: currentColor; }
     .icon-row { display: inline-flex; gap: 0.4rem; vertical-align: middle; }
     /* Holds the power button's place on a row that has none. */
     .icon-slot { display: inline-block; width: 2rem; height: 2rem; }

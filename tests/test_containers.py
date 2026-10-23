@@ -8,10 +8,10 @@ from tests.test_web import client, complete_setup  # noqa: F401 — the fixture
 
 
 def ps_line(working_dir, name, state="running", status="Up 2 days", health="none", cid=None,
-            image="img:1"):
+            image="img:1", ports=""):
     return json.dumps({
         "ID": cid or ("0" * 63 + name[-1]), "Names": name, "Image": image, "State": state,
-        "Status": status, "HealthStatus": health,
+        "Status": status, "HealthStatus": health, "Ports": ports,
         "Labels": f"com.docker.compose.project={name},"
                   f"com.docker.compose.project.working_dir={working_dir},"
                   "traefik.http.routers.x.middlewares=a@file,b@file",
@@ -203,42 +203,49 @@ class TestPage:
         monkeypatch.setattr(containers.fleet_status, "_probe", lambda host: True)
         monkeypatch.setattr(containers, "self_container_id", lambda: None)
         monkeypatch.setattr(containers, "_host_containers", lambda server: containers.HostContainers(
-            by_dir=containers.parse_ps(ps_line("/srv/immich", "immich-server", image="immich:v2"))))
+            by_dir=containers.parse_ps(ps_line("/srv/immich", "immich-server", image="immich:v2",
+                                               ports="0.0.0.0:2283->2283/tcp, [::]:2283->2283/tcp"))))
         containers.invalidate()
         return client
 
-    def test_rows_show_state_link_and_actions(self, page):
-        rows = page.get("/fragments/containers").text
-        assert '<tr class="up">' in rows and '<tr class="asleep">' in rows
+    def test_rows_sit_under_their_host_with_state_link_and_actions(self, page):
+        rows = page.get("/fragments/fleet").text
+        order = [rows.index(f'/settings/{kind}/{name}/edit"') for kind, name in
+                 [("servers", "docker-01"), ("containers", "immich"), ("containers", "odata"), ("servers", "router")]]
+        assert order == sorted(order)
+        assert '<tr class="up guest">' in rows and '<tr class="asleep guest">' in rows
         assert '<a href="https://photos.lan" target="_blank"' in rows
         assert "/containers/immich/stop" in rows and "/containers/immich/restart" in rows
         assert "/containers/odata/start" in rows
         assert 'hx-target="#toast"' in rows
-        assert rows.count('href="/settings/containers/new"') == 1
+        assert rows.count('href="/settings/containers/new"') == 1       # on the heading, by add-a-server
 
     def test_the_light_is_the_project_s_logo_in_its_state_s_colour(self, page):
-        rows = page.get("/fragments/containers").text
-        up = rows.split('<tr class="up">', 1)[1].split("</td>", 1)[0]
-        assert 'class="os"' in up and '#immich"></use>' in up and 'title="running · Immich"' in up
+        rows = page.get("/fragments/fleet").text
+        up = rows.split('<tr class="up guest">', 1)[1].split("</td>", 1)[0]
+        assert 'class="os"' in up and '#immich"></use>' in up and 'title="running · Immich · /srv/immich"' in up
         # Nothing created yet and no images ever seen: the whale.
-        asleep = rows.split('<tr class="asleep">', 1)[1].split("</td>", 1)[0]
+        asleep = rows.split('<tr class="asleep guest">', 1)[1].split("</td>", 1)[0]
         assert '#docker"></use>' in asleep and "· Docker" in asleep
 
-    def test_the_host_and_the_path_are_columns_of_their_own_and_no_images(self, page):
-        rows = page.get("/fragments/containers").text
-        assert ">Host<" in rows and ">Path<" in rows and ">Images<" not in rows
-        assert '<td class="col-mid muted"><code class="one-line">docker-01</code></td>' in rows
-        assert '<code class="one-line" title="/srv/immich">/srv/immich</code>' in rows
-        assert "immich:v2" not in rows
+    def test_the_address_is_where_it_is_published_and_the_system_says_docker(self, page):
+        rows = page.get("/fragments/fleet").text
+        assert ">Path<" not in rows and ">Images<" not in rows and "immich:v2" not in rows
+        assert '<code class="one-line">10.0.0.6:2283</code>' in rows
+        odata = rows.split('<tr class="asleep guest">', 1)[1].split("</tr>", 1)[0]
+        assert '<code class="one-line">-</code>' in odata
+        assert rows.count('<code class="one-line">Docker Container</code>') == 2
 
-    def test_the_counts_head_the_table_and_filter_it(self, page):
-        rows = page.get("/fragments/containers").text
+    def test_one_summary_counts_servers_and_containers_and_filters_both(self, page):
+        rows = page.get("/fragments/fleet").text
         assert rows.index('class="chip-bar"') < rows.index("<table>")
-        assert ">1 up<" in rows and ">1 asleep<" in rows and ">0 down<" in rows
+        assert ">3 up<" in rows and ">1 asleep<" in rows and ">0 down<" in rows
         assert "unknown" not in rows.split("</nav>")[0]          # shown only when there is one
-        picked = page.get("/fragments/containers?cstate=asleep").text
+        picked = page.get("/fragments/fleet?state=asleep").text
         assert "/settings/containers/odata/edit" in picked and "/settings/containers/immich/edit" not in picked
-        assert ">all 2<" in picked
+        assert "/settings/servers/docker-01/edit" not in picked
+        assert '<tr class="asleep">' in picked                  # its host filtered out: on its own
+        assert ">all 4<" in picked
 
     def test_a_failing_health_check_is_counted_as_down(self, page, monkeypatch):
         from timar import config
@@ -247,18 +254,18 @@ class TestPage:
         config.save(cfg)
         monkeypatch.setattr(containers, "_healthy", lambda url, fresh=False: False)
         containers.invalidate()
-        rows = page.get("/fragments/containers").text
-        assert '<tr class="warn">' in rows and ">1 down<" in rows and ">0 up<" in rows
+        rows = page.get("/fragments/fleet").text
+        assert '<tr class="warn guest">' in rows and ">1 down<" in rows and ">2 up<" in rows
 
-    def test_they_live_under_the_servers_and_the_old_page_leads_there(self, page):
+    def test_the_page_does_not_wait_for_them_and_the_old_page_leads_there(self, page):
         home = page.get("/").text
-        assert 'id="containers"' in home and 'hx-trigger="load, every 15s"' in home
-        assert home.index('hx-get="/fragments/fleet') < home.index('hx-get="/fragments/containers')
+        assert 'hx-trigger="load, every 10s"' in home
+        assert "/settings/containers/immich/edit" not in home       # the first poll brings them
+        assert "/fragments/containers" not in home
         old = page.get("/containers", follow_redirects=False)
-        assert old.status_code == 303 and old.headers["location"] == "/#containers"
+        assert old.status_code == 303 and old.headers["location"] == "/"
         page.cookies.clear()
         assert page.get("/containers").headers["location"] == "/login"
-        assert page.get("/fragments/containers").headers["location"] == "/login"
         assert page.post("/containers/immich/stop").headers["location"] == "/login"
 
     def test_the_host_list_offers_only_docker_hosts(self, page):
@@ -561,31 +568,60 @@ class TestSort:
         assert [p.name for p in containers.sort_projects(ps, "host")] == ["c", "b", "a"]
         assert [p.name for p in containers.sort_projects(ps, "host", True)] == ["a", "b", "c"]
 
-    def test_the_headings_sort_and_the_poll_keeps_the_order(self, client, monkeypatch):
+    @pytest.fixture
+    def table(self, client, monkeypatch):
         from timar import config
         complete_setup(client)
-        config.save({"servers": [{"name": "h", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
+        config.save({"servers": [{"name": "hv", "host": "10.0.0.5", "user": "root", "platform": "proxmox",
+                                  "manages_vms": [{"vm_id": 300, "server_name": "h"}]},
+                                 {"name": "h", "host": "10.0.0.6", "user": "op", "platform": "linux"},
+                                 {"name": "z", "host": "10.0.0.2", "user": "op", "platform": "linux"}],
                      "containers": [{"name": "b", "server": "h", "path": "/b"},
                                     {"name": "a", "server": "h", "path": "/a"}]})
-        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: False)
-        page = client.get("/?csort=host&cdir=desc").text
-        assert 'hx-get="/fragments/containers?csort=host&amp;cdir=desc"' in page
-        table = client.get("/fragments/containers?csort=host&cdir=desc").text
-        assert 'href="/?csort=host&amp;cdir=asc"' in table        # active column flips
-        assert 'href="/?csort=name&amp;cdir=asc"' in table
-        rows = client.get("/fragments/containers?csort=name&cdir=desc").text
-        assert rows.index('href="/settings/containers/b/edit"') < rows.index('href="/settings/containers/a/edit"')
+        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: True)
+        monkeypatch.setattr(containers, "self_container_id", lambda: None)
+        monkeypatch.setattr(containers, "_host_containers", lambda server: containers.HostContainers(
+            by_dir=containers.parse_ps("\n".join([ps_line("/a", "a-1", ports="0.0.0.0:80->80/tcp"),
+                                                  ps_line("/b", "b-1")]))))
+        containers.invalidate()
+        return client
 
-    def test_each_table_keeps_the_other_s_order_and_filter(self, client, monkeypatch):
-        from timar import config
-        complete_setup(client)
-        config.save({"servers": [{"name": "h", "host": "10.0.0.6", "user": "op", "platform": "linux"}],
-                     "containers": [{"name": "a", "server": "h", "path": "/a"}]})
-        monkeypatch.setattr(containers.fleet_status, "_probe", lambda host, fresh=False: False)
-        page = client.get("/?sort=address&dir=desc&cstate=unknown").text
-        assert 'hx-get="/fragments/fleet?sort=address&amp;dir=desc&amp;cstate=unknown"' in page
-        assert 'hx-get="/fragments/containers?cstate=unknown&amp;sort=address&amp;dir=desc"' in page
-        fleet = client.get("/fragments/fleet?sort=address&dir=desc&cstate=unknown").text
-        assert 'href="/?sort=name&amp;dir=asc&amp;cstate=unknown"' in fleet
-        table = client.get("/fragments/containers?cstate=unknown&sort=address&dir=desc").text
-        assert 'href="/?csort=host&amp;cdir=asc&amp;cstate=unknown&amp;sort=address&amp;dir=desc"' in table
+    @staticmethod
+    def order(rows):
+        import re
+        return re.findall(r'href="/settings/(?:servers|containers)/([^/]+)/edit"', rows)
+
+    def test_by_name_a_container_on_a_guest_is_two_steps_in(self, table):
+        rows = table.get("/fragments/fleet").text
+        assert self.order(rows) == ["hv", "h", "a", "b", "z"]
+        assert rows.count('class="up guest deep"') == 2
+        assert self.order(table.get("/fragments/fleet?sort=name&dir=desc").text) == ["z", "hv", "h", "b", "a"]
+
+    def test_by_address_or_system_one_flat_list_unpublished_last(self, table):
+        rows = table.get("/fragments/fleet?sort=address").text
+        assert self.order(rows) == ["z", "hv", "h", "a", "b"]
+        assert "guest" not in rows
+        assert self.order(table.get("/fragments/fleet?sort=address&dir=desc").text) == ["b", "a", "h", "hv", "z"]
+        by_system = self.order(table.get("/fragments/fleet?sort=platform").text)
+        assert by_system.index("a") < by_system.index("b")        # ties by name
+
+    def test_the_poll_keeps_the_order(self, table):
+        page = table.get("/?sort=address&dir=desc").text
+        assert 'hx-get="/fragments/fleet?sort=address&amp;dir=desc"' in page
+
+
+class TestPublished:
+    def ports(self, *columns, host="10.0.0.6"):
+        return containers.published([containers.Container("i", "n", "img", "running", "none", None, c)
+                                     for c in columns], host)
+
+    def test_every_address_is_the_host_s_own_and_several_ports_share_it(self):
+        assert self.ports("0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp") == "10.0.0.6:80,443"
+        assert self.ports("0.0.0.0:8090->80/tcp", "8080/tcp", host="10.0.0.6:2222") == "10.0.0.6:8090"
+
+    def test_a_bound_address_is_kept_and_loopback_is_not_open(self):
+        assert self.ports("192.168.0.6:11434->11434/tcp") == "192.168.0.6:11434"
+        assert self.ports("127.0.0.1:2345->2345/tcp", "[::1]:5432->5432/tcp") == ""
+
+    def test_nothing_published_is_empty(self):
+        assert self.ports("5432/tcp, 6379/tcp", "") == ""

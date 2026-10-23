@@ -212,14 +212,12 @@
   "Catches what the container state cannot: every container up and the application behind them returning 502.": "Ловит то, чего не видно по состоянию контейнеров: все контейнеры работают, а приложение за ними отдаёт 502.",
   "Compose directory": "Каталог compose",
   "Compose directory must be an absolute path, such as /srv/immich.": "Каталог compose должен быть абсолютным путём, например /srv/immich.",
-  "Container": "Контейнер",
   "Container info": "Сведения о контейнере",
   "Forgets the entry. The containers on the host are not touched.": "Забывает запись. Контейнеры на хосте не трогаются.",
   "Green: running. Yellow: running, but a healthcheck fails, a container exited with an error, or the health check does not answer. Grey: stopped and on-demand, or its host is not up. Red: should run and does not.": "Зелёный: работает. Жёлтый: работает, но не проходит healthcheck, контейнер завершился с ошибкой или проверка здоровья не отвечает. Серый: остановлен и по требованию, или его хост не включён. Красный: должен работать и не работает.",
   "Health check": "Проверка здоровья",
   "Host": "Хост",
   "Host must be one of the configured servers.": "Хост должен быть одним из настроенных серверов.",
-  "No containers yet.": "Контейнеров пока нет.",
   "Remove": "Удалить",
   "Remove {name} from timar? The containers are not touched.": "Удалить {name} из timar? Контейнеры не трогаются.",
   "Stop {name}?": "Остановить {name}?",
@@ -389,8 +387,5 @@
   "Too large: a document can be at most 1 MB.": "Слишком большой: документ может быть не больше 1 МБ.",
   "A document with this name already exists.": "Документ с таким именем уже существует.",
   "Documents": "Документы",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "На {platform} ключ timar кладётся вручную, в {path} — как, описано в README. Затем нажмите «Подключить» с пустым паролем, чтобы проверить.",
-  "Path": "Путь",
-  "No container is in this state right now.": "Сейчас нет контейнеров в этом состоянии.",
-  "Reading the containers…": "Читаю контейнеры…"
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "На {platform} ключ timar кладётся вручную, в {path} — как, описано в README. Затем нажмите «Подключить» с пустым паролем, чтобы проверить."
 }

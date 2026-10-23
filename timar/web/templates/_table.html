@@ -2,7 +2,7 @@
    it survives the polled refresh (which carries it along), a refresh and a bookmark. Clicking
    the column already in use flips its direction. `page` is the page the table lives on, and
    `query` carries anything else the URL holds (`&state=down`), so sorting keeps a filter.
-   `prefix` names the parameters of a second table on the same page (`csort`, `cdir`). #}
+   `prefix` names the parameters of a second table, should a page ever hold two. #}
 {% macro sortable(page, sort, descending, key, label, extra_class="", query="", prefix="") -%}
   {%- set active = sort == key -%}
   {%- set next_dir = "asc" if active and descending else ("desc" if active else "asc") -%}

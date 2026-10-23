@@ -26,6 +26,7 @@ from pathlib import Path
 
 from . import config
 from . import status as fleet_status
+from .network import split_address
 from .platforms import get as get_platform
 from .ssh import connect, run
 
@@ -57,6 +58,7 @@ class Container:
     state: str          # running, exited, created, restarting, paused, dead
     health: str         # healthy, unhealthy, starting, none
     exit_code: int | None
+    ports: str = ""     # docker's own column: "0.0.0.0:8090->8080/tcp, 5432/tcp"
 
 
 @dataclass
@@ -78,6 +80,7 @@ class ProjectStatus:
     web_url: str | None
     is_self: bool       # Timar's own project: it is not offered a stop or a restart
     logo: str = "docker"  # the light before the name; see `app_logo`
+    address: str = ""   # where it is published outside its host — "192.168.0.6:8090"; see `published`
 
     @property
     def logo_name(self) -> str:
@@ -210,8 +213,35 @@ def parse_ps(output: str) -> dict[str, list[Container]]:
             state=(row.get("State") or "").lower(),
             health=(row.get("HealthStatus") or "none").lower(),
             exit_code=int(match.group(1)) if match else None,
+            ports=row.get("Ports") or "",
         ))
     return projects
+
+
+# One published port in docker's column: `0.0.0.0:8090->8080/tcp`, `[::]:53->53/udp`,
+# `192.168.0.6:80-81->80-81/tcp`. A port with no `->` is only exposed to other containers.
+_PUBLISHED = re.compile(r"(?:^|,)\s*(\[[0-9a-fA-F:]*\]|[0-9a-fA-F.:]*?):(\d+(?:-\d+)?)->")
+_WILDCARD = {"", "0.0.0.0", "::", "[::]"}
+
+
+def published(containers: list[Container], host: str) -> str:
+    """The project's ports open beyond its host, as `ip:port` — `192.168.0.6:80,443` for several.
+
+    A port bound to every address is reached on the host's own address; one bound to a single
+    address, on that one. Loopback is left out: a port only the host itself can reach is not
+    open. Empty when nothing is published — a service behind a proxy, or one on the host's
+    network, which docker cannot list a port for.
+    """
+    own, _ = split_address(host)
+    by_ip: dict[str, set[str]] = {}
+    for c in containers:
+        for ip, port in _PUBLISHED.findall(c.ports):
+            ip = ip.strip("[]")
+            if ip.startswith("127.") or ip == "::1":
+                continue
+            by_ip.setdefault(own if ip in _WILDCARD or ip == ":" else ip, set()).add(port)
+    return " ".join(f"{ip}:{','.join(sorted(ports, key=lambda p: int(p.split('-')[0])))}"
+                    for ip, ports in sorted(by_ip.items()))
 
 
 def project_state(containers: list[Container], on_demand: bool) -> tuple[str, str]:
@@ -372,6 +402,7 @@ def projects(cfg: dict) -> list[ProjectStatus]:
             images=images, on_demand=on_demand, web_url=entry.get("web_url"),
             is_self=bool(me) and any(c.id == me for c in containers),
             logo=_remembered_logo(f"{server_name}:{path}", entry["name"], images),
+            address=published(containers, servers[server_name]["host"]) if containers else "",
         ))
     return sorted(out, key=lambda p: p.name.casefold())
 
