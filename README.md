@@ -12,7 +12,7 @@ There is a one-page tour at **[timar.tools](https://timar.tools)**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/dashboard-dark.png">
-  <img alt="timar's servers page. Above the table, a summary that filters: 5 up, 2 asleep, 1 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it. The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button." src="docs/images/dashboard-light.png">
+  <img alt="timar's servers page. Above the table, a summary that filters, counting machines and containers together: 9 up, 3 asleep, 2 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it, and nas-01 its six compose projects, whose system reads Docker Container. The names of running machines and projects with a web interface are links. Each machine has a power button — shut down when up, wake when asleep and wakeable — and an edit button; a heading button next to + adds a container." src="docs/images/dashboard-light.png">
 </picture>
 
 Three states, not two. *Asleep* (grey) is a machine that is **meant** to be off, and it is not
@@ -251,7 +251,7 @@ tick, adjust, **Add selected**. All ticked rows go in, or, if any is wrong, none
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/containers-dark.png">
-  <img alt="The containers page: six compose projects on nas-01 with their images, each with its application's logo before its name (Forgejo, Grafana, Immich, Vaultwarden, and Docker's whale for local builds), coloured by state. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." src="docs/images/containers-light.png">
+  <img alt="nas-01 in the servers table with its six compose projects nested under it, each with its application's logo before its name (Forgejo, Grafana, Immich, Vaultwarden, and Docker's whale for local builds), coloured by state. The address column shows where each is published outside the host — 10.0.0.10:3000, :3001, :2283 — or a dash. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." src="docs/images/containers-light.png">
 </picture>
 
 - **State** comes from one `docker ps -a` per host over SSH, grouped by the compose

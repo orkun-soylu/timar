@@ -232,9 +232,9 @@
   </p>
 
   <figure class="shot">
-    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1344"
-         alt="timar's servers page. Above the table, a summary that filters: 5 up, 2 asleep, 1 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it. The names of running machines with a web interface are links. Each row has a power button — shut down when up, wake when asleep and wakeable — and an edit button." />
-    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1344"
+    <img class="shot-dark" src="images/dashboard-dark.png" width="2560" height="1978"
+         alt="timar's servers page. Above the table, a summary that filters, counting machines and containers together: 9 up, 3 asleep, 2 down. Eight machines, each with its operating system's logo before its name, coloured by state, and its system in the next column (Fedora 43, Ubuntu 26.04, Proxmox VE 9.2.21, Debian 13, OpenWrt 25.12.5). The hypervisor hv-01 has its two VMs nested under it, and nas-01 its six compose projects, whose system reads Docker Container. The names of running machines and projects with a web interface are links. Each machine has a power button — shut down when up, wake when asleep and wakeable — and an edit button; a heading button next to + adds a container." />
+    <img class="shot-light" src="images/dashboard-light.png" width="2560" height="1978"
          alt="The same dashboard in a light theme." />
     <figcaption>
       Each machine's logo (Debian, Ubuntu, Proxmox, OpenWrt, OctoPrint and more) takes the colour
@@ -314,9 +314,9 @@
     </div>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/report-sweep-dark.png" width="1986" height="1128"
+      <img class="shot-dark" src="images/report-sweep-dark.png" width="1986" height="1132"
            alt="An archived log sweep: one machine with findings, one unreachable, two asleep. A written assessment at the top: nas-01's /srv at 91 percent and climbing, and its grafana container failing a healthcheck; build-01 did not answer. Below it, the raw findings for nas-01, then 'clean' for four hosts, build-01 unreachable, and 'asleep — not checked' for the two that were off." />
-      <img class="shot-light" src="images/report-sweep-light.png" width="1986" height="1128"
+      <img class="shot-light" src="images/report-sweep-light.png" width="1986" height="1132"
            alt="The same log sweep in a light theme." />
       <figcaption>
         The written assessment sits above the findings it came from, never instead of them. A
@@ -327,9 +327,9 @@
 
     <figure class="shot narrow">
       <div>
-        <img class="shot-dark" src="images/job-dialog-dark.png" width="1410" height="1856"
+        <img class="shot-dark" src="images/job-dialog-dark.png" width="1410" height="1852"
              alt="The update run's dialog: a weekly Sunday 04:00 schedule, then three lists. Runs on: build-01, gpu-01, hv-01, nas-01, vm-01, vm-02, each with a minus button. Left out: router, with a plus button. Not enrolled: laptop, with a link to enrol it from its card." />
-        <img class="shot-light" src="images/job-dialog-light.png" width="1410" height="1856"
+        <img class="shot-light" src="images/job-dialog-light.png" width="1410" height="1852"
              alt="The same dialog in a light theme." />
       </div>
       <figcaption>
@@ -342,13 +342,14 @@
     </figure>
 
     <figure class="shot">
-      <img class="shot-dark" src="images/containers-dark.png" width="2560" height="1212"
-           alt="The containers page: six compose projects on nas-01 with their images, each with its application's logo before its name (Forgejo, Grafana, Immich, Vaultwarden, and Docker's whale for local builds), coloured by state. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." />
-      <img class="shot-light" src="images/containers-light.png" width="2560" height="1212"
-           alt="The same page in a light theme." />
+      <img class="shot-dark" src="images/containers-dark.png" width="2296" height="958"
+           alt="nas-01 in the servers table with its six compose projects nested under it, each with its application's logo before its name (Forgejo, Grafana, Immich, Vaultwarden, and Docker's whale for local builds), coloured by state. The address column shows where each is published outside the host — 10.0.0.10:3000, :3001, :2283 — or a dash. batch-tools is grey (stopped, on-demand) with a start button; monitoring is yellow because grafana fails its healthcheck; timar's own project has no stop or restart button; the rest are green with stop, restart and edit." />
+      <img class="shot-light" src="images/containers-light.png" width="2296" height="958"
+           alt="The same detail in a light theme." />
       <figcaption>
-        Containers, one row per Compose project: state from one <code>docker ps</code> per host,
-        start, stop and restart, and an update with every run. Each project wears its
+        Containers sit under the host they run on, one row per Compose project: state from one
+        <code>docker ps</code> per host, the address it is published on, start, stop and restart,
+        and an update with every run. Each project wears its
         application's logo, read from its images, and Docker's whale when it is a local build. Yellow means running but not
         well — a failing healthcheck, a crashed container, a health address that stopped
         answering. timar will not stop the project it runs in.
@@ -431,9 +432,9 @@
 
     <figure class="shot narrow">
       <div>
-        <img class="shot-dark" src="images/server-dialog-dark.png" width="1410" height="1900"
+        <img class="shot-dark" src="images/server-dialog-dark.png" width="1410" height="1880"
              alt="The edit dialog for vm-01 in three sections. Server info: name, address, platform, Wake-on-LAN MAC, On-demand ticked, Guest of hv-01 with VM id 101, web interface. Update: update command with a 'platform default' link, and More settings folded. SSH access: a 'No SSH — only watch it and link to it' box, the user, and a password used only to enrol with the Enrol button beside it; passwordless sudo below." />
-        <img class="shot-light" src="images/server-dialog-light.png" width="1410" height="1900"
+        <img class="shot-light" src="images/server-dialog-light.png" width="1410" height="1880"
              alt="The same dialog in a light theme." />
       </div>
       <figcaption>
