@@ -625,3 +625,57 @@ class TestPublished:
 
     def test_nothing_published_is_empty(self):
         assert self.ports("5432/tcp, 6379/tcp", "") == ""
+
+    @staticmethod
+    def answer(monkeypatch, out, err="", code=0):
+        """`_ps` against a host that answers `out`; returns what it read and the command sent."""
+        sent = []
+
+        class Conn:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        monkeypatch.setattr(containers, "connect", lambda *a, **k: Conn())
+        monkeypatch.setattr(containers, "run", lambda ssh, cmd, timeout=0: sent.append(cmd) or (out, err, code))
+        return containers._ps({"name": "h", "host": "10.0.0.6", "user": "op"}), sent[0]
+
+    def test_a_host_network_container_is_published_on_what_it_listens(self, monkeypatch):
+        cid = "a" * 64
+        ps = json.dumps({"ID": cid, "Names": "timar", "Image": "timar:1", "State": "running",
+                         "Status": "Up", "Networks": "host", "Ports": "",
+                         "Labels": "com.docker.compose.project.working_dir=/srv/timar"})
+        listen = "\n".join([f"{cid} 0.0.0.0:8095", f"{cid} 0.0.0.0:8095", f"{cid} 127.0.0.1:9000",
+                            f"{'b' * 64} 0.0.0.0:22", "garbage"])
+        answer, _ = self.answer(monkeypatch, ps + "\n" + containers.LISTEN_MARK + "\n" + listen + "\n")
+        found = answer.by_dir["/srv/timar"]
+        assert containers.published(found, "10.0.0.6") == "10.0.0.6:8095"     # loopback left out
+
+    def test_listeners_parse_wildcards_and_interfaces(self):
+        cid = "c" * 64
+        got = containers.parse_listen(f"{cid} *:53\n{cid} [::]:80\n{cid} 192.168.0.6%eth0:5000\n")
+        assert got == {cid: ["0.0.0.0:53->53/tcp", "[::]:80->80/tcp", "192.168.0.6:5000->5000/tcp"]}
+
+    def test_a_failed_docker_ps_still_fails_the_read(self, monkeypatch):
+        answer, sent = self.answer(monkeypatch, "", "permission denied", 1)
+        assert answer.error == "permission denied"
+        # The listener read runs only after a `docker ps` that worked, so its `true` masks nothing.
+        assert "--format json && {" in sent and sent.rstrip().endswith("true; }")
+
+
+class TestAddress:
+    def c(self, **kw):
+        return containers.Container("i", "n", "img", "running", "none", None, **kw)
+
+    def test_published_first_then_the_web_address_then_the_traefik_rule(self):
+        published = self.c(ports="0.0.0.0:8090->80/tcp", proxied_as="app.lan")
+        assert containers.address({"web_url": "https://app.lan"}, [published], "10.0.0.6") == "10.0.0.6:8090"
+        proxied = self.c(ports="80/tcp", proxied_as="rule.lan")
+        assert containers.address({"web_url": "https://git.lan/"}, [proxied], "10.0.0.6") == "git.lan"
+        assert containers.address({"web_url": "vault.lan:8443"}, [], "10.0.0.6") == "vault.lan:8443"
+        assert containers.address({}, [proxied], "10.0.0.6") == "rule.lan"
+        assert containers.address({}, [self.c(ports="5432/tcp")], "10.0.0.6") == ""
+
+    def test_the_traefik_rule_is_read_off_the_labels(self):
+        row = json.dumps({"ID": "x", "Names": "cve", "State": "running", "Status": "Up",
+                          "Labels": "com.docker.compose.project.working_dir=/srv/cve,"
+                                    "traefik.http.routers.cve.rule=Host(`cve.lan`)"})
+        assert containers.parse_ps(row)["/srv/cve"][0].proxied_as == "cve.lan"

@@ -236,10 +236,12 @@ A report opens over the list, so comparing runs does not lose your place:
 ## Containers
 
 Docker Compose projects are rows of the servers table, under the host they run on — one row per
-project directory, however many containers it starts. Its address is where it is published
-outside the host (`192.168.0.6:8090`, `192.168.0.6:80,443` for several ports; loopback-only
-ports do not count), or `-` when nothing is: a service behind a proxy, or one on the host's
-network, which Docker lists no port for. Its system is *Docker Container*, and its directory is
+project directory, however many containers it starts. Its address is where it is reached from
+outside the host: its published ports (`192.168.0.6:8090`, `192.168.0.6:80,443` for several;
+loopback-only ports do not count) — for one on the host's network, the TCP ports its processes
+listen on, read with `ss` when the SSH user has passwordless sudo; else, for a service behind a
+proxy, the name it is served under — its web address, or a Traefik `Host()` rule on its
+containers. `-` when none of these says. Its system is *Docker Container*, and its directory is
 in the name's tooltip. The counts above the table take the containers in too: a failing health
 check counts as *down*, and *unknown* (the host is not up) appears only when there is one.
 Sorted by address or system the rows are one list, without nesting.

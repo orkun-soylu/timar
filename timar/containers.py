@@ -19,6 +19,7 @@ import ssl
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -59,6 +60,8 @@ class Container:
     health: str         # healthy, unhealthy, starting, none
     exit_code: int | None
     ports: str = ""     # docker's own column: "0.0.0.0:8090->8080/tcp, 5432/tcp"
+    network: str = ""   # "host" for one on the host's network, which docker lists no port for
+    proxied_as: str = ""  # the name a Traefik `Host()` rule on it answers to
 
 
 @dataclass
@@ -214,14 +217,62 @@ def parse_ps(output: str) -> dict[str, list[Container]]:
             health=(row.get("HealthStatus") or "none").lower(),
             exit_code=int(match.group(1)) if match else None,
             ports=row.get("Ports") or "",
+            network=row.get("Networks") or "",
+            proxied_as=(m.group(1) if (m := _TRAEFIK_HOST.search(row.get("Labels") or "")) else ""),
         ))
     return projects
+
+
+# After `docker ps`, on the same connection: the TCP ports the host-network containers listen on.
+# Docker lists no port for them — they bind the host's own sockets — so the sockets are read
+# with `ss` and matched to a container by each process's cgroup, which names the container id.
+# `ss` shows other users' processes only to root: without passwordless sudo nothing is printed,
+# and those containers keep "-". Skipped entirely when no container is on the host's network.
+LISTEN_MARK = "---timar-listen---"
+_LISTEN = ('echo "' + LISTEN_MARK + '"; if $D ps -q --filter network=host | grep -q .; then '
+           "sudo -n ss -ltnHp 2>/dev/null | while read -r _ _ _ local _ users; do "
+           "for pid in $(echo \"$users\" | grep -o 'pid=[0-9]*' | cut -d= -f2); do "
+           "id=$(grep -o '[0-9a-f]\\{64\\}' /proc/$pid/cgroup 2>/dev/null | head -1); "
+           '[ -n "$id" ] && echo "$id $local"; done; done; fi; true')
+
+
+def parse_listen(output: str) -> dict[str, list[str]]:
+    """`<container id> <local address>` lines → each container's listening addresses, as docker
+    would write them published (`0.0.0.0:8095->8095/tcp`), so `published` reads both alike."""
+    found: dict[str, list[str]] = {}
+    for line in output.splitlines():
+        cid, _, local = line.strip().partition(" ")
+        if len(cid) != 64 or ":" not in local:
+            continue
+        address, _, port = local.rpartition(":")
+        address = {"*": "0.0.0.0"}.get(address, address.split("%")[0])
+        if address.startswith("[") and not address.endswith("]"):
+            address += "]"      # "[fe80::1%eth0]" lost its bracket with the interface
+        entry = f"{address}:{port}->{port}/tcp"
+        if entry not in found.setdefault(cid, []):
+            found[cid].append(entry)
+    return found
 
 
 # One published port in docker's column: `0.0.0.0:8090->8080/tcp`, `[::]:53->53/udp`,
 # `192.168.0.6:80-81->80-81/tcp`. A port with no `->` is only exposed to other containers.
 _PUBLISHED = re.compile(r"(?:^|,)\s*(\[[0-9a-fA-F:]*\]|[0-9a-fA-F.:]*?):(\d+(?:-\d+)?)->")
 _WILDCARD = {"", "0.0.0.0", "::", "[::]"}
+
+
+def address(entry: dict, containers: list[Container], host: str) -> str:
+    """Where a project is reached from outside its host. Its published ports first; else, for one
+    behind a proxy, the name it is served under — its web address, or the Traefik rule on its
+    containers. Empty when none of them says: the page writes "-"."""
+    return (published(containers, host) or _url_host(entry.get("web_url"))
+            or next((c.proxied_as for c in containers if c.proxied_as), ""))
+
+
+def _url_host(url: str | None) -> str:
+    """`https://git.lan/` → `git.lan`: a project behind a proxy is reached by its name."""
+    if not url:
+        return ""
+    return urllib.parse.urlsplit(url if "://" in url else "https://" + url).netloc
 
 
 def published(containers: list[Container], host: str) -> str:
@@ -284,7 +335,8 @@ def self_container_id() -> str | None:
 
 
 def _ps(server: dict) -> HostContainers:
-    command = _DOCKER + '$D ps -a --no-trunc --format json'
+    # `&&`: a failed `docker ps` must still fail the read, not be masked by the `true` after it.
+    command = _DOCKER + '$D ps -a --no-trunc --format json && { ' + _LISTEN + '; }'
     try:
         with connect(server["host"], server["user"], config.resolve_ssh_key(server),
                      timeout=SSH_TIMEOUT) as ssh:
@@ -293,7 +345,14 @@ def _ps(server: dict) -> HostContainers:
         return HostContainers(error=f"could not reach {server['name']}: {e}")
     if code != 0:
         return HostContainers(error=(err.strip() or out.strip() or "docker ps failed")[:200])
-    return HostContainers(by_dir=parse_ps(out))
+    ps_output, _, listen_output = out.partition(LISTEN_MARK)
+    by_dir = parse_ps(ps_output)
+    listening = parse_listen(listen_output)
+    for found in by_dir.values():
+        for c in found:
+            if c.network == "host" and c.id in listening:
+                c.ports = ", ".join(listening[c.id])
+    return HostContainers(by_dir=by_dir)
 
 
 def _host_containers(server: dict, fresh: bool = False) -> HostContainers:
@@ -402,7 +461,7 @@ def projects(cfg: dict) -> list[ProjectStatus]:
             images=images, on_demand=on_demand, web_url=entry.get("web_url"),
             is_self=bool(me) and any(c.id == me for c in containers),
             logo=_remembered_logo(f"{server_name}:{path}", entry["name"], images),
-            address=published(containers, servers[server_name]["host"]) if containers else "",
+            address=address(entry, containers, servers.get(server_name, {}).get("host", "")),
         ))
     return sorted(out, key=lambda p: p.name.casefold())
 
