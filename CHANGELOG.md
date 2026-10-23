@@ -9,6 +9,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.48] — 2026-10-24
+
+### Fixed
+- **A container's address on the host's network and behind a proxy.** A project on the host's
+  network showed `-` though it listens: Docker lists no port for it. Its TCP listening ports are
+  now read with `ss` over the same SSH session (with passwordless sudo; without it the row keeps
+  `-`) and matched to the container by its processes' cgroup. A project with no published port
+  shows the name it is served under — its web address, or a Traefik `Host()` rule on its
+  containers.
+
 ## [0.2.47] — 2026-10-24
 
 ### Changed
