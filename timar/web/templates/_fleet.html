@@ -10,24 +10,25 @@
 {% from "_table.html" import sortable %}
 {# Server hugs the left wall and Actions the right, each only as wide as its content; Address
    and System share what is left between them evenly, their text left-aligned. System is what
-   osinfo read ("Debian 13"), or the platform until a connection has read it. #}
+   osinfo read ("Debian 13"), or the platform until a connection has read it.
+
+   A Docker host's compose projects are rows of this table too, under the host when ordered by
+   name (`Row.depth`): their address is where they are published outside the host, or "-". #}
 {# The fleet in one line: a count per state, each a filter. Counted over every machine, so it
    reads the same whichever is picked; the picked one is outlined, "all" clears it. Zero counts
    stay, dimmed — "0 down" is the line an operator looks for first. #}
-{# `keep` is the containers table's own order and filter, carried by every link here. #}
-{% set keep = keep | default("") %}
-{% set query = (("&state=" ~ state) if state else "") ~ keep %}
+{% set query = ("&state=" ~ state) if state else "" %}
 {% set q = "&sort=" ~ sort ~ "&dir=" ~ ("desc" if descending else "asc") %}
 {% if total %}
 <nav class="chip-bar" aria-label="{{ _("Filter by state") }}">
-  {%- for s in ("up", "asleep", "down") %}
-  <a href="/?state={{ s }}{{ q }}{{ keep }}" class="chip chip-{{ s }}{% if not counts[s] %} chip-zero{% endif %}{% if state == s %} chip-on{% endif %}"
+  {%- for s in ("up", "asleep", "down", "unknown") if s != "unknown" or counts[s] or state == s %}
+  <a href="/?state={{ s }}{{ q }}" class="chip chip-{{ 'muted' if s == 'unknown' else s }}{% if not counts[s] %} chip-zero{% endif %}{% if state == s %} chip-on{% endif %}"
      {%- if state == s %} aria-current="true"{% endif %}>{{ counts[s] }} {{ _(s) }}</a>
   {%- endfor %}
-  {%- if state %}<a href="/?{{ q[1:] }}{{ keep }}" class="chip chip-muted">{{ _("all") }} {{ total }}</a>{% endif %}
+  {%- if state %}<a href="/?{{ q[1:] }}" class="chip chip-muted">{{ _("all") }} {{ total }}</a>{% endif %}
 </nav>
 {% endif %}
-{% if fleet %}
+{% if rows %}
 <div class="table-scroll">
 <table>
   <thead>
@@ -36,16 +37,62 @@
       <a href="/settings/servers/new" class="icon-btn" title="{{ _("Add a server") }}"
          aria-label="{{ _("Add a server") }}"
          hx-get="/settings/servers/new" hx-target="#dialog-body" hx-swap="innerHTML">{{ icon("add") }}</a>
+      {%- if can_add_container %}
+      <a href="/settings/containers/new" class="icon-btn" title="{{ _("Add a container") }}"
+         aria-label="{{ _("Add a container") }}"
+         hx-get="/settings/containers/new" hx-target="#dialog-body" hx-swap="innerHTML"><svg class="logo"
+         aria-hidden="true"><use href="{{ static_url('logos.svg') }}#docker"></use></svg></a>
+      {%- endif %}
     </th></tr>
   </thead>
   <tbody>
-  {% for host in fleet %}
+  {% for row in rows %}
+  {%- set depth_class = (" guest" if row.depth else "") ~ (" deep" if row.depth > 1 else "") %}
+  {%- if row.kind == "container" %}{% set p = row.item %}
+    {%- set words = {"running": _("running"), "starting": _("starting"), "stopped": _("stopped"),
+                     "not created": _("not created"), "host is not up": _("host is not up"),
+                     "host not configured": _("host not configured"),
+                     "running, but the health check does not answer": _("running, but the health check does not answer")} %}
+    {%- set word = words.get(p.detail, p.detail) %}
+    <tr class="{{ p.state }}{{ depth_class }}">
+      <td class="col-edge" title="{{ word }} · {{ p.logo_name }} · {{ p.path }}"><svg class="os" role="img"
+          aria-label="{{ word }} · {{ p.logo_name }}"><use href="{{ static_url('logos.svg') }}#{{ p.logo }}"></use></svg>
+        {% if p.web_url and p.running -%}
+        <a href="{{ p.web_url }}" target="_blank" rel="noopener noreferrer" title="{{ p.web_url }}">{{ p.name }}</a>
+        {%- else %}{{ p.name }}{% endif %}</td>
+      <td class="col-mid muted"><code class="one-line">{{ p.address or "-" }}</code></td>
+      <td class="col-mid muted wide"><code class="one-line">{{ container_system }}</code></td>
+      <td class="col-edge"><div class="icon-row">
+        {%- if p.is_self %}
+          <span class="icon-slot" title="{{ _("timar itself — not stopped from here") }}"></span><span class="icon-slot"></span>
+        {%- elif p.running %}
+          <button type="button" class="icon-btn" title="{{ _("stop") }}" aria-label="{{ _("stop") }}"
+                  hx-post="/containers/{{ p.name }}/stop" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this"
+                  hx-confirm="{{ _("Stop {name}?", name=p.name) }}">{{ icon("stop") }}</button>
+          <button type="button" class="icon-btn" title="{{ _("restart") }}" aria-label="{{ _("restart") }}"
+                  hx-post="/containers/{{ p.name }}/restart" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this">{{ icon("restart") }}</button>
+        {%- elif p.state in ("asleep", "down") and p.detail != "host not configured" %}
+          <button type="button" class="icon-btn" title="{{ _("start") }}" aria-label="{{ _("start") }}"
+                  hx-post="/containers/{{ p.name }}/start" hx-target="#toast" hx-swap="innerHTML"
+                  hx-indicator="#toast" hx-disabled-elt="this">{{ icon("play") }}</button>
+          <span class="icon-slot"></span>
+        {%- else %}
+          <span class="icon-slot"></span><span class="icon-slot"></span>
+        {%- endif %}
+        <a href="/settings/containers/{{ p.name }}/edit" class="icon-btn"
+           title="{{ _("edit") }}" aria-label="{{ _("edit") }}"
+           hx-get="/settings/containers/{{ p.name }}/edit" hx-target="#dialog-body"
+           hx-swap="innerHTML">{{ icon("edit") }}</a>
+      </div></td>
+    </tr>
+  {%- else %}{% set host = row.item %}
     {%- if host.state == "up" %}{% set state_label = _("up") %}
     {%- elif host.state == "asleep" %}{% set state_label = _("asleep") ~ " (" ~ _("on-demand") ~ ")" %}
     {%- else %}{% set state_label = _("down") %}
     {%- endif %}
-    {%- set nested = sort == "name" and host.parent and host.parent in fleet | map(attribute="name") | list %}
-    <tr class="{{ host.state }}{% if nested %} guest{% endif %}">
+    <tr class="{{ host.state }}{{ depth_class }}">
       {# The state is the light in front of the name — the machine's own logo (osinfo), green up,
          grey asleep, red down — and its word is the tooltip, with the logo's name. The label is
          on the whole cell, not just the logo: a target that small is one nobody manages to hover. While it is up, a machine with a
@@ -110,6 +157,7 @@
       </div>
       </td>
     </tr>
+  {%- endif %}
   {% endfor %}
   </tbody>
 </table>

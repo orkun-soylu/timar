@@ -16,6 +16,7 @@ from pathlib import Path
 
 import asyncio
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -25,6 +26,8 @@ from fastapi.templating import Jinja2Templates
 from .. import alerts, config, i18n, jobs, power, reports, state, status as fleet_status
 from .. import containers as container_status
 from ..i18n import gettext as _
+from ..network import address_key
+from ..platforms import get as get_platform
 from ..scheduler import scheduler
 from . import assets, auth, hardware as hardware_pages, outcome, settings
 from .auth import require_operator as current_operator
@@ -250,8 +253,58 @@ def _job_view() -> list[dict]:
     return rows
 
 
-def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None = None) -> dict:
-    """The fleet table, ordered by the column the operator picked.
+# A container's light by the summary's words: a project that runs but whose health check fails is
+# counted as down — "0 down" has to be the line that says nothing is broken. "unknown" (its host
+# is not up, or did not answer) gets a chip of its own, shown only when there is one.
+STATES = ("up", "asleep", "down", "unknown")
+_COUNTED_AS = {"warn": "down"}
+CONTAINER_SYSTEM = "Docker Container"
+
+
+@dataclass(frozen=True)
+class Row:
+    """One line of the servers table: a machine, or a compose project under its Docker host."""
+    kind: str               # "server" or "container"
+    item: object            # status.HostStatus or containers.ProjectStatus
+    depth: int = 0          # 0 on its own, 1 under its hypervisor or host, 2 under both
+
+    @property
+    def counted(self) -> str:
+        return _COUNTED_AS.get(self.item.state, self.item.state)
+
+
+def _sorted_rows(hosts: list, projects: list, key: str, descending: bool) -> list[Row]:
+    """The table's order. By name, each machine has its guests and its containers under it —
+    what runs on it. By address or system the rows are one list in that column's order, as the
+    reader asked; nesting them would break it. A container whose host is not in the list (a
+    filter left it out) stands on its own.
+    """
+    if key != "name":
+        rows = [Row("server", h) for h in fleet_status.sort_fleet(hosts, "name")]
+        rows += [Row("container", p) for p in container_status.sort_projects(projects, "name")]
+        if key == "address":
+            # Unpublished containers ("-") after every address.
+            rows.sort(key=lambda r: (1,) if r.kind == "container" and not r.item.address
+                      else (0, address_key(r.item.host if r.kind == "server" else r.item.address.split(",")[0])))
+        else:
+            rows.sort(key=lambda r: (r.item.system if r.kind == "server" else CONTAINER_SYSTEM).casefold())
+        return rows[::-1] if descending else rows
+    present = {h.name for h in hosts}
+    under: dict[str, list] = {}
+    for p in container_status.sort_projects(projects, "name", descending):
+        under.setdefault(p.server if p.server in present else "", []).append(p)
+    rows: list[Row] = []
+    for h in fleet_status.sort_fleet(hosts, "name", descending):
+        depth = 1 if h.parent in present else 0
+        rows.append(Row("server", h, depth))
+        rows += [Row("container", p, depth + 1) for p in under.get(h.name, [])]
+    rows += [Row("container", p) for p in under.get("", [])]
+    return rows
+
+
+def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None = None,
+                projects: list | None = None) -> dict:
+    """The servers table, with the containers under their hosts, ordered by the column picked.
 
     The order is a query parameter, not something the browser keeps: the table is re-fetched
     every ten seconds, and a sort applied in the page would be undone by the next poll. As a URL
@@ -259,82 +312,61 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
     """
     key = sort if sort in fleet_status.SORT_KEYS else "name"
     descending = dir == "desc"
-    hosts = fleet_status.fleet(cfg)
-    # Counted over the whole fleet, then filtered: the summary is what clicking each count shows,
+    rows = _sorted_rows(fleet_status.fleet(cfg), projects or [], key, descending)
+    # Counted over everything, then filtered: the summary is what clicking each count shows,
     # and it must not shrink to the one state already picked.
-    counts = {s: sum(h.state == s for h in hosts) for s in fleet_status.STATES}
-    picked = state if state in fleet_status.STATES else None
+    counts = {s: sum(r.counted == s for r in rows) for s in STATES}
+    picked = state if state in STATES else None
     if picked:
-        hosts = [h for h in hosts if h.state == picked]
+        rows = [r for r in rows if r.counted == picked]
+        present = {r.item.name for r in rows if r.kind == "server"}
+        rows = [r if r.depth == 0 or _parent(r) in present else Row(r.kind, r.item, 0) for r in rows]
     return {
-        "fleet": fleet_status.sort_fleet(hosts, key, descending),
+        "rows": rows,
         "sort": key,
         "descending": descending,
         "counts": counts,
         "state": picked,
         "total": sum(counts.values()),
+        "can_add_container": any(get_platform(s.get("platform")).supports_docker
+                                 for s in cfg.get("servers", []) if config.has_ssh(s)),
+        "container_system": CONTAINER_SYSTEM,
     }
 
 
-def _order(sort: str | None, dir: str | None, state: str | None,
-           sort_keys: tuple[str, ...], states: tuple[str, ...]) -> tuple[str, bool, str | None]:
-    """A table's sort, direction and filter from the URL; anything unrecognised is the default."""
-    return (sort if sort in sort_keys else "name", dir == "desc",
-            state if state in states else None)
+def _parent(row: Row) -> str | None:
+    return row.item.server if row.kind == "container" else row.item.parent
 
 
-def _keep(prefix: str, sort: str, descending: bool, state: str | None) -> str:
-    """One table's order and filter as a query tail, for the links of the *other* table.
-
-    The servers and the containers share a page, each ordered and filtered in the URL; a click in
-    one must not reset the other. Only what differs from the default is carried.
-    """
-    tail = ""
-    if sort != "name" or descending:
-        tail += f"&{prefix}sort={sort}&{prefix}dir={'desc' if descending else 'asc'}"
-    if state:
-        tail += f"&{prefix}state={state}"
-    return tail
-
-
-def _container_keep(csort, cdir, cstate) -> str:
-    return _keep("c", *_order(csort, cdir, cstate, container_status.SORT_KEYS, CONTAINER_STATES))
-
-
-def _fleet_keep(sort, dir, state) -> str:
-    return _keep("", *_order(sort, dir, state, fleet_status.SORT_KEYS, fleet_status.STATES))
+async def _projects(cfg: dict) -> list:
+    """The containers, in a thread: when the background read is stale this opens SSH sessions."""
+    return await asyncio.to_thread(container_status.projects, cfg)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, sort: str | None = None, dir: str | None = None,
-                    state: str | None = None, csort: str | None = None, cdir: str | None = None,
-                    cstate: str | None = None, operator: str = Depends(current_operator)):
-    """The servers, and the containers under them as a second table.
+                    state: str | None = None, operator: str = Depends(current_operator)):
+    """The servers, and the containers under their hosts in the same table.
 
-    The containers are not read here: that may open an SSH session per host, and the servers
-    table — which the background probe already has — would wait for it. Their panel asks for
-    itself as soon as the page is up.
+    The containers are not read here: that may open an SSH session per host, and the servers —
+    which the background probe already has — would wait for it. The table asks for itself as
+    soon as the page is up, and its first answer brings them.
     """
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "servers": cfg.get("servers", []),
         **_fleet_view(cfg, sort, dir, state),
-        "keep": _container_keep(csort, cdir, cstate),
-        "fleet_keep": _fleet_keep(sort, dir, state),
         "has_containers": bool(cfg.get("containers")),
     })
 
 
 @app.get("/fragments/fleet", response_class=HTMLResponse)
 async def fleet_fragment(request: Request, sort: str | None = None, dir: str | None = None,
-                         state: str | None = None, csort: str | None = None,
-                         cdir: str | None = None, cstate: str | None = None,
-                         operator: str = Depends(current_operator)):
+                         state: str | None = None, operator: str = Depends(current_operator)):
     """The status table alone — polled by HTMX so the page updates without a reload."""
-    return TEMPLATES.TemplateResponse(request, "_fleet.html", {
-        **_fleet_view(config.load(), sort, dir, state),
-        "keep": _container_keep(csort, cdir, cstate),
-    })
+    cfg = config.load()
+    return TEMPLATES.TemplateResponse(request, "_fleet.html",
+                                      _fleet_view(cfg, sort, dir, state, await _projects(cfg)))
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)
@@ -511,43 +543,10 @@ async def archived_report(request: Request, report_id: str,
 
 # -- containers ----------------------------------------------------------------------------
 
-# Each container's light is counted under one of three words, as the servers are. A failing
-# health check is counted as down: the project runs, but what it serves does not answer, and
-# "0 down" has to be the line that says nothing is broken. "unknown" (its host is not up, or
-# did not answer) gets a word of its own, shown only when there is one.
-CONTAINER_STATES = ("up", "asleep", "down", "unknown")
-_COUNTED_AS = {"warn": "down"}
-
-
-async def _containers_view(sort: str | None, dir: str | None, state: str | None = None) -> dict:
-    """The containers table in the order picked — in the URL, like the servers table's."""
-    key, descending, picked = _order(sort, dir, state, container_status.SORT_KEYS, CONTAINER_STATES)
-    projects = await asyncio.to_thread(container_status.projects, config.load())
-    counted = {p.name: _COUNTED_AS.get(p.state, p.state) for p in projects}
-    counts = {s: sum(c == s for c in counted.values()) for s in CONTAINER_STATES}
-    if picked:
-        projects = [p for p in projects if counted[p.name] == picked]
-    return {"projects": container_status.sort_projects(projects, key, descending),
-            "csort": key, "cdescending": descending, "cstate": picked,
-            "ccounts": counts, "ctotal": len(counted)}
-
-
 @app.get("/containers")
 async def containers_page(operator: str = Depends(current_operator)):
     """The containers moved under the servers; old links and bookmarks land there."""
-    return RedirectResponse("/#containers", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@app.get("/fragments/containers", response_class=HTMLResponse)
-async def containers_fragment(request: Request, csort: str | None = None, cdir: str | None = None,
-                              cstate: str | None = None, sort: str | None = None,
-                              dir: str | None = None, state: str | None = None,
-                              operator: str = Depends(current_operator)):
-    """The table alone, polled by HTMX. In a thread: it may open an SSH session per host."""
-    return TEMPLATES.TemplateResponse(request, "_containers.html", {
-        **await _containers_view(csort, cdir, cstate),
-        "keep": _fleet_keep(sort, dir, state),
-    })
+    return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/containers/{name}/{action}", response_class=HTMLResponse)
