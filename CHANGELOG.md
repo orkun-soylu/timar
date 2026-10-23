@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.47] — 2026-10-24
+
+### Changed
+- **Containers under their host, in one table.** A compose project is a row of the servers table,
+  under the Docker host it runs on — two steps in when the host is itself a guest. Its address is
+  where it is published outside the host (`192.168.0.6:8090`, `192.168.0.6:80,443`; loopback
+  left out), or `-` when nothing is; its system reads *Docker Container*, and its directory is in
+  the name's tooltip. One summary counts servers and containers and filters both; sorted by
+  address or system the rows are one flat list. Add a container with the whale button next to
+  **+**. The separate containers table, `/fragments/containers` and the `csort`, `cdir` and
+  `cstate` parameters are gone; `/containers` leads to `/`.
+
 ## [0.2.46] — 2026-10-24
 
 ### Changed
