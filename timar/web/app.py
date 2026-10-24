@@ -13,13 +13,14 @@ from __future__ import annotations
 import html
 import logging
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import asyncio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -88,7 +89,8 @@ def _set_session(response, username: str) -> None:
         auth.SESSION_COOKIE,
         auth.issue_token(username),
         httponly=True,      # invisible to any script on the page
-        samesite="lax",     # a cross-site form POST cannot ride this cookie
+        samesite="lax",     # a cross-site form POST cannot ride this cookie (see below for
+                            # same-site ones: `refuse_cross_origin_writes`)
         max_age=auth.SESSION_DAYS * 86400,
         # Deliberately not `secure`: the documented deployment is a private network, often
         # plain http, and a `secure` cookie is silently dropped there — which presents as "the
@@ -116,6 +118,41 @@ async def force_setup_first(request: Request, call_next):
         return RedirectResponse("/setup", status_code=status.HTTP_303_SEE_OTHER)
     if config.is_configured() and path == "/setup":
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    return await call_next(request)
+
+
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+def _same_origin(request: Request) -> bool:
+    """Whether a browser says this request comes from a page of this site's own origin.
+
+    `Sec-Fetch-Site` is the browser's own answer and is trusted when present; `none` is the
+    operator typing or bookmarking. Older browsers send only `Origin`, compared with the `Host`
+    the request was sent to — not the scheme, which a TLS-terminating proxy changes. A request
+    with neither header is not from a browser page (curl, a script), so no cookie rode along
+    without its sender meaning it to.
+    """
+    if (site := request.headers.get("sec-fetch-site")) is not None:
+        return site in ("same-origin", "none")
+    if (origin := request.headers.get("origin")) is None:
+        return True
+    return urlsplit(origin).netloc.lower() == request.headers.get("host", "").lower()
+
+
+@app.middleware("http")
+async def refuse_cross_origin_writes(request: Request, call_next):
+    """No change of state unless a page of this origin asked for it.
+
+    `SameSite=Lax` keeps the cookie off a request from another *site*, but a site is the whole
+    registrable domain: timar at `timar.example.net` shares it with every other service under
+    `example.net`, and any of them — an app without a login, or one with a script injection —
+    could otherwise post a form here that the browser signs with the operator's cookie. Every
+    write in this app would accept it: an update command to run on a host, an upgrade, a
+    shutdown.
+    """
+    if request.method not in _SAFE_METHODS and not _same_origin(request):
+        return PlainTextResponse("cross-origin request refused", status_code=status.HTTP_403_FORBIDDEN)
     return await call_next(request)
 
 
@@ -198,10 +235,15 @@ async def login_form(request: Request):
     return TEMPLATES.TemplateResponse(request, "login.html", {"error": None})
 
 
+# Lengths far past any real name or password: the limit is there so an unauthenticated request
+# cannot hand the process a megabyte to hold.
 @app.post("/login")
-async def login_submit(request: Request, username: str = Form(...), password: str = Form(...)):
+async def login_submit(request: Request, username: str = Form(..., max_length=256),
+                       password: str = Form(..., max_length=1024)):
     try:
-        auth.verify(username, password)
+        # Behind a reverse proxy the peer is the proxy, and every client shares its lockout
+        # unless uvicorn is told to trust the proxy's X-Forwarded-For (FORWARDED_ALLOW_IPS).
+        auth.verify(username, password, client=request.client.host if request.client else "")
     except auth.AuthError as e:
         return TEMPLATES.TemplateResponse(
             request, "login.html", {"error": str(e)}, status_code=status.HTTP_401_UNAUTHORIZED
@@ -212,7 +254,10 @@ async def login_submit(request: Request, username: str = Form(...), password: st
 
 
 @app.post("/logout")
-async def logout():
+async def logout(request: Request):
+    # Only a valid session can end the sessions; without one this just clears the cookie.
+    if auth.read_token(request.cookies.get(auth.SESSION_COOKIE)) is not None:
+        auth.revoke_sessions()
     response = RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie(auth.SESSION_COOKIE)
     return response

@@ -9,6 +9,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Security
+- **Writes from another origin of the same site are refused.** `SameSite=Lax` keeps the session
+  cookie off requests from other sites, but every service under the same domain is the same
+  site, and any of them could post a form here that the browser signed — an update command, an
+  upgrade, a shutdown. Any request that changes state now needs `Sec-Fetch-Site: same-origin`
+  (or `none`), or an `Origin` matching the address it was sent to; one with neither header, from
+  curl or a script, is unaffected.
+- **Logging out ends the session, not only this browser's copy of it.** A cookie copied before
+  logout used to stay valid for its thirty days. Logout now revokes every cookie issued so far.
+  Cookies from before this release keep working until the first logout.
+- **The login lockout no longer locks the operator out.** It counted failures per username only,
+  so five wrong guesses from anyone locked the operator's own login, again every five minutes.
+  It now counts per client and username; failures expire after the lockout window. Behind a
+  reverse proxy, set `FORWARDED_ALLOW_IPS` to the proxy's address so clients are told apart.
+- **The login no longer tells which username exists.** A wrong name skipped the password hash —
+  about 3 ms against 250 ms — and a password over 72 bytes returned an error page only for the
+  real name. Both now take the same path and answer the same.
+- **Failed logins no longer grow memory without bound.** Every new username added a record that
+  was never removed, of up to a megabyte each. Names that are not the operator's now share one
+  record per client, the table is capped, and the login fields have a length limit.
+
 ## [0.2.48] — 2026-10-24
 
 ### Fixed

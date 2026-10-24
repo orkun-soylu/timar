@@ -53,7 +53,8 @@ A VM has no wake address of its own, so it names the hypervisor that starts it a
 
 > ⚠️ **Do not expose this to the internet.** timar holds an SSH key that reaches every machine
 > it manages and can grant itself `sudo` on them. Keep it on a private network, or behind a
-> reverse proxy you control.
+> reverse proxy you control. Behind a proxy, set `FORWARDED_ALLOW_IPS` to its address (see
+> `docker-compose.yml`), so the login lockout tells clients apart.
 
 ### Bridge networks and other subnets
 
