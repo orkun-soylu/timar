@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.49] — 2026-10-25
+
 ### Security
 - **Writes from another origin of the same site are refused.** `SameSite=Lax` keeps the session
   cookie off requests from other sites, but every service under the same domain is the same
