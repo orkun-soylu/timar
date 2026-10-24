@@ -28,6 +28,9 @@ services:
       # fleet is the login page. Do not forward this port from the internet.
       # Set to 127.0.0.1 to reach it only through a reverse proxy on the same host.
       TIMAR_HOST: 0.0.0.0
+      # Behind a reverse proxy, name its address here so the login lockout counts each client
+      # by its X-Forwarded-For instead of putting every client behind the proxy in one count.
+      # FORWARDED_ALLOW_IPS: "172.17.0.1"
       # Host networking means no port remapping: this port must be free on the host. 8080 is a
       # popular one -- change it here if something already has it.
       TIMAR_PORT: "8080"

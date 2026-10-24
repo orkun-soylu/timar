@@ -124,6 +124,73 @@ class TestSession:
         response = client.post("/login", data={"username": "op", "password": PASSWORD})
         assert response.status_code == 401 and "too many attempts" in response.text
 
+    def test_lockout_does_not_lock_out_another_client(self, client):
+        """Five guesses from anyone must not keep the operator out of their own login."""
+        complete_setup(client)
+        client.cookies.clear()
+        for _ in range(5):
+            client.post("/login", data={"username": "op", "password": "wrong-wrong-wrong"})
+        operator = TestClient(client.app, follow_redirects=False, client=("10.0.0.2", 50000))
+        response = operator.post("/login", data={"username": "op", "password": PASSWORD})
+        assert response.status_code == 303 and response.cookies.get("timar_session")
+
+    def test_failures_expire_after_the_lockout_window(self, client, monkeypatch):
+        from timar.web import auth
+        complete_setup(client)
+        client.cookies.clear()
+        now = [1000.0]
+        monkeypatch.setattr(auth.time, "monotonic", lambda: now[0])
+        for _ in range(4):
+            client.post("/login", data={"username": "op", "password": "wrong-wrong-wrong"})
+        now[0] += auth.LOCKOUT_SECONDS + 1
+        client.post("/login", data={"username": "op", "password": "wrong-wrong-wrong"})
+        response = client.post("/login", data={"username": "op", "password": PASSWORD})
+        assert response.status_code == 303
+
+    def test_an_overlong_password_is_just_a_wrong_one(self, client):
+        """bcrypt 5 raises past 72 bytes; that must not turn into a 500 only the real name gets."""
+        complete_setup(client)
+        client.cookies.clear()
+        long = "A" * 73
+        bad_user = client.post("/login", data={"username": "nobody", "password": long})
+        bad_pass = client.post("/login", data={"username": "op", "password": long})
+        assert bad_user.status_code == bad_pass.status_code == 401
+        assert "incorrect username or password" in bad_pass.text
+
+    def test_a_wrong_username_costs_a_bcrypt_check(self, client, monkeypatch):
+        """Skipping the hash for an unknown name makes the response time a username oracle."""
+        from timar.web import auth
+        complete_setup(client)
+        client.cookies.clear()
+        checks = []
+        real = auth.bcrypt.checkpw
+        monkeypatch.setattr(auth.bcrypt, "checkpw", lambda pw, h: checks.append(1) or real(pw, h))
+        client.post("/login", data={"username": "nobody", "password": "wrong-wrong-wrong"})
+        client.post("/login", data={"username": "nobody", "password": "A" * 73})
+        assert len(checks) == 2
+
+    def test_unknown_usernames_do_not_grow_the_failure_table(self, client):
+        from timar.web import auth
+        complete_setup(client)
+        client.cookies.clear()
+        for i in range(20):
+            client.post("/login", data={"username": f"guess-{i}", "password": "p"})
+        assert len(auth._failures) == 1
+
+    def test_the_failure_table_is_bounded(self, client, monkeypatch):
+        from timar.web import auth
+        complete_setup(client)
+        monkeypatch.setattr(auth, "MAX_TRACKED", 8)
+        for i in range(20):
+            auth._record_failure((f"10.0.0.{i}", auth._UNKNOWN))
+        assert len(auth._failures) <= 8
+
+    def test_overlong_login_fields_are_refused(self, client):
+        complete_setup(client)
+        client.cookies.clear()
+        response = client.post("/login", data={"username": "x" * 100_000, "password": "p"})
+        assert response.status_code == 422
+
     def test_session_cookie_is_httponly_and_lax(self, client):
         header = complete_setup(client).headers["set-cookie"]
         assert "httponly" in header.lower()
@@ -136,6 +203,43 @@ class TestSession:
         assert 'timar_session=""' in response.headers["set-cookie"] or \
                "Max-Age=0" in response.headers["set-cookie"]
 
+    def test_logout_ends_the_session_not_just_the_cookie(self, client):
+        """A cookie copied before logout must not keep the fleet open for thirty days."""
+        complete_setup(client)
+        cookie = client.cookies.get("timar_session")
+        client.post("/logout")
+        client.cookies.clear()
+        replay = TestClient(client.app, follow_redirects=False, cookies={"timar_session": cookie})
+        assert replay.get("/").status_code == 303
+        assert replay.get("/").headers["location"] == "/login"
+
+    def test_logging_in_after_logout_works(self, client):
+        complete_setup(client)
+        client.post("/logout")
+        client.cookies.clear()
+        client.post("/login", data={"username": "op", "password": PASSWORD})
+        assert client.get("/").status_code == 200
+
+    def test_logout_without_a_session_revokes_nothing(self, client):
+        complete_setup(client)
+        cookie = client.cookies.get("timar_session")
+        TestClient(client.app, follow_redirects=False).post("/logout")
+        assert client.get("/").status_code == 200 and cookie
+
+    def test_a_cookie_from_before_epochs_still_works(self, client):
+        """Upgrading must not log the operator out; the first logout after it does."""
+        import time
+
+        import jwt
+        from timar.web import auth
+        complete_setup(client)
+        now = int(time.time())
+        old = jwt.encode({"sub": "op", "iat": now, "exp": now + 3600}, auth.secret_key(),
+                         algorithm=auth.ALGORITHM)
+        assert auth.read_token(old) == "op"
+        auth.revoke_sessions()
+        assert auth.read_token(old) is None
+
     def test_cookie_for_a_replaced_account_stops_working(self, client, tmp_path):
         """A restored volume can carry an old cookie into a fleet with a different operator."""
         complete_setup(client)
@@ -145,6 +249,53 @@ class TestSession:
         config.path(config.AUTH).unlink()
         auth.create_account("someone-else", PASSWORD)
         assert auth.read_token(cookie) is None
+
+
+class TestCrossOriginWrites:
+    """SameSite=Lax stops other sites, not other origins of the same site: `a.example.net` and
+    `timar.example.net` are one site, and the browser signs a form posted from one to the other.
+    """
+
+    def _telegram(self, client, **headers):
+        return client.post("/settings/telegram", data={"token": "1:dummy", "chat_id": "1"},
+                           headers=headers)
+
+    @pytest.mark.parametrize("site", ["same-site", "cross-site"])
+    def test_a_write_from_another_origin_is_refused(self, client, site):
+        from timar import config
+        complete_setup(client)
+        response = self._telegram(client, **{"Sec-Fetch-Site": site,
+                                             "Origin": "https://sibling.example.test"})
+        assert response.status_code == 403
+        assert not config.load().get("telegram")
+
+    def test_a_foreign_origin_without_fetch_metadata_is_refused(self, client):
+        complete_setup(client)
+        assert self._telegram(client, Origin="https://sibling.example.test").status_code == 403
+
+    def test_an_opaque_origin_is_refused(self, client):
+        complete_setup(client)
+        assert self._telegram(client, Origin="null").status_code == 403
+
+    @pytest.mark.parametrize("headers", [
+        {"Sec-Fetch-Site": "same-origin", "Origin": "http://testserver"},
+        {"Sec-Fetch-Site": "none"},
+        {"Origin": "http://testserver"},
+        {"Origin": "https://testserver"},   # TLS terminated by a proxy in front
+        {},                                 # not a browser page: curl, a script
+    ])
+    def test_a_write_from_this_origin_goes_through(self, client, headers):
+        complete_setup(client)
+        assert self._telegram(client, **headers).status_code == 303
+
+    def test_reads_are_not_affected(self, client):
+        complete_setup(client)
+        assert client.get("/", headers={"Sec-Fetch-Site": "cross-site"}).status_code == 200
+
+    def test_setup_and_login_are_covered_too(self, client):
+        response = client.post("/setup", data={"username": "op", "password": PASSWORD},
+                               headers={"Sec-Fetch-Site": "same-site"})
+        assert response.status_code == 403
 
 
 class TestDashboard:

@@ -307,9 +307,9 @@ This service holds an SSH key that reaches every managed machine and can write `
 them; site-to-site links, a guest VLAN and a forwarded port all end at the same login form.
 Single-user is a deliberate scope — there are no roles to divide when every capability is
 administrative — and that removes user management, not authentication. bcrypt, a JWT in an
-httpOnly `SameSite=Lax` cookie, a 12-character minimum, and a five-attempt lockout.
+httpOnly `SameSite=Lax` cookie, a 12-character minimum, and a five-attempt lockout per client.
 
-Four decisions worth keeping:
+Decisions worth keeping:
 
 - **Until an account exists, every path redirects to `/setup`.** Otherwise the window between
   first boot and the operator finishing setup is a window in which the dashboard — the fleet's
@@ -324,6 +324,21 @@ Four decisions worth keeping:
   am never logged in". TLS belongs to a reverse proxy in front, not to this app.
 - **A cookie whose username is no longer the operator's is rejected.** A restored volume can
   carry an old session into a fleet that now has a different account.
+- **Logging out ends every session.** A signed cookie carries its own validity, so `auth.json`
+  holds an epoch that every cookie names; logout increments it. Without that, a cookie copied
+  before logout stays good for its thirty days. Cookies from before the epoch existed count as
+  epoch 0, so an upgrade logs nobody out.
+- **No write unless this origin's page asked for it** (`refuse_cross_origin_writes`).
+  `SameSite=Lax` keeps the cookie off requests from other *sites*, and a site is the whole
+  registrable domain: every other service under the same domain could otherwise post a form the
+  browser signs with the operator's cookie. `Sec-Fetch-Site` decides when the browser sends it,
+  `Origin` against `Host` otherwise; a request with neither is not from a browser page.
+- **The lockout is per client and per account, and bounded.** On the account alone, five wrong
+  guesses from anyone locked the operator out of their own login, for as long as someone kept
+  sending them. Every name that is not the operator's shares one record, the table is capped,
+  and a wrong name costs a bcrypt check against a dummy hash — skipping it made the response
+  time say which names exist. Behind a reverse proxy the peer is the proxy; set
+  `FORWARDED_ALLOW_IPS` to it so the lockout sees the real client.
 
 ### Devices that are only watched
 
