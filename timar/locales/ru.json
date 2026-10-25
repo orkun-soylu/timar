@@ -387,5 +387,7 @@
   "Too large: a document can be at most 1 MB.": "Слишком большой: документ может быть не больше 1 МБ.",
   "A document with this name already exists.": "Документ с таким именем уже существует.",
   "Documents": "Документы",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "На {platform} ключ timar кладётся вручную, в {path} — как, описано в README. Затем нажмите «Подключить» с пустым паролем, чтобы проверить."
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "На {platform} ключ timar кладётся вручную, в {path} — как, описано в README. Затем нажмите «Подключить» с пустым паролем, чтобы проверить.",
+  "{findings} with findings · {clean} clean · {asleep} asleep": "с замечаниями: {findings} · в порядке: {clean} · спят: {asleep}",
+  "{n} unreachable": "недоступны: {n}"
 }

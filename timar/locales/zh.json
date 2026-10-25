@@ -387,5 +387,7 @@
   "Too large: a document can be at most 1 MB.": "太大：文档最多 1 MB。",
   "A document with this name already exists.": "已存在同名文档。",
   "Documents": "文档",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} 需要你自己把 timar 的密钥放到 {path} —— 方法见 README。然后将密码留空并点击接入以检查。"
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} 需要你自己把 timar 的密钥放到 {path} —— 方法见 README。然后将密码留空并点击接入以检查。",
+  "{findings} with findings · {clean} clean · {asleep} asleep": "有发现 {findings} · 正常 {clean} · 休眠 {asleep}",
+  "{n} unreachable": "无法连接 {n}"
 }

@@ -110,6 +110,39 @@ class TestUpdateReport:
         assert "❌ db-01: stdout: it broke\n    stderr: noise" in outcome.report
 
 
+class TestTelegramSweepIsShort:
+    """The assessment and the raw findings used to be sent together: every finding was read
+    twice, the asleep machines were listed twice, and one night's message ran to two screens."""
+
+    CFG = {"telegram": {"token": "t", "chat_id": "1"}}
+
+    @pytest.fixture
+    def sent(self, monkeypatch):
+        messages = []
+        monkeypatch.setattr(jobs.notify, "send", lambda token, chat, text: messages.append(text))
+        return messages
+
+    RESULTS = [LogResult(server="web-01", success=True, disk_issues=["/: 91%"]),
+               LogResult(server="gpu-01", success=True, offline=True)]
+
+    def test_the_assessment_replaces_the_raw_findings(self, sweep, sent):
+        outcome = sweep(self.RESULTS, cfg=self.CFG, assessment="• web-01: / at 91% — clean it")
+        assert "• web-01: / at 91% — clean it" in sent[0]
+        assert "<pre>" not in sent[0]
+        assert "gpu-01" not in sent[0]
+        # The stored report keeps both: the page is where the detail is read.
+        assert "• web-01" in outcome.report and "gpu-01: offline, not checked" in outcome.report
+
+    def test_without_a_model_the_raw_findings_are_the_message(self, sweep, sent):
+        sweep(self.RESULTS, cfg=self.CFG)
+        assert "<pre>" in sent[0] and "disk: /: 91%" in sent[0]
+
+    def test_a_clean_sweep_is_the_all_clear_line_only(self, sweep, sent):
+        sweep([LogResult(server="web-01", success=True)], cfg=self.CFG,
+              assessment="Everything looks healthy across the fleet today.")
+        assert sent[0] == "<b>Log sweep</b>\n\nAll clear — 1 checked, 0 asleep."
+
+
 class TestTelegramLanguage:
     """Telegram speaks `telegram.language`; the stored copy stays English for whoever reads it later."""
 
@@ -129,6 +162,13 @@ class TestTelegramLanguage:
         assert "disk: /: 91%" in sent[0]
         assert "gpu-01: offline, not checked" in outcome.report
         assert outcome.summary == "1 with findings, 0 unreachable, 1 asleep"
+
+    def test_sweep_counts_lead_the_message_in_turkish(self, sweep, sent):
+        sweep([LogResult(server="web-01", success=True, disk_issues=["/: 91%"]),
+               LogResult(server="db-01", success=True),
+               LogResult(server="router", success=False, error="down"),
+               LogResult(server="gpu-01", success=True, offline=True)], cfg=self.CFG)
+        assert sent[0].startswith("<b>Log taraması</b> — 1 bulgu · 1 temiz · 1 kapalı · 1 erişilemedi")
 
     def test_all_clear_is_turkish(self, sweep, sent):
         sweep([LogResult(server="web-01", success=True)], cfg=self.CFG)

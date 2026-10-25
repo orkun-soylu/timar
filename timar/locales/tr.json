@@ -387,5 +387,7 @@
   "Too large: a document can be at most 1 MB.": "Çok büyük: bir belge en fazla 1 MB olabilir.",
   "A document with this name already exists.": "Bu adda bir belge zaten var.",
   "Documents": "Belgeler",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} için timar'ın anahtarını kendin yerleştirirsin: {path} — nasıl yapılacağı README'de. Sonra kontrol için parolayı boş bırakıp Kaydet'e bas."
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} için timar'ın anahtarını kendin yerleştirirsin: {path} — nasıl yapılacağı README'de. Sonra kontrol için parolayı boş bırakıp Kaydet'e bas.",
+  "{findings} with findings · {clean} clean · {asleep} asleep": "{findings} bulgu · {clean} temiz · {asleep} kapalı",
+  "{n} unreachable": "{n} erişilemedi"
 }
