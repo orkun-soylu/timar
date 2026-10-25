@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+- **A router's old errors no longer come back in every sweep.** busybox `logread` has no time
+  window, so the sweep read the whole ring buffer — back to the router's last boot. A PPPoE
+  outage that ended five days earlier was still reported as "look at this today", and a cron
+  job removed a week before kept being flagged. OpenWrt lines are now cut at `journal_hours`,
+  measured on the router's own clock (`logread -t`). A line that carries no timestamp is still
+  reported, so a `logread` without `-t` errs towards too much, never towards silence.
+
+### Added
+- **`job_containers`** on a server: containers that run to completion and sit exited between
+  runs (an import job, a one-shot migration). A clean exit (0) is no longer reported as a
+  stopped container; a non-zero exit still is — that is a run that failed.
+
 ## [0.2.49] — 2026-10-25
 
 ### Security

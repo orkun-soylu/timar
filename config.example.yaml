@@ -40,6 +40,12 @@ servers:
     #     started_marker: "Backup started"
     #     completed_marker: "Backup completed"
 
+    # Optional: containers that run to completion and sit exited between runs (an import job,
+    # a one-shot migration). An exit code of 0 is then not reported as a stopped container;
+    # a non-zero exit still is, because that is a run that failed.
+    # job_containers:
+    #   - rita-rita-1
+
     # Optional: extra log files to scan for error keywords.
     # watch_logs:
     #   - /var/log/myapp.log
