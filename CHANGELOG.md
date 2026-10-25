@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.50] — 2026-10-25
+
 ### Fixed
 - **A router's old errors no longer come back in every sweep.** busybox `logread` has no time
   window, so the sweep read the whole ring buffer — back to the router's last boot. A PPPoE
