@@ -79,6 +79,34 @@ class TestCommands:
         assert "journalctl" not in OpenWrt().journal_cmd(6)
         assert "logread" in OpenWrt().journal_cmd(6)
 
+    def test_openwrt_log_window_drops_lines_older_than_the_sweep(self, tmp_path):
+        """logread prints the whole ring buffer; a week-old outage must not read as today's.
+
+        Runs the real command under sh with a fake `logread` that answers `-t` the way OpenWrt
+        25.12 does (epoch as the sixth field, captured from a router).
+        """
+        import subprocess, time
+        now = int(time.time())
+        old, recent = now - 5 * 86400, now - 600
+        fake = tmp_path / "logread"
+        fake.write_text(
+            "#!/bin/sh\n"
+            "cat <<'LOG'\n"
+            f"Tue Oct 20 00:05:37 2026 [{old}.120] daemon.err pppd[27728]: Unable to complete PPPoE Discovery phase 1\n"
+            f"Sat Oct 25 14:50:00 2026 [{recent}.004] daemon.err pppd[1]: still failing\n"
+            f"Sat Oct 25 14:51:00 2026 [{recent}.005] daemon.info pppd[1]: not an error\n"
+            "Sat Oct 25 14:52:00 2026 daemon.err odd: no epoch field\n"
+            "LOG\n"
+        )
+        fake.chmod(0o755)
+        out = subprocess.run(["sh", "-c", OpenWrt().journal_cmd(6)], capture_output=True, text=True,
+                             env={"PATH": f"{tmp_path}:/usr/bin:/bin"}).stdout
+        assert OpenWrt().parse_journal(out) == [
+            "Sat Oct 25 14:50:00 2026 daemon.err pppd[1]: still failing",
+            # Kept, not dropped: without the field the age is unknown, and silence would lie.
+            "Sat Oct 25 14:52:00 2026 daemon.err odd: no epoch field",
+        ]
+
     def test_disk_cmd_avoids_the_gnu_only_flag(self):
         # `--output=pcent,target` is rejected by busybox with a non-zero exit.
         for p in (Platform(), OpenWrt(), Proxmox()):

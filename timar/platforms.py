@@ -180,10 +180,22 @@ class OpenWrt(Platform):
     skip_mounts = frozenset({"/rom"})
 
     def journal_cmd(self, hours: int) -> str:
-        # busybox logread has neither `-p` nor a time window; it prints the whole ring buffer.
-        # Severity lives in a "facility.severity" token, so it is filtered textually, and the
-        # `hours` argument cannot be honoured — the buffer is simply whatever still fits in it.
-        return r"logread 2>/dev/null | grep -E '\.(emerg|alert|crit|err)( |$|\[)' | tail -50"
+        # busybox logread has neither `-p` nor a time window; it prints the whole ring buffer,
+        # which on a quiet router reaches back to its last boot. Unfiltered, a week-old outage
+        # came back as "look at this today" in every sweep until the buffer wrapped.
+        #
+        # `-t` adds the entry's epoch as the sixth field ("Wed Oct 14 02:42:51 2026 [1791934971.068]
+        # cron.err ..."), and the cutoff is taken from the router's own clock, so neither time
+        # zones nor clock skew between the two machines move the window. A line without that
+        # field is kept rather than dropped: if `-t` ever stops working, the sweep goes back to
+        # reporting too much instead of silently reporting nothing.
+        # Severity lives in a "facility.severity" token, so it is filtered textually.
+        return (
+            f"c=$(( $(date +%s) - {int(hours) * 3600} )); "
+            "logread -t 2>/dev/null"
+            r""" | awk -v c="$c" '$6 ~ /^\[[0-9]/ { if (substr($6, 2) + 0 < c) next; sub(/ \[[0-9.]+\]/, "") } { print }'"""
+            r" | grep -E '\.(emerg|alert|crit|err)( |$|\[)' | tail -50"
+        )
 
     def parse_journal(self, stdout: str) -> list[str]:
         return [line.strip() for line in stdout.splitlines() if line.strip()]

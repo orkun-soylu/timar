@@ -395,6 +395,23 @@ class TestLogSweep:
         assert stopped_containers(out, frozenset({"/srv/odata"})) == ["immich-db", "one-off"]
         assert sorted(stopped_containers(out)) == ["immich-db", "odata-1", "one-off"]
 
+    def test_a_job_container_is_forgiven_only_a_clean_exit(self):
+        from timar.log_checker import stopped_containers
+        jobs = frozenset({"rita-rita-1", "one-off"})
+        clean = "\n".join([
+            ps_line("/opt/rita", "rita-rita-1", "exited", "Exited (0) 9 minutes ago"),
+            json.dumps({"ID": "loose", "Names": "one-off", "State": "exited",
+                        "Status": "Exited (0) 2 hours ago", "Labels": ""}),
+        ])
+        assert stopped_containers(clean, job_containers=jobs) == []
+        assert stopped_containers(clean) == ["rita-rita-1", "one-off"]
+        failed = "\n".join([
+            ps_line("/opt/rita", "rita-rita-1", "exited", "Exited (1) 9 minutes ago"),
+            json.dumps({"ID": "loose", "Names": "one-off", "State": "exited",
+                        "Status": "Exited (137) 2 hours ago", "Labels": ""}),
+        ])
+        assert stopped_containers(failed, job_containers=jobs) == ["rita-rita-1", "one-off"]
+
 
 class TestDiscovery:
     LS = json.dumps([

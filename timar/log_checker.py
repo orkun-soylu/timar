@@ -14,7 +14,7 @@ from .platforms import get as get_platform
 from .config import resolve_ssh_key
 from .ssh import connect, run, run_bounded
 from . import cancel, membership, osinfo
-from .containers import parse_ps
+from .containers import _EXITED, parse_ps
 
 logger = logging.getLogger(__name__)
 
@@ -142,11 +142,15 @@ def run_check(ssh, check: dict) -> CheckResult:
                        "\n".join(lines) if rc in CHECK_STATES else "\n".join([f"exit {rc}"] + lines))
 
 
-def stopped_containers(output: str, on_demand_dirs=frozenset()) -> list[str]:
+def stopped_containers(output: str, on_demand_dirs=frozenset(), job_containers=frozenset()) -> list[str]:
     """Exited containers, minus those of compose projects registered as stopped on purpose.
 
     Containers outside any compose project, and those of projects nobody registered, are all
     still reported: an unknown stopped container is exactly what the sweep is for.
+
+    `job_containers` names containers that run to completion — an import, a migration — and
+    are *supposed* to sit exited between runs. Only a clean exit (0) is forgiven: the same job
+    exiting 1 is a failed run and stays a finding.
     """
     names = []
     seen = set()
@@ -154,15 +158,19 @@ def stopped_containers(output: str, on_demand_dirs=frozenset()) -> list[str]:
         seen.update(c.id for c in found)
         if working_dir in on_demand_dirs:
             continue
-        names += [c.name for c in found]
+        names += [c.name for c in found if not (c.name in job_containers and c.exit_code == 0)]
     # parse_ps keeps only compose containers; the rest are reported by name as before.
     for line in output.splitlines():
         try:
             row = json.loads(line)
         except ValueError:
             continue
-        if row.get("ID") not in seen and row.get("Names"):
-            names.append(row["Names"])
+        if row.get("ID") in seen or not row.get("Names"):
+            continue
+        exited = _EXITED.match(row.get("Status") or "")
+        if row["Names"] in job_containers and exited and int(exited.group(1)) == 0:
+            continue
+        names.append(row["Names"])
     return names
 
 
@@ -189,7 +197,8 @@ def check_server(server_cfg: dict, hours: int = 6, disk_threshold: int = 85,
             if cmd := platform.docker_cmd():
                 out, _, rc = run(ssh, cmd)
                 if rc == 0:
-                    containers_stopped = stopped_containers(out, on_demand_dirs)
+                    containers_stopped = stopped_containers(
+                        out, on_demand_dirs, frozenset(server_cfg.get("job_containers") or ()))
 
             job_logs = {}
             for job in server_cfg.get("job_logs", []):
