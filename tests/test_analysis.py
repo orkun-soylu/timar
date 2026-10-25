@@ -68,6 +68,12 @@ class TestSystemPrompt:
     def test_per_server_context_is_included(self):
         assert "Only powered on for batch jobs." in build_system_prompt(CONFIG)
 
+    def test_a_watched_only_device_is_not_named(self):
+        """It is never swept, and naming it had the model report it missing every night."""
+        cfg = {"servers": [{"name": "web-01"}, {"name": "nas-01", "ssh": False}]}
+        prompt = build_system_prompt(cfg)
+        assert "web-01" in prompt and "nas-01" not in prompt
+
     def test_operator_notes_are_appended(self):
         assert "known benign" in build_system_prompt(CONFIG, notes="known benign warning")
 

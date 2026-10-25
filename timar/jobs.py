@@ -73,6 +73,17 @@ def _sweep_body(results, offline, clean: bool) -> str:
     return analysis.format_findings(results)
 
 
+def _sweep_counts(results, with_issues) -> str:
+    checked = [r for r in results if not r.offline]
+    unreachable = sum(1 for r in checked if not r.success)
+    counts = _("{findings} with findings · {clean} clean · {asleep} asleep",
+               findings=len(with_issues), clean=len(checked) - len(with_issues) - unreachable,
+               asleep=len(results) - len(checked))
+    if unreachable:
+        counts += " · " + _("{n} unreachable", n=unreachable)
+    return counts
+
+
 def run_log_sweep(cfg: dict) -> Outcome:
     results = run_log_checks(cfg)
 
@@ -101,13 +112,17 @@ def run_log_sweep(cfg: dict) -> Outcome:
     with i18n.using(i18n.DEFAULT):
         body = _sweep_body(results, offline, clean)
     with i18n.using(language):
-        lines = [f"<b>{_(TITLES[LOG_SWEEP])}</b>", ""]
-        if written:
-            lines += [f"<i>{notify.escape(written)}</i>", ""]
-        message = _sweep_body(results, offline, clean)
-    # The findings block is preformatted so the column alignment survives; the all-clear line is
-    # one sentence and reads better without it.
-    lines.append(message if clean else f"<pre>{notify.escape(message)}</pre>")
+        title = f"<b>{_(TITLES[LOG_SWEEP])}</b>"
+        if clean:
+            lines = [title, "", _sweep_body(results, offline, clean)]
+        else:
+            lines = [f"{title} — {notify.escape(_sweep_counts(results, with_issues))}", ""]
+            # The assessment replaces the raw findings rather than sitting on top of them: sent
+            # together, every finding was read twice and the message ran to two screens. The
+            # full findings stay in the stored report. Without a model, they are the message —
+            # preformatted so the indentation survives.
+            lines.append(notify.escape(written) if written
+                         else f"<pre>{notify.escape(_sweep_body(results, offline, clean))}</pre>")
 
     _notify(cfg, "\n".join(lines))
     return Outcome(summary, f"{written}\n\n{body}" if written else body)

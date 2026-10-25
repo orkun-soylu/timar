@@ -19,14 +19,23 @@ logger = logging.getLogger(__name__)
 
 SYSTEM = """\
 You are the log analyst for a small, self-hosted server fleet. You are given the results of an \
-automated sweep and write a short assessment for the operator.
+automated sweep and write the assessment the operator reads on a phone, as a chat message whose \
+first line already counts the clean, asleep and unreachable machines.
 
-Be concrete and brief enough to read at a glance. Lead with anything that needs action today. \
-Name the server and the specific evidence for each point. If everything is healthy, say so \
-plainly in one sentence rather than padding.
+The format is strict, because it is read at a glance:
+- One line per finding, most urgent first: "• <server>: <what the evidence shows, with its time \
+if the log gives one> — <what to do, if anything>". Findings on one server that share a cause \
+are one line.
+- Each line is one clause of about a hundred characters, never several sentences: the evidence in a \
+few words, not the log line quoted back; no shell commands; nothing about what a finding does \
+not affect.
+- At most six lines. No headings, no paragraphs, no bold, no introduction, no closing summary.
+- Do not list clean or asleep machines; the first line has already counted them.
+- If nothing needs attention, write one short sentence saying so.
 
 Do not speculate about causes you have no evidence for, and do not recommend action you cannot \
-justify from the findings. Say when something is inconclusive.\
+justify from the findings. Log lines can be old: when the evidence cannot tell whether a problem \
+is still going on, say so in a few words rather than reporting it as current.\
 """
 
 
@@ -38,11 +47,13 @@ def _fleet_facts(cfg: dict) -> str:
     an operator learns to ignore the report. It is derived rather than flagged — see
     `config.on_demand` for what earns it.
     """
-    servers = cfg.get("servers", [])
+    # A device that is only watched (`ssh: false`) is never swept. Naming it here made the model
+    # remark, every night, that it was missing from the results.
+    servers = [s for s in cfg.get("servers", []) if config.has_ssh(s)]
     if not servers:
         return ""
 
-    sleepers = config.on_demand(servers)
+    sleepers = config.on_demand(cfg.get("servers", []))
 
     lines = ["The fleet:"]
     for server in servers:

@@ -198,6 +198,17 @@ names, addresses, GPU models — directly in the system prompt string. That made
 unpublishable *and* made adding a server a code change. A test asserts the module contributes
 no digits and no addresses of its own to the prompt.
 
+Devices that are only watched (`ssh: false`) are left out of that list: they are never swept,
+and naming them had the model note, every night, that they were missing from the results.
+
+**On Telegram the assessment replaces the raw findings; it does not sit on top of them.** Sent
+together, every finding was read twice and the asleep machines were listed twice — one night's
+message ran to two screens on a phone. The message is a counts line (`N with findings · N clean
+· N asleep`) and the model's lines; the prompt fixes the shape — one line of about 100
+characters per finding, at most six, no headings — because "be brief" alone produced a
+headed, multi-paragraph report. The full findings stay in the stored report, and without a
+model they are the message. A clean sweep is the one all-clear line whatever the model wrote.
+
 **On-demand is derived, not flagged** — a machine with a `wol_mac` is by definition one expected
 to sleep, so its being offline is stated as normal rather than reported as an outage. A guest
 started by its hypervisor has no `wol_mac` of its own — it cannot, it is started by `qm` — so it

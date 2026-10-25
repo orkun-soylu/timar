@@ -387,5 +387,7 @@
   "Too large: a document can be at most 1 MB.": "大きすぎます：ドキュメントは最大 1 MB です。",
   "A document with this name already exists.": "同じ名前のドキュメントがすでにあります。",
   "Documents": "ドキュメント",
-  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} では timar の鍵を自分で {path} に置きます — 手順は README にあります。その後、パスワードを空のまま登録を押して確認してください。"
+  "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} では timar の鍵を自分で {path} に置きます — 手順は README にあります。その後、パスワードを空のまま登録を押して確認してください。",
+  "{findings} with findings · {clean} clean · {asleep} asleep": "所見あり {findings} · 正常 {clean} · スリープ中 {asleep}",
+  "{n} unreachable": "到達不能 {n}"
 }

@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+- **The log sweep's Telegram message is short.** It is now a counts line and the model's
+  assessment, one line per finding (at most six); the raw findings are no longer appended under
+  it — they stay in the stored report, and are still the message when no model is configured. A
+  clean sweep is the single all-clear line. Watched-only devices (`ssh: false`) are no longer
+  named to the model, which kept reporting them as missing from the sweep.
+
 ## [0.2.50] — 2026-10-25
 
 ### Fixed
