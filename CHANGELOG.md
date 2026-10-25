@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.51] — 2026-10-26
+
 ### Changed
 - **The log sweep's Telegram message is short.** It is now a counts line and the model's
   assessment, one line per finding (at most six); the raw findings are no longer appended under
