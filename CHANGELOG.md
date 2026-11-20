@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.52] — 2026-11-20
+
 ### Added
 - **Services.** A `services:` list in `config.yaml` puts things that are neither a machine nor a
   compose project — an agent in a terminal, a model server — on the dashboard, each under the
