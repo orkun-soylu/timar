@@ -105,7 +105,7 @@ APP_LOGOS = {
     "homeassistant": "Home Assistant", "pihole": "Pi-hole", "adguard": "AdGuard", "nginx": "NGINX",
     "caddy": "Caddy", "uptimekuma": "Uptime Kuma", "syncthing": "Syncthing",
     "paperlessngx": "Paperless-ngx", "minio": "MinIO", "influxdb": "InfluxDB", "rabbitmq": "RabbitMQ",
-    "n8n": "n8n",
+    "n8n": "n8n", "opencode": "OpenCode",
 }
 
 # Names that are not their logo's slug: an image is `traefik`, a database `postgres`.

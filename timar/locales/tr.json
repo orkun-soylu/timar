@@ -389,5 +389,6 @@
   "Documents": "Belgeler",
   "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "{platform} için timar'ın anahtarını kendin yerleştirirsin: {path} — nasıl yapılacağı README'de. Sonra kontrol için parolayı boş bırakıp Kaydet'e bas.",
   "{findings} with findings · {clean} clean · {asleep} asleep": "{findings} bulgu · {clean} temiz · {asleep} kapalı",
-  "{n} unreachable": "{n} erişilemedi"
+  "{n} unreachable": "{n} erişilemedi",
+  "the health check does not answer": "sağlık kontrolü cevap vermiyor"
 }

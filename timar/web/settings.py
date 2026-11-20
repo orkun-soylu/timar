@@ -306,6 +306,9 @@ async def save_server(request: Request):
             for project in cfg.get("containers") or []:
                 if project.get("server") == original:
                     project["server"] = entry["name"]
+            for service in cfg.get("services") or []:
+                if isinstance(service, dict) and service.get("server") == original:
+                    service["server"] = entry["name"]
             membership.rename(cfg, original, entry["name"])
     else:
         servers.append(entry)

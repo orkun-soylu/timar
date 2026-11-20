@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Services.** A `services:` list in `config.yaml` puts things that are neither a machine nor a
+  compose project — an agent in a terminal, a model server — on the dashboard, each under the
+  server it runs on, with an application logo, a light and a link (http(s) or a `link_schemes`
+  entry). timar only watches them: no SSH, no start/stop, no updates, so the server may be
+  `ssh: false`. The light follows the server, or the optional `health_url` when there is one.
+  Names may contain `@` (`opencode@rocm`). Written in the file only, checked again on every
+  draw; a malformed entry is left out instead of breaking the page. A server rename carries its
+  services along.
+- **OpenCode logo** (Simple Icons 16.33.0), for containers and services.
+
 ## [0.2.51] — 2026-10-26
 
 ### Changed
