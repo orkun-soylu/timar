@@ -158,6 +158,19 @@ containers:
     on_demand: true                     # stopped on purpose: reads as asleep, not down; an
                                         # update pulls it and leaves it stopped
 
+# Optional: services -- something on a server that is neither a machine nor a compose project
+# (an agent in a terminal, a model server, a program started by hand). Shown under that server
+# with a light and a link; never started, stopped, updated or reached over SSH, so the server may
+# be `ssh: false`. Edited here only. The light: server not up -> unknown; up and no health_url ->
+# up; otherwise the health check decides (any answer below HTTP 500).
+# services:
+#   - name: agent@gpu-01                # letters, digits, . _ - and @
+#     server: web-01                    # the row it sits under
+#     logo: ollama                      # optional: an application logo (as for containers)
+#     web_url: "agent://open"           # optional: http(s), or a scheme in link_schemes
+#     health_url: "https://gpu-01.example.lan/health"   # optional
+#     on_demand: true                   # optional: no answer reads as asleep, not down
+
 # Optional: servers left out of a job, by name -- set from the pencil on a job's row (reports
 # page). A job runs on every server that is enrolled (Timar has logged in to it with its key) and
 # not listed here; the others are not woken, not connected to, and named as skipped.

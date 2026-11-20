@@ -87,6 +87,24 @@
            hx-swap="innerHTML">{{ icon("edit") }}</a>
       </div></td>
     </tr>
+  {%- elif row.kind == "service" %}{% set v = row.item %}
+    {#- A service (`services`): something on its host that timar only watches — no buttons but
+        the slots, kept so edit and power line up with the other rows. Edited in config.yaml. #}
+    {%- set words = {"running": _("running"), "host is not up": _("host is not up"),
+                     "host not configured": _("host not configured"),
+                     "the health check does not answer": _("the health check does not answer")} %}
+    {%- set word = words.get(v.detail, v.detail) %}
+    <tr class="{{ v.state }}{{ depth_class }}">
+      <td class="col-edge" title="{{ word }} · {{ v.logo_name }}"><svg class="os" role="img"
+          aria-label="{{ word }} · {{ v.logo_name }}"><use href="{{ static_url('logos.svg') }}#{{ v.logo }}"></use></svg>
+        {% if v.web_url and v.running -%}
+        <a href="{{ v.web_url }}" {% if v.web_url.startswith(('http://', 'https://')) %}target="_blank" {% endif %}rel="noopener noreferrer"
+           title="{{ v.web_url }}">{{ v.name }}</a>
+        {%- else %}{{ v.name }}{% endif %}</td>
+      <td class="col-mid muted"><code class="one-line">{{ v.address or "-" }}</code></td>
+      <td class="col-mid muted wide"><code class="one-line">{{ service_system }}</code></td>
+      <td class="col-edge"><div class="icon-row"><span class="icon-slot"></span><span class="icon-slot"></span><span class="icon-slot"></span></div></td>
+    </tr>
   {%- else %}{% set host = row.item %}
     {%- if host.state == "up" %}{% set state_label = _("up") %}
     {%- elif host.state == "asleep" %}{% set state_label = _("asleep") ~ " (" ~ _("on-demand") ~ ")" %}

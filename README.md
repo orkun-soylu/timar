@@ -158,6 +158,27 @@ behind empty. The value is checked again every time the page is drawn. A hand-ed
 `javascript:` therefore never reaches it, and removing a scheme from the list removes its links.
 Container links stay `http(s)` only, because a container's address is also its health check.
 
+### Services
+
+Some things on a server are neither a machine nor a compose project: an agent in a terminal, a
+model server, a program started by hand. List them under `services:` in `config.yaml` and each
+one gets a row under its server, with a logo, a light and a link:
+
+```yaml
+services:
+  - name: agent@gpu-01          # letters, digits, . _ - and @
+    server: workstation         # the row it sits under
+    logo: ollama                # optional, an application logo
+    web_url: "agent://open"     # optional: http(s) or a scheme from link_schemes
+    health_url: "https://gpu-01.lan/health"   # optional
+    on_demand: true             # optional: no answer reads as asleep, not down
+```
+
+timar never starts, stops, updates or logs in to a service, so its server may be watched only
+(`ssh: false`). The light is the server's while there is no `health_url`. With one, the service
+is up when the address answers below HTTP 500. Services are written in the file only, and their
+values are checked again whenever the page is drawn.
+
 ## Why
 
 Homelab machines are mostly *off*. Tools built for always-on fleets assume an agent that phones

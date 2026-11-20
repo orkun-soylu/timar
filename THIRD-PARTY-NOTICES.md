@@ -27,7 +27,7 @@ broken page.
 
 ## Simple Icons
 
-Fifty-two operating-system, appliance and application logos are redistributed as symbols in
+Fifty-three operating-system, appliance and application logos are redistributed as symbols in
 [`timar/web/static/logos.svg`](timar/web/static/logos.svg). They are taken from **Simple Icons
 16.33.0**, with the path data unmodified and only wrapped in `<symbol>` elements. The slugs are
 listed in `osinfo.LOGOS` and `containers.APP_LOGOS`.

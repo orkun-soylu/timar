@@ -26,6 +26,7 @@ from fastapi.templating import Jinja2Templates
 
 from .. import alerts, config, i18n, jobs, power, reports, state, status as fleet_status
 from .. import containers as container_status
+from .. import services as service_status
 from ..i18n import gettext as _
 from ..network import address_key
 from ..platforms import get as get_platform
@@ -69,6 +70,7 @@ async def _keep_status_fresh() -> None:
             cfg = config.load()
             await asyncio.to_thread(fleet_status.refresh, cfg)
             await asyncio.to_thread(container_status.refresh, cfg)
+            await asyncio.to_thread(service_status.refresh, cfg)
             # Right after the probe, while its answers are fresh: see `alerts`.
             await asyncio.to_thread(lambda: alerts.watch(cfg, fleet_status.fleet(cfg)))
         except asyncio.CancelledError:
@@ -308,9 +310,10 @@ CONTAINER_SYSTEM = "Docker Container"
 
 @dataclass(frozen=True)
 class Row:
-    """One line of the servers table: a machine, or a compose project under its Docker host."""
-    kind: str               # "server" or "container"
-    item: object            # status.HostStatus or containers.ProjectStatus
+    """One line of the servers table: a machine, a compose project under its Docker host, or a
+    service (`services`) under the machine it runs on."""
+    kind: str               # "server", "container" or "service"
+    item: object            # status.HostStatus, containers.ProjectStatus or services.ServiceStatus
     depth: int = 0          # 0 on its own, 1 under its hypervisor or host, 2 under both
 
     @property
@@ -318,37 +321,48 @@ class Row:
         return _COUNTED_AS.get(self.item.state, self.item.state)
 
 
-def _sorted_rows(hosts: list, projects: list, key: str, descending: bool) -> list[Row]:
-    """The table's order. By name, each machine has its guests and its containers under it —
-    what runs on it. By address or system the rows are one list in that column's order, as the
-    reader asked; nesting them would break it. A container whose host is not in the list (a
-    filter left it out) stands on its own.
+def _sorted_rows(hosts: list, projects: list, key: str, descending: bool,
+                 svcs: list | None = None) -> list[Row]:
+    """The table's order. By name, each machine has its guests, its containers and its services
+    under it — what runs on it. By address or system the rows are one list in that column's
+    order, as the reader asked; nesting them would break it. A container or service whose host
+    is not in the list (a filter left it out) stands on its own.
     """
+    svcs = svcs or []
     if key != "name":
         rows = [Row("server", h) for h in fleet_status.sort_fleet(hosts, "name")]
         rows += [Row("container", p) for p in container_status.sort_projects(projects, "name")]
+        rows += [Row("service", v) for v in service_status.sort_services(svcs, "name")]
         if key == "address":
-            # Unpublished containers ("-") after every address.
-            rows.sort(key=lambda r: (1,) if r.kind == "container" and not r.item.address
+            # Unpublished containers and services without an address ("-") after every address.
+            rows.sort(key=lambda r: (1,) if r.kind != "server" and not r.item.address
                       else (0, address_key(r.item.host if r.kind == "server" else r.item.address.split(",")[0])))
         else:
-            rows.sort(key=lambda r: (r.item.system if r.kind == "server" else CONTAINER_SYSTEM).casefold())
+            rows.sort(key=lambda r: _system(r).casefold())
         return rows[::-1] if descending else rows
     present = {h.name for h in hosts}
-    under: dict[str, list] = {}
+    under: dict[str, list[Row]] = {}
     for p in container_status.sort_projects(projects, "name", descending):
-        under.setdefault(p.server if p.server in present else "", []).append(p)
+        under.setdefault(p.server if p.server in present else "", []).append(Row("container", p))
+    for v in service_status.sort_services(svcs, "name", descending):
+        under.setdefault(v.server if v.server in present else "", []).append(Row("service", v))
     rows: list[Row] = []
     for h in fleet_status.sort_fleet(hosts, "name", descending):
         depth = 1 if h.parent in present else 0
         rows.append(Row("server", h, depth))
-        rows += [Row("container", p, depth + 1) for p in under.get(h.name, [])]
-    rows += [Row("container", p) for p in under.get("", [])]
+        rows += [Row(r.kind, r.item, depth + 1) for r in under.get(h.name, [])]
+    rows += under.get("", [])
     return rows
 
 
+def _system(row: Row) -> str:
+    if row.kind == "server":
+        return row.item.system
+    return CONTAINER_SYSTEM if row.kind == "container" else service_status.SYSTEM
+
+
 def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None = None,
-                projects: list | None = None) -> dict:
+                projects: list | None = None, svcs: list | None = None) -> dict:
     """The servers table, with the containers under their hosts, ordered by the column picked.
 
     The order is a query parameter, not something the browser keeps: the table is re-fetched
@@ -357,7 +371,7 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
     """
     key = sort if sort in fleet_status.SORT_KEYS else "name"
     descending = dir == "desc"
-    rows = _sorted_rows(fleet_status.fleet(cfg), projects or [], key, descending)
+    rows = _sorted_rows(fleet_status.fleet(cfg), projects or [], key, descending, svcs)
     # Counted over everything, then filtered: the summary is what clicking each count shows,
     # and it must not shrink to the one state already picked.
     counts = {s: sum(r.counted == s for r in rows) for s in STATES}
@@ -376,11 +390,12 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
         "can_add_container": any(get_platform(s.get("platform")).supports_docker
                                  for s in cfg.get("servers", []) if config.has_ssh(s)),
         "container_system": CONTAINER_SYSTEM,
+        "service_system": service_status.SYSTEM,
     }
 
 
 def _parent(row: Row) -> str | None:
-    return row.item.server if row.kind == "container" else row.item.parent
+    return row.item.parent if row.kind == "server" else row.item.server
 
 
 async def _projects(cfg: dict) -> list:
@@ -411,7 +426,8 @@ async def fleet_fragment(request: Request, sort: str | None = None, dir: str | N
     """The status table alone — polled by HTMX so the page updates without a reload."""
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "_fleet.html",
-                                      _fleet_view(cfg, sort, dir, state, await _projects(cfg)))
+                                      _fleet_view(cfg, sort, dir, state, await _projects(cfg),
+                                                  await asyncio.to_thread(service_status.services, cfg)))
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)
