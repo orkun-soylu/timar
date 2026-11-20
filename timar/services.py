@@ -10,12 +10,14 @@ can do is show them where they live, under their host, with a light and a link:
       logo: opencode                  # a slug from containers.APP_LOGOS, optional
       web_url: opencode-rocm://open   # http(s) or a `link_schemes` entry, optional
       health_url: https://rocm.lan    # optional: no answer → the service is down
+      on_demand: true                 # optional: no answer → asleep (grey), not down
 
 Written in `config.yaml` by hand, like `link_schemes`. Everything in an entry is checked again
 where it is drawn, so a mistyped value shows as such instead of reaching the page.
 
 The light: host not up → unknown; host up and no `health_url` → up (the host is all there is to
-ask); otherwise the health check decides. A health check answers with any status below 500, as
+ask); otherwise the health check decides, and a service marked `on_demand` (its backend is woken
+when needed) reads as asleep rather than down while the check does not answer. A health check answers with any status below 500, as
 for containers — a login page in front of the service still says it is there.
 """
 from __future__ import annotations
@@ -38,7 +40,7 @@ MAX_PARALLEL = 16
 class ServiceStatus:
     name: str
     server: str
-    state: str                  # "up", "down" or "unknown"
+    state: str                  # "up", "asleep", "down" or "unknown"
     detail: str
     web_url: str | None = None
     logo: str = DEFAULT_LOGO
@@ -101,7 +103,8 @@ def services(cfg: dict) -> list[ServiceStatus]:
         elif not fleet_status._probe(fleet_status._probe_key(server)):
             state, detail = "unknown", "host is not up"
         elif health and not containers._healthy(health):
-            state, detail = "down", "the health check does not answer"
+            state = "asleep" if e.get("on_demand") is True else "down"
+            detail = "the health check does not answer"
         else:
             state, detail = "up", "running"
         logo = str(e.get("logo") or "")

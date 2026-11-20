@@ -169,6 +169,7 @@ containers:
 #     logo: ollama                      # optional: an application logo (as for containers)
 #     web_url: "agent://open"           # optional: http(s), or a scheme in link_schemes
 #     health_url: "https://gpu-01.example.lan/health"   # optional
+#     on_demand: true                   # optional: no answer reads as asleep, not down
 
 # Optional: servers left out of a job, by name -- set from the pencil on a job's row (reports
 # page). A job runs on every server that is enrolled (Timar has logged in to it with its key) and

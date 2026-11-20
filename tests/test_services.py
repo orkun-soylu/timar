@@ -32,6 +32,11 @@ class TestState:
         assert (out["a@cuda"].state, out["a@cuda"].detail) == ("down", "the health check does not answer")
         assert out["a@rocm"].address == "up.lan"
 
+    def test_on_demand_reads_as_asleep_not_down(self, probes):
+        (s,) = services.services(cfg({"name": "x", "server": "agent-01", "on_demand": True,
+                                      "health_url": "https://down.lan/"}))
+        assert (s.state, s.running) == ("asleep", False)
+
     def test_without_a_health_check_the_host_is_the_answer(self, probes):
         (s,) = services.services(cfg({"name": "shell", "server": "agent-01"}))
         assert s.state == "up" and s.address == ""

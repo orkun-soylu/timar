@@ -171,6 +171,7 @@ services:
     logo: ollama                # optional, an application logo
     web_url: "agent://open"     # optional: http(s) or a scheme from link_schemes
     health_url: "https://gpu-01.lan/health"   # optional
+    on_demand: true             # optional: no answer reads as asleep, not down
 ```
 
 timar never starts, stops, updates or logs in to a service, so its server may be watched only
