@@ -390,5 +390,8 @@
   "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "Sur {platform}, la clé de timar se dépose à la main, dans {path} — le README explique comment. Puis appuyez sur Enrôler avec le mot de passe vide pour la vérifier.",
   "{findings} with findings · {clean} clean · {asleep} asleep": "{findings} avec constats · {clean} sains · {asleep} en veille",
   "{n} unreachable": "{n} injoignables",
-  "the health check does not answer": "le contrôle de santé ne répond pas"
+  "the health check does not answer": "le contrôle de santé ne répond pas",
+  "from the system": "selon le système",
+  "fold": "replier",
+  "{n} more": "{n} de plus"
 }

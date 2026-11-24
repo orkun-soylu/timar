@@ -109,15 +109,16 @@
       {% if enrol_result %}<div class="notice good">{{ enrol_result }}</div>
       {% elif enrol_error %}<div class="notice bad">{{ enrol_error }}</div>{% endif %}
       {# An access point, a NAS appliance: watched on its web port and linked, never logged in to.
-         Ticking it swaps the SSH fields for the logo the device is drawn with — CSS `:has()`, no
-         script, so the form still works as a plain page. #}
+         Ticking it hides the SSH fields — CSS `:has()`, no script, so the form still works as a
+         plain page. The logo is for every machine: one timar logs in to is drawn with its system's
+         unless another is picked (a box that is there for one program, say). #}
       <label class="inline">
         <input type="checkbox" name="no_ssh" {{ "checked" if values.get('no_ssh') else "" }}>
         <span>{{ _("No SSH — only watch it and link to it") }}</span>
       </label>
-      <label class="watched-only"><span>{{ _("Logo") }}</span>
+      <label><span>{{ _("Logo") }}</span>
         <select name="logo">
-          <option value="">—</option>
+          <option value="">{{ _("from the system") }}</option>
           {% for slug, label in device_logos %}
           <option value="{{ slug }}" {{ "selected" if values.get('logo') == slug else "" }}>{{ label }}</option>
           {% endfor %}

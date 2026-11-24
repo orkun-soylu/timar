@@ -46,8 +46,22 @@ DEVICE_LOGOS = {
 }
 
 
+def app_logos() -> dict[str, str]:
+    """The application logos a machine may wear instead of its system's: a box that is there for
+    one program — an agent, a model server — reads faster as that program. Docker's whale is left
+    out: a container host is still the system it runs. Imported late: `containers` imports
+    `status`, which imports this module."""
+    from .containers import APP_LOGOS
+    return {k: v for k, v in APP_LOGOS.items() if k != "docker"}
+
+
+def choices() -> dict[str, str]:
+    """Every logo a server entry may name as `logo`."""
+    return {**LOGOS, **DEVICE_LOGOS, **app_logos()}
+
+
 def logo_name(slug: str) -> str:
-    return LOGOS.get(slug) or DEVICE_LOGOS.get(slug) or "Linux"
+    return choices().get(slug) or "Linux"
 
 
 # `os-release` IDs whose logo is named differently. Everything else is looked up as itself.
@@ -161,10 +175,13 @@ def system(server: dict, known: dict[str, str]) -> str:
 
 
 def logo(server: dict, known: dict[str, str] | None = None) -> str:
-    """The slug drawn before a server's name."""
+    """The slug drawn before a server's name: the entry's own `logo` when it names one, else what
+    the machine says it is."""
+    if server.get("logo") in choices():
+        return server["logo"]
     if not config.has_ssh(server):
-        # Nothing can be read without logging in: the entry says what it is.
-        return server["logo"] if server.get("logo") in (LOGOS | DEVICE_LOGOS) else "linux"
+        # Nothing can be read without logging in, and the entry names nothing.
+        return "linux"
     platform = server.get("platform", "linux")
     if platform in ("proxmox", "windows"):
         return platform     # Proxmox's os-release says Debian; Windows has none to read

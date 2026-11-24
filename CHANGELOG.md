@@ -9,6 +9,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Folded rows.** `folded: true` on a container, a service or a guest server (one under its
+  hypervisor) hides that row under its machine, behind a quiet "▾ N more" line that opens it
+  in place — for what is seldom looked at: a management API, timar's own container, a test VM.
+  A folded row is still probed and counted, and one that is down is never hidden. What is open
+  is in the URL (`?open=…`), so the ten-second refresh keeps it and the page works without a
+  script; sorted by another column or filtered by state, nothing is folded. Set in
+  `config.yaml`; the forms carry it across an edit.
+- **A logo for any server.** The server form's logo picker is no longer only for `ssh: false`
+  devices: a machine timar logs in to may wear a picked logo instead of its system's (its System
+  cell still says what it runs), and application logos are on the list too — a box that is there
+  for one program reads faster as that program.
+- **Claude logo** (Simple Icons 16.33.0).
+
 ## [0.2.52] — 2026-11-20
 
 ### Added

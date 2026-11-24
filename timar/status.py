@@ -66,6 +66,9 @@ class HostStatus:
 
     # False for a device that is only watched and linked (`ssh: false`): no shutdown, no jobs.
     ssh: bool = True
+    # `folded: true` — a row seldom looked at, hidden under its parent until opened. See
+    # `web.app._fold`.
+    folded: bool = False
 
     @property
     def logo_name(self) -> str:
@@ -184,6 +187,7 @@ def fleet(cfg: dict) -> list[HostStatus]:
             system=osinfo.system(s, systems),
             parent=parents.get(s["name"]),
             ssh=config.has_ssh(s),
+            folded=s.get("folded") is True,
         )
         for s, up in zip(servers, results)
     ]

@@ -157,6 +157,10 @@ containers:
     path: /srv/batch-tools
     on_demand: true                     # stopped on purpose: reads as asleep, not down; an
                                         # update pulls it and leaves it stopped
+    folded: true                        # optional, here only: seldom looked at -- hidden under
+                                        # its host behind a "N more" line until opened (also on a
+                                        # guest server, under its hypervisor, and on a service);
+                                        # one that is down is always shown
 
 # Optional: services -- something on a server that is neither a machine nor a compose project
 # (an agent in a terminal, a model server, a program started by hand). Shown under that server
@@ -170,6 +174,7 @@ containers:
 #     web_url: "agent://open"           # optional: http(s), or a scheme in link_schemes
 #     health_url: "https://gpu-01.example.lan/health"   # optional
 #     on_demand: true                   # optional: no answer reads as asleep, not down
+#     folded: true                      # optional: hidden under its server until opened
 
 # Optional: servers left out of a job, by name -- set from the pencil on a job's row (reports
 # page). A job runs on every server that is enrolled (Timar has logged in to it with its key) and
@@ -208,6 +213,8 @@ log_check:
 #    ssh: false            # probed on 443/80, never logged in to, in no job
 #    logo: tplink          # what it is drawn as; nothing can be read from it
 #    web_url: "https://192.0.2.2"
+# Any server may name a `logo` (from the form's list): one timar logs in to is drawn with its
+# system's otherwise. For a box that is there for one program -- logo: claude, logo: opencode.
 
 # Optional: extra schemes a server's web_url may use, for links that open a program rather than
 # a page -- a handler registered on the operator's machine, such as claude://open. http and https

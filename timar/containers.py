@@ -84,6 +84,7 @@ class ProjectStatus:
     is_self: bool       # Timar's own project: it is not offered a stop or a restart
     logo: str = "docker"  # the light before the name; see `app_logo`
     address: str = ""   # where it is published outside its host — "192.168.0.6:8090"; see `published`
+    folded: bool = False  # hidden under its host until opened; see `web.app._fold`
 
     @property
     def logo_name(self) -> str:
@@ -105,7 +106,7 @@ APP_LOGOS = {
     "homeassistant": "Home Assistant", "pihole": "Pi-hole", "adguard": "AdGuard", "nginx": "NGINX",
     "caddy": "Caddy", "uptimekuma": "Uptime Kuma", "syncthing": "Syncthing",
     "paperlessngx": "Paperless-ngx", "minio": "MinIO", "influxdb": "InfluxDB", "rabbitmq": "RabbitMQ",
-    "n8n": "n8n", "opencode": "OpenCode",
+    "n8n": "n8n", "opencode": "OpenCode", "claude": "Claude",
 }
 
 # Names that are not their logo's slug: an image is `traefik`, a database `postgres`.
@@ -462,6 +463,7 @@ def projects(cfg: dict) -> list[ProjectStatus]:
             is_self=bool(me) and any(c.id == me for c in containers),
             logo=_remembered_logo(f"{server_name}:{path}", entry["name"], images),
             address=address(entry, containers, servers.get(server_name, {}).get("host", "")),
+            folded=entry.get("folded") is True,
         ))
     return sorted(out, key=lambda p: p.name.casefold())
 
