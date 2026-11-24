@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.53] — 2026-11-24
+
 ### Added
 - **Folded rows.** `folded: true` on a container, a service or a guest server (one under its
   hypervisor) hides that row under its machine, behind a quiet "▾ N more" line that opens it
