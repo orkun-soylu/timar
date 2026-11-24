@@ -87,6 +87,15 @@
     tr.fold-row td { padding-top: 0.15rem; padding-bottom: 0.15rem; }
     a.fold-toggle { color: var(--muted); font-size: 0.85rem; text-decoration: none; }
     a.fold-toggle:hover { color: var(--text); }
+    /* Settings → Dashboard rows: a machine per block, its rows as chips that move on a click. */
+    .fold-groups { padding-bottom: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem 1.5rem; }
+    .fold-group h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+    .fold-list { display: flex; align-items: baseline; margin-bottom: 0.35rem; }
+    .fold-list > span.muted:first-child { font-size: 0.8rem; flex: 0 0 5.5rem; }
+    .fold-chips { display: flex; flex-wrap: wrap; align-items: center; }
+    .fold-list form { display: inline; margin: 0; }
+    button.fold-chip { cursor: pointer; color: var(--text); font: inherit; font-size: 0.8rem; }
+    button.fold-chip:hover { background: color-mix(in srgb, currentColor 18%, transparent); }
     /* A container on a guest — docker on a VM: one more step in, the same line back. */
     tr.guest.deep td:first-child { padding-left: 4.325rem; }
     tr.guest.deep td:first-child::before { left: 3.275rem; }

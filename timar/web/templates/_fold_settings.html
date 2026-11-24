@@ -1,0 +1,34 @@
+{# The dashboard's rows under each machine, shown or folded (`folded: true`): one click moves a
+   row to the other list. A form per row, so it works without a script; with htmx only this
+   panel is redrawn. #}
+<section class="panel" id="rows">
+  <h2 class="with-action">{{ _("Dashboard rows") }}
+    <button type="button" class="help" popovertarget="help-rows"
+            aria-label="{{ _("About {section}", section=_("Dashboard rows")) }}">?</button></h2>
+  {% if fold_groups %}
+  <div class="stack fold-groups">
+  {% for g in fold_groups %}
+    <div class="fold-group">
+      <h3>{{ g.host }}</h3>
+      {% for title, items, to, glyph in ((_("Shown"), g.shown, "1", "▾"), (_("Folded"), g.folded, "0", "▴")) %}
+      <div class="fold-list">
+        <span class="muted">{{ title }}</span>
+        <div class="fold-chips">
+        {% for kind, name in items %}
+        <form method="post" action="/settings/fold" hx-post="/settings/fold" hx-target="#rows" hx-swap="outerHTML">
+          <input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="name" value="{{ name }}">
+          <input type="hidden" name="folded" value="{{ to }}">
+          <button type="submit" class="chip fold-chip" title="{{ _("fold") if to == "1" else _("show") }}">{{ name }} <span aria-hidden="true">{{ glyph }}</span></button>
+        </form>
+        {% else %}<span class="muted">—</span>
+        {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+  </div>
+  {% else %}
+  <p class="stack muted">{{ _("Nothing sits under a machine yet: guests, containers and services appear here.") }}</p>
+  {% endif %}
+</section>

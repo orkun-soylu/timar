@@ -393,5 +393,11 @@
   "the health check does not answer": "sağlık kontrolü cevap vermiyor",
   "from the system": "sistemden",
   "fold": "katla",
-  "{n} more": "{n} tane daha"
+  "{n} more": "{n} tane daha",
+  "Dashboard rows": "Pano satırları",
+  "Shown": "Görünen",
+  "Folded": "Katlanan",
+  "show": "göster",
+  "Nothing sits under a machine yet: guests, containers and services appear here.": "Henüz hiçbir makinenin altında bir şey yok: misafirler, container'lar ve servisler burada görünür.",
+  "What sits under each machine on the servers page — its virtual machines, containers and services. A folded row waits under an “N more” line until opened; it is still checked and counted, and one that is down is always shown. Click a row to move it to the other list.": "Sunucular sayfasında her makinenin altında duranlar — sanal makineleri, container'ları ve servisleri. Katlanan satır, açılana kadar “N tane daha” satırının altında bekler; yine de denetlenir ve sayılır, down olan her zaman görünür. Bir satıra tıklamak onu öbür listeye taşır."
 }

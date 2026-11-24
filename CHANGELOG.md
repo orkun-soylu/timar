@@ -9,6 +9,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+- **Settings → Dashboard rows.** Every row that sits under a machine — its guests, compose
+  projects and services — listed by machine as *Shown* and *Folded*; a click moves a row to the
+  other list (`folded: true` in `config.yaml`). Works without a script; with htmx only the
+  panel is redrawn.
+
+### Changed
+- **Under each machine, shown rows first, then the folded ones**, each group in name order
+  across kinds, with the "▾ N more" / "▴ fold" line between them. Opening a machine no longer
+  reshuffles the rows already on screen; a folded row that is down is drawn after the line even
+  while the group is closed.
+
 ## [0.2.53] — 2026-11-24
 
 ### Added

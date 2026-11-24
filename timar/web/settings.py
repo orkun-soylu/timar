@@ -167,12 +167,65 @@ def _view(request: Request, *, errors: list[str] | None = None, notice: str | No
         "telegram_language": telegram_cfg.get("language") or i18n.DEFAULT,
         "providers": llm_module.PROVIDERS,
         "anthropic_default": llm_module.DEFAULTS[llm_module.ANTHROPIC]["model"],
+        "fold_groups": _fold_groups(cfg),
         "version": release.current_version(),
         "source_url": release.SOURCE_URL,
         "site_url": release.SITE_URL,
         "errors": errors or [],
         "notice": notice,
     }, status_code=status_code)
+
+
+# Where each kind of row lives in config.yaml.
+_FOLD_LISTS = {"server": "servers", "container": "containers", "service": "services"}
+
+
+def _fold_groups(cfg: dict) -> list[dict]:
+    """Every row that sits under a machine on the dashboard — its guests, its compose projects, its
+    services — by that machine, split into the shown and the folded, each in name order."""
+    servers = {s["name"] for s in cfg.get("servers", [])}
+    by_name = {s["name"]: s for s in cfg.get("servers", [])}
+    under: dict[str, list[tuple[str, str, bool]]] = {}
+    for host in cfg.get("servers", []):
+        for guest in host.get("manages_vms", []):
+            if (g := by_name.get(guest.get("server_name"))) is not None:
+                under.setdefault(host["name"], []).append(("server", g["name"], g.get("folded") is True))
+    for kind, key in (("container", "containers"), ("service", "services")):
+        for e in cfg.get(key) or []:
+            if isinstance(e, dict) and e.get("server") in servers and e.get("name"):
+                under.setdefault(e["server"], []).append((kind, str(e["name"]), e.get("folded") is True))
+    groups = []
+    for host in sorted(under, key=str.casefold):
+        rows = sorted(under[host], key=lambda r: r[1].casefold())
+        groups.append({"host": host,
+                       "shown": [(k, n) for k, n, f in rows if not f],
+                       "folded": [(k, n) for k, n, f in rows if f]})
+    return groups
+
+
+def _fold_panel(request: Request, cfg: dict | None = None):
+    return TEMPLATES.TemplateResponse(request, "_fold_settings.html",
+                                      {"fold_groups": _fold_groups(cfg or config.load())})
+
+
+@router.post("/fold")
+async def save_fold(request: Request):
+    """Move one row between the shown and the folded under its machine (`folded: true`)."""
+    form = dict(await request.form())
+    kind, name = str(form.get("kind") or ""), str(form.get("name") or "")
+    cfg = config.load()
+    entry = next((e for e in cfg.get(_FOLD_LISTS.get(kind, ""), []) or []
+                  if isinstance(e, dict) and e.get("name") == name), None)
+    if entry is None:
+        raise HTTPException(status_code=404)
+    if form.get("folded") == "1":
+        entry["folded"] = True
+    else:
+        entry.pop("folded", None)
+    config.save(cfg)
+    if _htmx(request):
+        return _fold_panel(request, cfg)
+    return RedirectResponse("/settings#rows", status_code=SEE_OTHER)
 
 
 def _redirect(notice: str | None = None):
