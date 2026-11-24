@@ -6,7 +6,7 @@
 {# The containers come with the first poll, fired as soon as the page is up: reading them may open
    an SSH session per host, and the servers — already known — must not wait for that. #}
 <div class="panel"
-     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ fleet_dir }}{% if state %}&amp;state={{ state }}{% endif %}"
+     hx-get="/fragments/fleet?sort={{ sort }}&amp;dir={{ fleet_dir }}{% if state %}&amp;state={{ state }}{% endif %}{% if open %}&amp;open={{ open }}{% endif %}"
      hx-trigger="{% if has_containers %}load, {% endif %}every 10s"
      hx-swap="innerHTML">
   {% include "_fleet.html" %}

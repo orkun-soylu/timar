@@ -390,5 +390,8 @@
   "{platform} is enrolled by placing timar's key on it yourself, in {path} — the README shows how. Then press Enrol with the password left empty to check it.": "На {platform} ключ timar кладётся вручную, в {path} — как, описано в README. Затем нажмите «Подключить» с пустым паролем, чтобы проверить.",
   "{findings} with findings · {clean} clean · {asleep} asleep": "с замечаниями: {findings} · в порядке: {clean} · спят: {asleep}",
   "{n} unreachable": "недоступны: {n}",
-  "the health check does not answer": "проверка здоровья не отвечает"
+  "the health check does not answer": "проверка здоровья не отвечает",
+  "from the system": "по системе",
+  "fold": "свернуть",
+  "{n} more": "ещё {n}"
 }

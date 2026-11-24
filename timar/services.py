@@ -11,6 +11,7 @@ can do is show them where they live, under their host, with a light and a link:
       web_url: opencode-rocm://open   # http(s) or a `link_schemes` entry, optional
       health_url: https://rocm.lan    # optional: no answer → the service is down
       on_demand: true                 # optional: no answer → asleep (grey), not down
+      folded: true                    # optional: hidden under its server until opened
 
 Written in `config.yaml` by hand, like `link_schemes`. Everything in an entry is checked again
 where it is drawn, so a mistyped value shows as such instead of reaching the page.
@@ -45,6 +46,7 @@ class ServiceStatus:
     web_url: str | None = None
     logo: str = DEFAULT_LOGO
     address: str = ""           # the health check's host, if there is one
+    folded: bool = False        # hidden under its server until opened; see `web.app._fold`
 
     @property
     def logo_name(self) -> str:
@@ -114,6 +116,7 @@ def services(cfg: dict) -> list[ServiceStatus]:
             web_url=validate.web_url(str(raw_link), schemes) if raw_link else None,
             logo=logo if logo in containers.APP_LOGOS else DEFAULT_LOGO,
             address=(urlsplit(health).hostname or "") if health else "",
+            folded=e.get("folded") is True,
         ))
     return sorted(out, key=lambda s: s.name.casefold())
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 import html
 import logging
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 import asyncio
 from contextlib import asynccontextmanager
@@ -31,6 +31,7 @@ from ..i18n import gettext as _
 from ..network import address_key
 from ..platforms import get as get_platform
 from ..scheduler import scheduler
+from ..validate import NAME
 from . import assets, auth, hardware as hardware_pages, outcome, settings
 from .auth import require_operator as current_operator
 
@@ -312,8 +313,8 @@ CONTAINER_SYSTEM = "Docker Container"
 class Row:
     """One line of the servers table: a machine, a compose project under its Docker host, or a
     service (`services`) under the machine it runs on."""
-    kind: str               # "server", "container" or "service"
-    item: object            # status.HostStatus, containers.ProjectStatus or services.ServiceStatus
+    kind: str               # "server", "container", "service" or "fold"
+    item: object            # status.HostStatus, containers.ProjectStatus, services.ServiceStatus or Fold
     depth: int = 0          # 0 on its own, 1 under its hypervisor or host, 2 under both
 
     @property
@@ -355,6 +356,63 @@ def _sorted_rows(hosts: list, projects: list, key: str, descending: bool,
     return rows
 
 
+@dataclass(frozen=True)
+class Fold:
+    """The line that opens, or closes again, the folded rows under one machine."""
+    parent: str             # the top row of the group: the machine they are under
+    count: int              # how many rows it hides, or shows while open
+    open: bool
+    href: str               # the dashboard with this group's name added to `open`, or taken out
+
+
+def _fold(rows: list[Row], opened: frozenset[str], keep: str) -> list[Row]:
+    """Hide what is marked `folded: true` under its machine, behind one line that opens it.
+
+    For the rows seldom looked at — a management API, the dashboard's own container, a test VM:
+    the eye goes past them every time it reads the table. A folded row is still probed and
+    counted; only drawing it waits for a click. One that is down is never hidden: the count says
+    "1 down", and the row it means has to be there to find. Folding needs a parent, so a machine
+    at the top of the table is never folded, and whatever sits under a folded machine (docker
+    on a folded VM) folds with it.
+
+    Which groups are open is in the URL (`open=docker-prod-01,pve`), like the order, so the
+    ten-second poll keeps it and the page works without a script.
+    """
+    out: list[Row] = []
+    group: list[Row] = []
+
+    def close() -> None:
+        if not group:
+            return
+        top, members = group[0], group[1:]
+        folded_servers: set[str] = set()
+        hidden: list[Row] = []
+        for r in members:
+            if r.counted != "down" and (r.item.folded or _parent(r) in folded_servers):
+                hidden.append(r)
+                if r.kind == "server":
+                    folded_servers.add(r.item.name)
+        name = top.item.name
+        is_open = name in opened
+        if not hidden:
+            out.extend(group)
+        else:
+            out.append(top)
+            shown = members if is_open else [r for r in members if all(r is not h for h in hidden)]
+            out.extend(shown)
+            others = sorted(opened ^ {name})
+            href = "/?" + (f"open={quote(','.join(others), safe=',')}&" if others else "") + keep
+            out.append(Row("fold", Fold(name, len(hidden), is_open, href.rstrip("&?")), 1))
+        group.clear()
+
+    for r in rows:
+        if r.depth == 0:
+            close()
+        group.append(r)
+    close()
+    return out
+
+
 def _system(row: Row) -> str:
     if row.kind == "server":
         return row.item.system
@@ -362,7 +420,8 @@ def _system(row: Row) -> str:
 
 
 def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None = None,
-                projects: list | None = None, svcs: list | None = None) -> dict:
+                projects: list | None = None, svcs: list | None = None,
+                open: str | None = None) -> dict:
     """The servers table, with the containers under their hosts, ordered by the column picked.
 
     The order is a query parameter, not something the browser keeps: the table is re-fetched
@@ -380,7 +439,13 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
         rows = [r for r in rows if r.counted == picked]
         present = {r.item.name for r in rows if r.kind == "server"}
         rows = [r if r.depth == 0 or _parent(r) in present else Row(r.kind, r.item, 0) for r in rows]
+    # Only in the nested table: sorted by address or system, or filtered by state, a row has no
+    # parent to fold under — and the reader asked for exactly those rows.
+    opened = frozenset(n for n in (open or "").split(",") if NAME.match(n))
+    if key == "name" and not picked:
+        rows = _fold(rows, opened, f"sort=name&dir={'desc' if descending else 'asc'}")
     return {
+        "open": ",".join(sorted(opened)),
         "rows": rows,
         "sort": key,
         "descending": descending,
@@ -405,7 +470,8 @@ async def _projects(cfg: dict) -> list:
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, sort: str | None = None, dir: str | None = None,
-                    state: str | None = None, operator: str = Depends(current_operator)):
+                    state: str | None = None, open: str | None = None,
+                    operator: str = Depends(current_operator)):
     """The servers, and the containers under their hosts in the same table.
 
     The containers are not read here: that may open an SSH session per host, and the servers —
@@ -415,19 +481,22 @@ async def dashboard(request: Request, sort: str | None = None, dir: str | None =
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "dashboard.html", {
         "servers": cfg.get("servers", []),
-        **_fleet_view(cfg, sort, dir, state),
-        "has_containers": bool(cfg.get("containers")),
+        **_fleet_view(cfg, sort, dir, state, open=open),
+        # Containers and services both come with the first poll only; fire it at once for either.
+        "has_containers": bool(cfg.get("containers") or cfg.get("services")),
     })
 
 
 @app.get("/fragments/fleet", response_class=HTMLResponse)
 async def fleet_fragment(request: Request, sort: str | None = None, dir: str | None = None,
-                         state: str | None = None, operator: str = Depends(current_operator)):
+                         state: str | None = None, open: str | None = None,
+                         operator: str = Depends(current_operator)):
     """The status table alone — polled by HTMX so the page updates without a reload."""
     cfg = config.load()
     return TEMPLATES.TemplateResponse(request, "_fleet.html",
                                       _fleet_view(cfg, sort, dir, state, await _projects(cfg),
-                                                  await asyncio.to_thread(service_status.services, cfg)))
+                                                  await asyncio.to_thread(service_status.services, cfg),
+                                                  open=open))
 
 
 @app.get("/fragments/jobs", response_class=HTMLResponse)

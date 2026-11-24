@@ -181,6 +181,13 @@ class TestWatchedOnly:
             server({"name": "ap", "host": "10.0.0.2", "platform": "linux", "no_ssh": "on",
                     "logo": '"><script>'}, set())
 
+    def test_a_machine_timar_logs_in_to_may_wear_an_app_logo(self):
+        entry = server({"name": "agent", "host": "10.0.0.8", "platform": "linux", "user": "op",
+                        "logo": "claude"}, set())
+        assert entry["logo"] == "claude" and "ssh" not in entry
+        assert "logo" not in server({"name": "x", "host": "10.0.0.8", "platform": "linux",
+                                     "user": "op", "logo": ""}, set())
+
     def test_without_the_box_the_user_is_still_required(self):
         with pytest.raises(ValidationError, match="SSH user"):
             server({"name": "x", "host": "10.0.0.2", "platform": "linux", "logo": "tplink"}, set())

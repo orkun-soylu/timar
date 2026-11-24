@@ -72,6 +72,16 @@ def test_its_logo_and_system_come_from_its_entry():
     assert osinfo.logo(nameless, {}) == "linux" and osinfo.system(nameless, {}) == "—"
 
 
+def test_a_picked_logo_wins_over_the_system_read():
+    """A box that is there for one program reads faster as that program; the System cell still
+    says what it runs."""
+    pi = {"name": "agent", "host": "10.0.0.8", "user": "op", "logo": "claude"}
+    known = {"10.0.0.8": "raspberrypi"}
+    assert osinfo.logo(pi, known) == "claude" and osinfo.logo_name("claude") == "Claude"
+    assert osinfo.logo({**pi, "logo": "nonsense"}, known) == "raspberrypi"
+    assert osinfo.logo({**AP, "logo": "opencode"}, {}) == "opencode"
+
+
 def test_shutdown_is_refused():
     from timar import power
     with pytest.raises(power.PowerError, match="watched only"):

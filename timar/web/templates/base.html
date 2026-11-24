@@ -82,6 +82,11 @@
       content: ""; position: absolute; left: 1.675rem; top: 0; bottom: 50%; width: 0.6rem;
       border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); border-bottom-left-radius: 4px;
     }
+    /* The line that opens a machine's folded rows: quiet, in the name column, no line back. */
+    tr.fold-row td:first-child::before { display: none; }
+    tr.fold-row td { padding-top: 0.15rem; padding-bottom: 0.15rem; }
+    a.fold-toggle { color: var(--muted); font-size: 0.85rem; text-decoration: none; }
+    a.fold-toggle:hover { color: var(--text); }
     /* A container on a guest — docker on a VM: one more step in, the same line back. */
     tr.guest.deep td:first-child { padding-left: 4.325rem; }
     tr.guest.deep td:first-child::before { left: 3.275rem; }
@@ -196,9 +201,7 @@
     .field-with-action > button { margin-bottom: 1rem; white-space: nowrap; }
     /* Folded settings: a quiet line that opens to the fields under it. */
     details.more { margin: 0 0 0.5rem; }
-    /* The server form's "No SSH" box: ticked, the SSH fields give way to the logo picker. */
-    .ssh-section .watched-only { display: none; }
-    .ssh-section:has(input[name=no_ssh]:checked) .watched-only { display: block; }
+    /* The server form's "No SSH" box: ticked, the SSH fields give way. */
     .ssh-section:has(input[name=no_ssh]:checked) .ssh-fields { display: none; }
     details.more > summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.8rem; }
     details.more > summary:hover { color: var(--text); }

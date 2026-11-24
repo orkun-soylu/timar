@@ -84,13 +84,14 @@ def server(form: dict, existing_names: set[str], original_name: str | None = Non
     entry: dict = {"name": name, "host": host, "user": user, "platform": platform}
     if watched_only:
         entry["ssh"] = False
-        # Nothing can be read from it, so the form says what it is. Only from the sprite's list:
-        # the value becomes a fragment in the page's `href`.
-        from .osinfo import DEVICE_LOGOS, LOGOS
-        if (logo := (form.get("logo") or "").strip()) in (LOGOS | DEVICE_LOGOS):
-            entry["logo"] = logo
-        elif logo:
-            errors.append(_("Logo must be one of the listed ones."))
+    # A device that cannot be read needs one to say what it is; a machine that can is drawn with
+    # its system's logo unless one is picked. Only from the sprite's list: the value becomes a
+    # fragment in the page's `href`.
+    from .osinfo import choices
+    if (logo := (form.get("logo") or "").strip()) in choices():
+        entry["logo"] = logo
+    elif logo:
+        errors.append(_("Logo must be one of the listed ones."))
 
     if mac := (form.get("wol_mac") or "").strip():
         if not MAC.match(mac):
