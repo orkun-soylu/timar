@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.54] — 2026-11-24
+
 ### Added
 - **Settings → Dashboard rows.** Every row that sits under a machine — its guests, compose
   projects and services — listed by machine as *Shown* and *Folded*; a click moves a row to the
