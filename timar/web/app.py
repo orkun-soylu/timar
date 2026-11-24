@@ -365,15 +365,20 @@ class Fold:
     href: str               # the dashboard with this group's name added to `open`, or taken out
 
 
-def _fold(rows: list[Row], opened: frozenset[str], keep: str) -> list[Row]:
+def _fold(rows: list[Row], opened: frozenset[str], keep: str, descending: bool = False) -> list[Row]:
     """Hide what is marked `folded: true` under its machine, behind one line that opens it.
 
     For the rows seldom looked at — a management API, the dashboard's own container, a test VM:
     the eye goes past them every time it reads the table. A folded row is still probed and
-    counted; only drawing it waits for a click. One that is down is never hidden: the count says
-    "1 down", and the row it means has to be there to find. Folding needs a parent, so a machine
-    at the top of the table is never folded, and whatever sits under a folded machine (docker
-    on a folded VM) folds with it.
+    counted; only drawing it waits for a click. Folding needs a parent, so a machine at the top
+    of the table is never folded, and whatever sits under a folded row (docker on a folded VM)
+    folds with it.
+
+    Under each machine the rows come in two groups, each in name order: the ones shown, then the
+    line, then the folded ones — open or closed, a row stays in its own group, so opening a
+    machine never reshuffles what was already on screen. A folded row that is down is drawn even
+    while its group is closed: the count says "1 down", and the row it means has to be there to
+    find.
 
     Which groups are open is in the URL (`open=docker-prod-01,pve`), like the order, so the
     ten-second poll keeps it and the page works without a script.
@@ -385,25 +390,33 @@ def _fold(rows: list[Row], opened: frozenset[str], keep: str) -> list[Row]:
         if not group:
             return
         top, members = group[0], group[1:]
-        folded_servers: set[str] = set()
-        hidden: list[Row] = []
+        group.clear()
+        # A unit is a row directly under the machine and whatever sits under that row.
+        units: list[list[Row]] = []
         for r in members:
-            if r.counted != "down" and (r.item.folded or _parent(r) in folded_servers):
-                hidden.append(r)
-                if r.kind == "server":
-                    folded_servers.add(r.item.name)
+            if r.depth <= top.depth + 1 or not units:
+                units.append([r])
+            else:
+                units[-1].append(r)
+        order = lambda u: u[0].item.name.casefold()  # noqa: E731
+        shown = sorted((u for u in units if not u[0].item.folded), key=order, reverse=descending)
+        folded = sorted((u for u in units if u[0].item.folded), key=order, reverse=descending)
         name = top.item.name
         is_open = name in opened
-        if not hidden:
-            out.extend(group)
-        else:
-            out.append(top)
-            shown = members if is_open else [r for r in members if all(r is not h for h in hidden)]
-            out.extend(shown)
+        down = [u for u in folded if any(r.counted == "down" for r in u)]
+        hidden = sum(len(u) for u in folded if not any(u is d for d in down))
+        out.append(top)
+        for u in shown:
+            out.extend(u)
+        if not folded:
+            return
+        if hidden or is_open:
             others = sorted(opened ^ {name})
             href = "/?" + (f"open={quote(','.join(others), safe=',')}&" if others else "") + keep
-            out.append(Row("fold", Fold(name, len(hidden), is_open, href.rstrip("&?")), 1))
-        group.clear()
+            count = sum(len(u) for u in folded) if is_open else hidden
+            out.append(Row("fold", Fold(name, count, is_open, href.rstrip("&?")), top.depth + 1))
+        for u in folded if is_open else down:
+            out.extend(u)
 
     for r in rows:
         if r.depth == 0:
@@ -443,7 +456,7 @@ def _fleet_view(cfg: dict, sort: str | None, dir: str | None, state: str | None 
     # parent to fold under — and the reader asked for exactly those rows.
     opened = frozenset(n for n in (open or "").split(",") if NAME.match(n))
     if key == "name" and not picked:
-        rows = _fold(rows, opened, f"sort=name&dir={'desc' if descending else 'asc'}")
+        rows = _fold(rows, opened, f"sort=name&dir={'desc' if descending else 'asc'}", descending)
     return {
         "open": ",".join(sorted(opened)),
         "rows": rows,

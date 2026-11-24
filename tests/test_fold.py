@@ -25,7 +25,7 @@ def names(rows):
 
 
 class TestFold:
-    def test_folded_rows_wait_behind_one_line_at_the_end_of_their_group(self):
+    def test_folded_rows_wait_behind_one_line_after_the_shown_ones(self):
         rows = [Row("server", host("hv")), Row("server", host("vm-a", "hv", folded=True), 1),
                 Row("server", host("vm-b", "hv"), 1), Row("server", host("solo"))]
         out = _fold(rows, frozenset(), KEEP)
@@ -39,14 +39,27 @@ class TestFold:
         rows = [Row("server", host("hv")), Row("server", host("vm-a", "hv", folded=True), 1),
                 Row("server", host("vm-b", "hv"), 1)]
         out = _fold(rows, frozenset({"hv", "other"}), KEEP)
-        assert names(out) == ["hv", "vm-a", "vm-b", "hv"]
-        f = out[-1].item
+        # Open, a folded row stays in its own group: after the line, not back in name order.
+        assert names(out) == ["hv", "vm-b", "hv", "vm-a"]
+        f = out[2].item
         assert (f.parent, f.count, f.open, f.href) == ("hv", 1, True, "/?open=other&" + KEEP)
 
     def test_a_down_row_is_never_hidden(self):
-        """"1 down" in the counts has to have a row to find."""
-        rows = [Row("server", host("hv")), Row("service", svc("api", "hv", folded=True, state="down"), 1)]
-        assert names(_fold(rows, frozenset(), KEEP)) == ["hv", "api"]
+        """"1 down" in the counts has to have a row to find — in the folded group, after the line."""
+        rows = [Row("server", host("hv")), Row("service", svc("api", "hv", folded=True, state="down"), 1),
+                Row("service", svc("zz", "hv", folded=True), 1)]
+        out = _fold(rows, frozenset(), KEEP)
+        assert names(out) == ["hv", "hv", "api"] and out[1].item.count == 1
+        alone = _fold(rows[:2], frozenset(), KEEP)
+        assert names(alone) == ["hv", "api"]       # nothing left to open: no line
+
+    def test_each_group_in_name_order_across_kinds(self):
+        rows = [Row("server", host("hv")), Row("server", host("b-vm", "hv", folded=True), 1),
+                Row("service", svc("d", "b-vm"), 2), Row("service", svc("a", "hv", folded=True), 1),
+                Row("service", svc("c", "hv"), 1), Row("server", host("a-vm", "hv"), 1)]
+        out = _fold(rows, frozenset({"hv"}), KEEP)
+        assert names(out) == ["hv", "a-vm", "c", "hv", "a", "b-vm", "d"]
+        assert names(_fold(rows, frozenset({"hv"}), KEEP, descending=True)) == ["hv", "c", "a-vm", "hv", "b-vm", "d", "a"]
 
     def test_what_sits_under_a_folded_machine_folds_with_it(self):
         rows = [Row("server", host("hv")), Row("server", host("vm", "hv", folded=True), 1),
@@ -89,3 +102,39 @@ class TestPage:
 
     def test_an_open_value_that_is_not_a_name_is_dropped(self, page):
         assert "script" not in page.get('/fragments/fleet?open="><script>').text.lower().replace("</script", "")
+
+
+class TestSettings:
+    @pytest.fixture
+    def page(self, client):  # noqa: F811
+        from timar import config
+        complete_setup(client)
+        config.save({"servers": [{"name": "hv", "host": "10.0.0.5", "user": "root", "platform": "proxmox",
+                                  "manages_vms": [{"vm_id": 100, "server_name": "vm"}]},
+                                 {"name": "vm", "host": "10.0.0.40", "user": "op", "platform": "linux"},
+                                 {"name": "box", "host": "10.0.0.12:22", "user": "", "ssh": False}],
+                     "containers": [{"name": "web", "server": "box", "path": "/srv/web", "folded": True}],
+                     "services": [{"name": "agent", "server": "box"}]})
+        return client
+
+    def test_the_panel_lists_each_machines_rows_shown_and_folded(self, page):
+        body = page.get("/settings").text
+        panel = body.split('id="rows"', 1)[1].split("</section>", 1)[0]
+        assert ">box<" in panel and ">hv<" in panel
+        shown, folded = panel.split(">box<", 1)[1].split("Folded", 1)
+        assert "agent" in shown and "web" not in shown and "web" in folded.split("<h3>")[0]
+
+    def test_a_click_moves_a_row_and_back(self, page):
+        from timar import config
+        r = page.post("/settings/fold", data={"kind": "server", "name": "vm", "folded": "1"},
+                      headers={"HX-Request": "true"})
+        assert r.status_code == 200 and 'id="rows"' in r.text
+        assert next(s for s in config.load()["servers"] if s["name"] == "vm")["folded"] is True
+        page.post("/settings/fold", data={"kind": "container", "name": "web", "folded": "0"})
+        assert "folded" not in config.load()["containers"][0]
+        page.post("/settings/fold", data={"kind": "service", "name": "agent", "folded": "1"})
+        assert config.load()["services"][0]["folded"] is True
+
+    def test_an_unknown_row_is_refused(self, page):
+        assert page.post("/settings/fold", data={"kind": "server", "name": "nope", "folded": "1"}).status_code == 404
+        assert page.post("/settings/fold", data={"kind": "llm", "name": "x", "folded": "1"}).status_code == 404

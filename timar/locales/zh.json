@@ -393,5 +393,11 @@
   "the health check does not answer": "健康检查无应答",
   "from the system": "跟随系统",
   "fold": "折叠",
-  "{n} more": "另外 {n} 项"
+  "{n} more": "另外 {n} 项",
+  "Dashboard rows": "面板行",
+  "Shown": "显示",
+  "Folded": "折叠",
+  "show": "显示",
+  "Nothing sits under a machine yet: guests, containers and services appear here.": "目前还没有任何内容位于机器之下：客户机、容器和服务会显示在这里。",
+  "What sits under each machine on the servers page — its virtual machines, containers and services. A folded row waits under an “N more” line until opened; it is still checked and counted, and one that is down is always shown. Click a row to move it to the other list.": "服务器页面上每台机器下方的内容——它的虚拟机、容器和服务。折叠的行在“另外 N 项”一行下等待展开；它仍会被检查和计数，宕机的行始终显示。点击某行即可将其移到另一个列表。"
 }

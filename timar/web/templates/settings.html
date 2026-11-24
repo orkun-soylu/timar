@@ -82,6 +82,8 @@
   </form>
 </section>
 
+{% include "_fold_settings.html" %}
+
 {# The page's language, remembered by this browser — not the Telegram one under Notifications.
    A plain GET form like the one on the sign-in page; the select submits itself when there is
    scripting. #}
@@ -115,6 +117,12 @@
 </section>
 
 {# The explanations, behind the "?" on each heading. #}
+<div id="help-rows" popover class="popover">
+  <h3>{{ _("Dashboard rows") }}</h3>
+  <dl class="help-list">
+    <dd>{{ _("What sits under each machine on the servers page — its virtual machines, containers and services. A folded row waits under an “N more” line until opened; it is still checked and counted, and one that is down is always shown. Click a row to move it to the other list.") }}</dd>
+  </dl>
+</div>
 <div id="help-model" popover class="popover">
   <h3>{{ _("Model") }}</h3>
   <dl class="help-list">

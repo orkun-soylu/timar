@@ -393,5 +393,11 @@
   "the health check does not answer": "ヘルスチェックが応答しない",
   "from the system": "システムから",
   "fold": "折りたたむ",
-  "{n} more": "ほか {n} 件"
+  "{n} more": "ほか {n} 件",
+  "Dashboard rows": "ダッシュボードの行",
+  "Shown": "表示",
+  "Folded": "折りたたみ",
+  "show": "表示する",
+  "Nothing sits under a machine yet: guests, containers and services appear here.": "まだマシンの下には何もありません。ゲスト、コンテナ、サービスがここに表示されます。",
+  "What sits under each machine on the servers page — its virtual machines, containers and services. A folded row waits under an “N more” line until opened; it is still checked and counted, and one that is down is always shown. Click a row to move it to the other list.": "サーバーページで各マシンの下に並ぶもの（仮想マシン、コンテナ、サービス）。折りたたんだ行は「ほか N 件」の行の下で開かれるまで待ちます。確認と集計は続き、停止中の行は常に表示されます。クリックすると行がもう一方の一覧に移ります。"
 }

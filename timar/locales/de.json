@@ -393,5 +393,11 @@
   "the health check does not answer": "der Health-Check antwortet nicht",
   "from the system": "vom System",
   "fold": "einklappen",
-  "{n} more": "{n} weitere"
+  "{n} more": "{n} weitere",
+  "Dashboard rows": "Zeilen der Übersicht",
+  "Shown": "Sichtbar",
+  "Folded": "Eingeklappt",
+  "show": "anzeigen",
+  "Nothing sits under a machine yet: guests, containers and services appear here.": "Noch steht nichts unter einer Maschine: Gäste, Container und Dienste erscheinen hier.",
+  "What sits under each machine on the servers page — its virtual machines, containers and services. A folded row waits under an “N more” line until opened; it is still checked and counted, and one that is down is always shown. Click a row to move it to the other list.": "Was auf der Serverseite unter jeder Maschine steht — ihre virtuellen Maschinen, Container und Dienste. Eine eingeklappte Zeile wartet unter einer „N weitere“-Zeile, bis sie geöffnet wird; sie wird weiter geprüft und gezählt, und eine ausgefallene wird immer angezeigt. Ein Klick verschiebt eine Zeile in die andere Liste."
 }
