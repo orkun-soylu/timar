@@ -95,7 +95,8 @@ class ProjectStatus:
         return self.state in ("up", "warn")
 
 
-# Slug → name, for each application symbol in `web/static/logos.svg` (Simple Icons, CC0).
+# Slug → name, for each application symbol in `web/static/logos.svg` (Simple Icons, CC0; `swirlgate`
+# is the Swirlgate router's own mark, one colour, drawn from its brand file).
 APP_LOGOS = {
     "docker": "Docker", "forgejo": "Forgejo", "gitea": "Gitea", "gitlab": "GitLab",
     "homepage": "Homepage", "immich": "Immich", "traefikproxy": "Traefik", "vaultwarden": "Vaultwarden",
@@ -106,7 +107,7 @@ APP_LOGOS = {
     "homeassistant": "Home Assistant", "pihole": "Pi-hole", "adguard": "AdGuard", "nginx": "NGINX",
     "caddy": "Caddy", "uptimekuma": "Uptime Kuma", "syncthing": "Syncthing",
     "paperlessngx": "Paperless-ngx", "minio": "MinIO", "influxdb": "InfluxDB", "rabbitmq": "RabbitMQ",
-    "n8n": "n8n", "opencode": "OpenCode", "claude": "Claude",
+    "n8n": "n8n", "opencode": "OpenCode", "claude": "Claude", "swirlgate": "Swirlgate",
 }
 
 # Names that are not their logo's slug: an image is `traefik`, a database `postgres`.
