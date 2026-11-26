@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [0.2.55] — 2026-11-26
+
+### Added
+- **A Swirlgate logo** (`logo: swirlgate`) for a server or service, the router's own one-colour
+  mark: a shield with a spiral. Like every logo it takes the colour of the row's state.
+
 ## [0.2.54] — 2026-11-24
 
 ### Added
